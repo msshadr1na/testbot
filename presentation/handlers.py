@@ -149,7 +149,7 @@ async def as_org(callback: CallbackQuery):
     user = await user_service.find_by_tgid(callback.from_user.id)
     ids, names = await org_service.show_owned_orgs(user.id)
 
-    keyboard = await presentation.keyboards.build_org_keyboard()
+    keyboard = await presentation.keyboards.build_org_keyboard(ids,names)
     await callback.message.edit_text("Вы вошли как организатор\nВыберите организацию или создайте новую",reply_markup=keyboard)
     await callback.answer()
 
