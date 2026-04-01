@@ -144,7 +144,10 @@ async def cancel_delete_org(callback: CallbackQuery):
 async def as_org(callback: CallbackQuery):
     pool = await get_db_pool()
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool),OrganizationMemberRepository(pool), InviteRepository(pool))
+
     user = await user_service.find_by_tgid(callback.from_user.id)
+    ids, names = await org_service.show_owned_orgs(user.id)
 
     keyboard = await presentation.keyboards.build_org_keyboard()
     await callback.message.edit_text("Вы вошли как организатор\nВыберите организацию или создайте новую",reply_markup=keyboard)
