@@ -266,8 +266,9 @@ async def handle_create_organization(message: types.Message):
 
     if is_created is None:
         organization = await organization_service.create_organization(user, name)
+        ids, names = await organization_service.show_owned_orgs(user.id)
         waiting_for_name.remove(user_id)
-        keyboard = await presentation.keyboards.build_org_keyboard()
+        keyboard = await presentation.keyboards.build_org_keyboard(ids,names)
         await message.answer(f"Организация {name} успешно создана")
         await message.answer("Вы вошли как организатор", reply_markup=keyboard)
     else:
