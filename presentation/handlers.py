@@ -62,7 +62,7 @@ async def handle_start(message: types.Message, command: Command):
             await message.answer(f"Не удалось присоединиться: {e}")
         
         # После обработки приглашения — показываем обычное меню
-        keyboard = presentation.keyboards.build_start_keyboard()
+        keyboard = presentation.keyboards.get_main_menu_keyboard()
         await message.answer(f"Добро пожаловать, {user.first_name}!\nВойти как:", reply_markup=keyboard)
         return
 
