@@ -1,4 +1,4 @@
-from aiogram.types import inline_keyboard_button, keyboard_button, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import inline_keyboard_button, keyboard_button, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from app.models import User
 
 def build_start_keyboard():
@@ -8,17 +8,6 @@ def build_start_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
-def get_main_menu_keyboard():
-    buttons = [
-        [KeyboardButton(text="Организатор")],
-        [KeyboardButton(text="Работник")],
-        [KeyboardButton(text="Клиент")]
-    ]
-    return ReplyKeyboardMarkup(
-        keyboard=buttons,
-        resize_keyboard=True,  
-        one_time_keyboard=False  
-    )
 
 #Клавиатура при выборе роли Организатор
 async def build_org_keyboard(orgs,names):
