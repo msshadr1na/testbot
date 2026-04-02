@@ -140,7 +140,7 @@ async def cancel_delete_org(callback: CallbackQuery):
     await callback.answer()
 
 #Войти как организатор
-@router.callback_query(F.data.startswith("owner"))
+@router.callback_query(F.text == "Организатор")
 async def as_org(callback: CallbackQuery):
     pool = await get_db_pool()
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
@@ -194,7 +194,7 @@ async def start_create_org(callback: types.CallbackQuery):
     await callback.answer()
 
 
-
+#
 @router.callback_query(F.data.startswith("choose.org_"))
 async def choose_org(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
@@ -207,6 +207,7 @@ async def choose_org(callback: types.CallbackQuery):
 
     await callback.message.edit_text(f"Организация {name.name}", reply_markup=keyboard)
 
+#Управление работниками
 @router.callback_query(F.data.startswith("mng.workers_"))
 async def manage_workers(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
@@ -215,6 +216,8 @@ async def manage_workers(callback: types.CallbackQuery):
     
     await callback.message.edit_text("Управление работниками", reply_markup=keyboard)
 
+
+#Вывод ссылки-приглашения для работников
 @router.callback_query(F.data.startswith("invite.worker_"))
 async def invite_worker(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
@@ -231,10 +234,8 @@ async def invite_worker(callback: types.CallbackQuery):
 
     keyboard = presentation.keyboards.build_invite_code_keyboard(link, org_id)
 
-    await callback.message.edit_text(f"Ваша ссылка-приглашение:\n\n`{link}`\n\n \nНажмите на неё, чтобы скопировать.", parse_mode="Markdown", reply_markup=keyboard)
+    await callback.message.edit_text(f"Ваша ссылка-приглашение:\n\n`{link}`\n\nНажмите, чтобы скопировать.", parse_mode="Markdown", reply_markup=keyboard)
    
-
-
 
 # Текстовые сообщения
 @router.message()
