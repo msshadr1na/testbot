@@ -56,9 +56,9 @@ def build_invite_workers_keyboard(org_id):
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
+#Клавиатура ссылки приглашения для работников
 def build_invite_code_keyboard(invite_code,org_id):
-    buttons = [[InlineKeyboardButton(text="Скопировать ссылку-приглашение", callback_data=f"copy.code_{invite_code}")],
-               [InlineKeyboardButton(text="Назад", callback_data=f"invite.worker_{org_id}")]]
+    buttons = [[InlineKeyboardButton(text="Назад", callback_data=f"invite.worker_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 

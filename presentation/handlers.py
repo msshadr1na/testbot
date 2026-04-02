@@ -231,7 +231,7 @@ async def invite_worker(callback: types.CallbackQuery):
 
     keyboard = presentation.keyboards.build_invite_code_keyboard(link, org_id)
 
-    await callback.message.edit_text(f"Приглашение для работников:\n{link}", reply_markup=keyboard)
+    await callback.message.edit_text(f"Ваша ссылка-приглашение:\n\n`{link}`\n\n \nНажмите на неё, чтобы скопировать.", parse_mode="Markdown", reply_markup=keyboard)
    
 
 
