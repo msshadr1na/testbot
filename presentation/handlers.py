@@ -1,5 +1,5 @@
 from aiogram import Router, types, F
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.types import inline_keyboard_button, reply_keyboard_markup, reply_markup_union, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message
 from asyncpg import pool
 from app.models import Organization, User
@@ -8,7 +8,8 @@ from infrastructure.database import get_db_pool
 from infrastructure.repositories import UserRepository, SettingsRepository, OrganizationRepository, InviteRepository
 import presentation.keyboards
 from app.states import RegistrationState
-from aiogram.fsm.state import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
 
 router = Router()
 
