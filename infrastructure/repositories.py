@@ -10,13 +10,13 @@ class SettingsRepository:
     async def create(self, settings: Settings):
         json_value = json.dumps(settings.notification_settings)
         sql_find = "SELECT id FROM settings WHERE notification_settings = $1"
-        row = await self.pool.fetchrow(sql_find, settings.json_value)
+        row = await self.pool.fetchrow(sql_find, json_value)
         if row:
-            return Settings(id=row["id"], notification_settings=settings.json_value)
+            return Settings(id=row["id"], notification_settings=json_value)
 
-        sql_insert = "INSERT INTO settings (notification_settings) VALUES ($1::jsonb) RETURNING id"
-        row = await self.pool.fetchrow(sql_insert, settings.notificaation_settings)
-        return Settings(id=row["id"], notification_settings=settings.json_value)
+        sql_insert = "INSERT INTO settings (notification_settings) VALUES ($1) RETURNING id"
+        row = await self.pool.fetchrow(sql_insert, json_value)
+        return Settings(id=row["id"], notification_settings=json_value)
 
 class UserRepository:
     def __init__(self, pool):
