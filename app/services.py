@@ -86,5 +86,13 @@ class OrganizationService:
     
         return await self.create_invite(organization_id, role_id)
 
+    #Получение организации из кода приглашения
+    async def get_org_id_from_invite(self, code):
+        invite = await self.invite_repository.get_by_code(code)
+        if not invite:
+            raise ValueError("Приглашение не найдено")
+        return invite.organization_id
+
+
 
 

@@ -1,14 +1,13 @@
 from aiogram import Router, types, F
-from aiogram.filters import CommandStart, Command, StateFilter
+from aiogram.filters import CommandStart, Command
 from aiogram.types import inline_keyboard_button, reply_keyboard_markup, reply_markup_union, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message
 from asyncpg import pool
 from app.models import Organization, User
 from app.services import OrganizationMemberRepository, UserService, OrganizationService
+from app.states import RegistrationState
 from infrastructure.database import get_db_pool
 from infrastructure.repositories import UserRepository, SettingsRepository, OrganizationRepository, InviteRepository
 import presentation.keyboards
-from app.states import RegistrationState
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 router = Router()
@@ -17,133 +16,66 @@ waiting_for_name = set()
 waiting_for_org_num = set()
 waiting_for_delete_confirm = set()
 
-# Команды
-@router.message(Command("start"))
+# Регистрация и вход
+@router.message(CommandStart())
 async def handle_start(message: types.Message, command: Command, state: FSMContext):
     pool = await get_db_pool()
-    user_repo = UserRepository(pool)
-    settings_repo = SettingsRepository(pool)
-    user_service = UserService(user_repo, settings_repo)
 
-    user = await user_service.find_by_tgid(message.from_user.id)
+    userRepo = UserRepository(pool)
+    settingsRepos = SettingsRepository(pool)
 
-    # Сохраняем аргументы (даже если пользователь уже есть!)
+    user_service = UserService(userRepo, settingsRepos)
+
+    user_id = message.from_user.id
+    user = await user_service.find_by_tgid(user_id)
+    
     if command.args and command.args.startswith("join_"):
         await state.update_data(start_args=command.args)
 
     if user is None:
-        # Начинаем регистрацию
-        await message.answer("👋 Добро пожаловать!\nВведите ваше имя:")
+        await message.answer("Для продолжения пройдите регистрацию\nВведите ваше имя:")
         await state.set_state(RegistrationState.first_name)
     else:
-        # Пользователь уже зарегистрирован → сразу обрабатываем приглашение (если есть)
-        await process_invite_if_any(message, state, user.id, pool)
+        await check_invite(message, state, user_id, pool)       
 
 @router.message(RegistrationState.first_name, F.text)
 async def reg_first_name(message: Message, state: FSMContext):
     await state.update_data(first_name=message.text.strip())
-    await message.answer("Теперь введите фамилию:")
+    await message.answer("Введите фамилию:")
     await state.set_state(RegistrationState.last_name)
 
-
 @router.message(RegistrationState.last_name, F.text)
-async def reg_last_name(message: Message, state: FSMContext):
+async def reg_first_name(message: Message, state: FSMContext):
     await state.update_data(last_name=message.text.strip())
-    await message.answer("Введите отчество (или нажмите «Пропустить»):")
+    await message.answer("Введите отчество: (при отстутствии отправьте прочерк -)")
     await state.set_state(RegistrationState.middle_name)
 
-
 @router.message(RegistrationState.middle_name, F.text)
-async def reg_middle_name(message: Message, state: FSMContext):
-    text = message.text.strip()
-    middle_name = None if text.lower() in {"пропустить", "нет", "-"} else text
+async def reg_first_name(message: Message, state: FSMContext):
+    middle_name = message.text.strip()
+    if middle_name == "-":
+        middle_name = None
     await state.update_data(middle_name=middle_name)
-
-    # Кнопка для отправки номера
-    kb = [[types.KeyboardButton(text="📱 Отправить номер", request_contact=True)]]
-    await message.answer(
-        "Теперь отправьте ваш номер телефона:",
-        reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, one_time_keyboard=True)
-    )
+    kb = [[types.KeyboardButton(text="Отправить номер", request_contact=True)]]
+    await message.answer("Теперь отправьте ваш номер телефона:", reply_markup=types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True, one_time_keyboard=True))
     await state.set_state(RegistrationState.phone)
 
 @router.message(RegistrationState.phone, F.contact)
 async def reg_phone(message: types.Message, state: FSMContext):
     phone = message.contact.phone_number
-    reg_data = await state.get_data()
+    data = await state.get_data()
 
     pool = await get_db_pool()
     user_repo = UserRepository(pool)
     settings_repo = SettingsRepository(pool)
     user_service = UserService(user_repo, settings_repo)
 
-    user = await user_service.registration(
-        telegram_id=message.from_user.id,
-        phone=phone,
-        first_name=reg_data["first_name"],
-        last_name=reg_data["last_name"],
-        middle_name=reg_data.get("middle_name")
-    )
+    user = await user_service.registration(telegram_id=message.from_user.id,phone=phone,first_name=data["first_name"],last_name=data["last_name"],middle_name=data.get("middle_name"))
 
-    # Сначала обработай приглашение (пока start_args ещё в состоянии)
-    await process_invite_if_any(message, state, user.id, pool)
+    await check_invite(message, state, user.id, pool)
 
-    # Теперь можно очистить
     await state.clear()
-    await message.answer("✅ Регистрация завершена!", reply_markup=types.ReplyKeyboardRemove())
-
-async def process_invite_if_any(message: types.Message, state: FSMContext, user_id: int, pool):
-    data = await state.get_data()
-    args = data.get("start_args")
-    
-    if not args or not args.startswith("join_"):
-        # Нет приглашения → показываем обычное меню
-        keyboard = presentation.keyboards.build_start_keyboard()
-        await message.answer("Выберите роль:", reply_markup=keyboard)
-        return
-
-    invite_code = args[len("join_"):]
-    
-    # Подключаем репозитории
-    org_repo = OrganizationRepository(pool)
-    org_member_repo = OrganizationMemberRepository(pool)
-    invite_repo = InviteRepository(pool)
-    org_service = OrganizationService(org_repo, org_member_repo, invite_repo)
-    
-    try:
-        role_id = await org_service.accept_invite(invite_code, user_id)
-        role_name = {2: "тренер", 3: "клиент"}.get(role_id, "участник")
-        await message.answer(f"Вы добавлены в организацию как {role_name}!")
-    except ValueError as e:
-        await message.answer(f"Ошибка: {e}")
-    except Exception as e:
-        await message.answer(f"Не удалось присоединиться: {e}")
-    
-    # Удаляем использованный invite из состояния
-    await state.update_data(start_args=None)
-    
-    # Показываем меню
-    keyboard = presentation.keyboards.build_start_keyboard()
-    await message.answer("Выберите роль:", reply_markup=keyboard)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    await message.answer("Регистрация завершена", reply_markup=types.ReplyKeyboardRemove())
 
 
 
@@ -175,7 +107,7 @@ async def start_create_note(message: types.Message):
 
         await message.answer("Выберите организацию для удаления:", reply_markup=keyboard)
 
-# Обработчики кнопок
+### Обработчики кнопок
 
 @router.callback_query(F.data.startswith("start"))
 async def cancel_delete_org(callback: CallbackQuery):
@@ -222,16 +154,16 @@ async def as_org(callback: CallbackQuery):
     pool = await get_db_pool()
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
     org_service = OrganizationService(OrganizationRepository(pool),OrganizationMemberRepository(pool), InviteRepository(pool))
-
     user = await user_service.find_by_tgid(callback.from_user.id)
     ids, names = await org_service.show_owned_orgs(user.id)
 
-    keyboard = await presentation.keyboards.build_org_keyboard(ids,names)
+
+    keyboard = await presentation.keyboards.build_org_keyboard(ids, names)
     await callback.message.edit_text("Вы вошли как организатор\nВыберите организацию или создайте новую",reply_markup=keyboard)
     await callback.answer()
 
 #Выбор организации для управления
-@router.callback_query(F.data.startswith("choose.org_"))
+@router.callback_query(F.data.startswith("select.org_"))
 async def choose_org(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
 
@@ -271,7 +203,7 @@ async def start_create_org(callback: types.CallbackQuery):
     await callback.answer()
 
 
-#
+
 @router.callback_query(F.data.startswith("choose.org_"))
 async def choose_org(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
@@ -284,7 +216,6 @@ async def choose_org(callback: types.CallbackQuery):
 
     await callback.message.edit_text(f"Организация {name.name}", reply_markup=keyboard)
 
-#Управление работниками
 @router.callback_query(F.data.startswith("mng.workers_"))
 async def manage_workers(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
@@ -293,8 +224,6 @@ async def manage_workers(callback: types.CallbackQuery):
     
     await callback.message.edit_text("Управление работниками", reply_markup=keyboard)
 
-
-#Вывод ссылки-приглашения для работников
 @router.callback_query(F.data.startswith("invite.worker_"))
 async def invite_worker(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
@@ -311,8 +240,10 @@ async def invite_worker(callback: types.CallbackQuery):
 
     keyboard = presentation.keyboards.build_invite_code_keyboard(link, org_id)
 
-    await callback.message.edit_text(f"Ваша ссылка-приглашение:\n\n`{link}`\n\nНажмите, чтобы скопировать.", parse_mode="Markdown", reply_markup=keyboard)
+    await callback.message.edit_text(f"Приглашение для работников:\n{link}", reply_markup=keyboard)
    
+
+
 
 # Текстовые сообщения
 @router.message()
@@ -326,7 +257,9 @@ async def handle_text_messages(message: types.Message):
     await message.answer("Неизвестная команда. Используйте /create или /delete.")
 
 
-# Вспомогательные функции
+## Вспомогательные функции
+
+#Создание организации
 async def handle_create_organization(message: types.Message):
     user_id = message.from_user.id
     name = message.text
@@ -344,9 +277,8 @@ async def handle_create_organization(message: types.Message):
 
     if is_created is None:
         organization = await organization_service.create_organization(user, name)
-        ids, names = await organization_service.show_owned_orgs(user.id)
         waiting_for_name.remove(user_id)
-        keyboard = await presentation.keyboards.build_org_keyboard(ids,names)
+        keyboard = await presentation.keyboards.build_org_keyboard()
         await message.answer(f"Организация {name} успешно создана")
         await message.answer("Вы вошли как организатор", reply_markup=keyboard)
     else:
@@ -355,3 +287,33 @@ async def handle_create_organization(message: types.Message):
             "Введите другое название:"
         )
 
+async def check_invite(message: types.Message,state: FSMContext, user_id: int, pool):
+    data = await state.get_data()
+    args = data.get("start_args")
+
+    if not args or not args.startswith("join_"):
+        keyboard = presentation.keyboards.build_start_keyboard()
+        await message.answer("Войти как:", reply_markup=keyboard)
+    else:
+        invite_code = args[5:]
+
+        org_repo = OrganizationRepository(pool)
+        org_member_repo = OrganizationMemberRepository(pool)
+        invite_repo = InviteRepository(pool)
+        org_service = OrganizationService(org_repo, org_member_repo, invite_repo)
+    
+        try:
+            role_id = await org_service.accept_invite(invite_code, user_id)
+            org_id = await org_service.get_org_id_from_invite(invite_code)
+            org = await org_service.get_by_id(org_id)
+            role_name = {2: "тренер", 3: "клиент"}.get(role_id, "участник")
+            await message.answer(f"Вы добавлены в организацию {org} как {role_name}!")
+        except ValueError as e:
+            await message.answer(f"Ошибка: {e}")
+        except Exception as e:
+            await message.answer(f"Не удалось присоединиться: {e}")
+    
+        await state.update_data(start_args=None)
+    
+        keyboard = presentation.keyboards.build_start_keyboard()
+        await message.answer("Войти как:", reply_markup=keyboard)

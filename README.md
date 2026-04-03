@@ -1,1 +1,1 @@
-# testbot
+# fitnessbot
