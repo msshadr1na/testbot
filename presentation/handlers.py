@@ -237,7 +237,7 @@ async def choose_worker(callback):
      pool = await get_db_pool()
      user_service = UserService(UserRepository(pool),SettingsRepository(pool))
 
-     worker = user_service.get_by_id(wrk_id)
+     worker = await user_service.get_by_id(wrk_id)
      
      keyboard = presentation.keyboards.build_manage_worker_keyboard(wrk_id)
      if worker.middle_name:
