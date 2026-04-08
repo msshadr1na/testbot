@@ -87,8 +87,8 @@ def build_list_workers_keyboard(workers_list, page, org_id):
 
 #Управление конкретным работником организации
 def build_manage_worker_keyboard(wrk_id):
-    buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"del.worker_{wrk_id}")],
-               [InlineKeyboardButton(text="Расписание работника", callback_data=f"wrk.schedule_{wrk_id}")],
+    buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"del_worker_{wrk_id}")],
+               [InlineKeyboardButton(text="Расписание работника", callback_data=f"wrk_schedule_{wrk_id}")],
                [InlineKeyboardButton(text="Назад", callback_data=f"wrk.page_0")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard

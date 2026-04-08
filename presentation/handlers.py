@@ -249,7 +249,7 @@ async def choose_worker(callback, state: FSMContext):
 
 
 
-@router.callback_query(F.data.startswith("wrk_confirm_del_"))
+@router.callback_query(F.data.startswith("del_worker_"))
 async def delete_worker(callback, state: FSMContext):
      wrk_id = int(callback.data.split("_")[-1])
 
