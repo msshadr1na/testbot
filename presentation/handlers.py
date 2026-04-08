@@ -228,7 +228,8 @@ async def manage_workers(callback: types.CallbackQuery):
 @router.callback_query(F.data.startswith("wrk.page_"))
 async def manage_workers(callback: types.CallbackQuery, state):
     page = int(callback.data.split("_")[-1])
-    org_id = state.data.get("selected_org_id")
+    data = await state.get_data()
+    org_id = data.get("selected_org_id")
 
     pool = await get_db_pool()
     org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
