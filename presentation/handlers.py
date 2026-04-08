@@ -208,9 +208,12 @@ async def list_workers_first_page(callback: types.CallbackQuery, state: FSMConte
     org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
     workers_list = await org_service.get_workers_list(org_id)
 
-    
-    keyboard = presentation.keyboards.build_list_workers_keyboard(workers_list, 0 ,org_id)
-    await callback.message.edit_text(f"Список работников (страница 1):", reply_markup=keyboard)
+    if workers_list:
+        keyboard = presentation.keyboards.build_list_workers_keyboard(workers_list, 0 ,org_id)
+        await callback.message.edit_text(f"Список работников (страница 1):", reply_markup=keyboard)
+    else:
+        keyboard = presentation.keyboards.build_list_workers_keyboard(workers_list, 0 ,org_id)
+        await callback.message.edit_text(f"Работников нет. Добавьте их в свою организацию при помощи ссылки-приглашения", reply_markup=keyboard)
 
 @router.callback_query(F.data.startswith("wrk.page_"))
 async def list_workers_pages(callback: types.CallbackQuery, state):
