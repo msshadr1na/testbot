@@ -165,21 +165,6 @@ async def as_org(callback: CallbackQuery, state):
     state.set_state(UserState.organization)
 
 
-#Выбор организации для управления
-@router.callback_query(F.data.startswith("select.org_"))
-async def choose_org(callback: types.CallbackQuery,state):
-    org_id = int(callback.data.split("_")[-1])
-
-    pool = await get_db_pool()
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
-    name = await org_service.get_by_id(org_id)
-
-    keyboard = presentation.keyboards.build_manage_org_keyboard(org_id)
-
-    await callback.message.edit_text(f"Организация {name.name}:", reply_markup=keyboard)
-    state.set_state(UserState.menu)
-    state.set_data(selected_org_id=org_id)
-
 @router.callback_query(F.data == "create_org")
 async def start_create_org(callback: types.CallbackQuery):
     user_id = callback.from_user.id
@@ -191,9 +176,9 @@ async def start_create_org(callback: types.CallbackQuery):
     await callback.answer()
 
 
-
+#Выбор организации для управления
 @router.callback_query(F.data.startswith("choose.org_"))
-async def choose_org(callback: types.CallbackQuery):
+async def choose_org(callback: types.CallbackQuery, state):
     org_id = int(callback.data.split("_")[-1])
 
     pool = await get_db_pool()
@@ -203,6 +188,8 @@ async def choose_org(callback: types.CallbackQuery):
     keyboard = presentation.keyboards.build_manage_org_keyboard(org_id)
 
     await callback.message.edit_text(f"Организация {name.name}:", reply_markup=keyboard)
+    state.set_state(UserState.menu)
+    state.update_data(selected_org_id=org_id)
 
 @router.callback_query(F.data.startswith("mng.workers_"))
 async def manage_workers(callback: types.CallbackQuery):
@@ -214,7 +201,7 @@ async def manage_workers(callback: types.CallbackQuery):
 
 #Просмотр списка работников организации
 @router.callback_query(F.data.startswith("list.workers_"))
-async def manage_workers(callback: types.CallbackQuery):
+async def list_workers_first_page(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
 
     pool = await get_db_pool()
@@ -226,7 +213,7 @@ async def manage_workers(callback: types.CallbackQuery):
     await callback.message.edit_text(f"Список работников (страница 1):", reply_markup=keyboard)
 
 @router.callback_query(F.data.startswith("wrk.page_"))
-async def manage_workers(callback: types.CallbackQuery, state):
+async def list_workers_pages(callback: types.CallbackQuery, state):
     page = int(callback.data.split("_")[-1])
     data = await state.get_data()
     org_id = data.get("selected_org_id")
