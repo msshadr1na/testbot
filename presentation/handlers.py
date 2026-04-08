@@ -242,7 +242,7 @@ async def invite_worker(callback: types.CallbackQuery):
 
     keyboard = presentation.keyboards.build_invite_workers_keyboard(org_id)
 
-    await callback.message.edit_text(f"Приглашение для работников:\n{link}", reply_markup=keyboard)
+    await callback.message.edit_text(f"Приглашение для работников:\n\n`{link}`\n\nНажмите на ссылку, чтобы скопировать", parse_mode="MarkdownV2", reply_markup=keyboard)
 
 #Обновление ссылки-приглашения для работников
 @router.callback_query(F.data.startswith("upd.code2_"))
