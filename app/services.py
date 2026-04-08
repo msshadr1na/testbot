@@ -1,6 +1,5 @@
 from infrastructure.repositories import BookingRepository, UserRepository, SettingsRepository, OrganizationRepository, OrganizationMemberRepository, TrainingRepository, InviteRepository
 from app.models import Settings, User, Organization, OrganizationMember
-from presentation.handlers import delete_worker
 
 class UserService:
     def __init__(self, user_repository : UserRepository, settings_repository: SettingsRepository):
