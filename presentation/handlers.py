@@ -198,7 +198,7 @@ async def edit_org(callback: types.CallbackQuery):
     await callback.message.edit_text("Редактирование организации", reply_markup=keyboard)
 
 #Редактирование названия организации
-@router.callback_query(F.data.startswith("edit_name_"))
+@router.callback_query(F.data.startswith("edit_org_name_"))
 async def edit_org_name(callback: types.CallbackQuery, state):
     org_id = int(callback.data.split("_")[-1])
     await state.update_data(editing_org_id=org_id)
