@@ -94,10 +94,11 @@ class OrganizationMemberRepository:
 
     #Получение всех участников организации с определенной ролью
     async def get_members_by_org_and_role(self, org_id, role_id):
-        sql = """select om.user_id, concat_ws(' ',u.first_name,u.last_name,coalesce(u.middle_name,'')) as name
-                from organization_member om 
-                join users u on om.user_id = u.id
-                where organization_id = $1 and role_id = $2"""
+        sql = """select om.user_id, concat_ws(' ',u.last_name,u.first_name,coalesce(u.middle_name,'')) as name
+from organization_member om 
+join users u on om.user_id = u.id
+where organization_id = $1 and role_id = $2
+order by name asc"""
         rows = await self.pool.fetch(sql, org_id, role_id)
         return [(row["user_id"], row["name"]) for row in rows]
 
