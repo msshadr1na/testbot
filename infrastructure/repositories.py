@@ -36,7 +36,7 @@ class UserRepository:
         if not row:
             return None
         else:
-            user = User(row["id"], row["telegram_id"], row["phone"], row["first_name"], row["last_name"], row["middle_name"], row["settings_id"])
+            user = User(row["id"], row["telegram_id"], row["phone"], row["first_name"], row["last_name"], row["settings_id"], row["middle_name"])
             return user
 
     async def find(self, telegram_id):
