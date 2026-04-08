@@ -231,7 +231,7 @@ async def list_workers_pages(callback: types.CallbackQuery, state):
 
 #Управление работником
 @router.callback_query(F.data.startswith("worker.chosen_"))
-async def choose_worker(callback):
+async def choose_worker(callback, state: FSMContext):
      wrk_id = int(callback.data.split("_")[-1])
 
      pool = await get_db_pool()
@@ -240,8 +240,11 @@ async def choose_worker(callback):
      worker = await user_service.get_by_id(wrk_id)
      
      keyboard = presentation.keyboards.build_manage_worker_keyboard(wrk_id)
+
+     current_state = await state.get_state()
+     data = await state.get_data()
      if worker.middle_name:
-        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name} {worker.middle_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
+        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name} {worker.middle_name}\n\nНомер телефона: {worker.phone}\n\n\nСостояние: {current_state}, Данные: {data}", reply_markup=keyboard)
      else:
         await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
 
