@@ -220,7 +220,7 @@ async def edit_org_name(message: Message, state: FSMContext):
         await message.answer(
             f"Организация с названием {name} уже существует.\nВведите другое название:")
     else:
-        await org_service.organization_repository.update_name(org_id, name)
+        await org_service.update_name(org_id, name)
         await message.answer(f"Название организации успешно изменено на {name}")
         await state.update_data(editing_org_id=None)
         await message.answer("Редактированиее организации", reply_markup=presentation.keyboards.build_edit_org_keyboard(org_id))
