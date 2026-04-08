@@ -188,8 +188,8 @@ async def choose_org(callback: types.CallbackQuery, state):
     keyboard = presentation.keyboards.build_manage_org_keyboard(org_id)
 
     await callback.message.edit_text(f"Организация {name.name}:", reply_markup=keyboard)
-    state.set_state(UserState.menu)
-    state.update_data(selected_org_id=org_id)
+    await state.set_state(UserState.menu)
+    await state.update_data(selected_org_id=org_id)
 
 @router.callback_query(F.data.startswith("mng.workers_"))
 async def manage_workers(callback: types.CallbackQuery):
