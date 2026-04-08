@@ -9,12 +9,12 @@ class SettingsRepository:
 
     async def create(self, settings: Settings):
         json_value = json.dumps(settings.notification_settings)
-        sql_find = "SELECT id FROM settings WHERE notification_settings = $1"
+        sql_find = "select id from settings where notification_settings = $1"
         row = await self.pool.fetchrow(sql_find, json_value)
         if row:
             return Settings(id=row["id"], notification_settings=json_value)
 
-        sql_insert = "INSERT INTO settings (notification_settings) VALUES ($1) RETURNING id"
+        sql_insert = "insert into settings (notification_settings) values ($1) returning id"
         row = await self.pool.fetchrow(sql_insert, json_value)
         return Settings(id=row["id"], notification_settings=json_value)
 

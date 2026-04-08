@@ -1,3 +1,4 @@
+from tkinter.font import names
 from aiogram import Router, types, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import inline_keyboard_button, reply_keyboard_markup, reply_markup_union, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message
@@ -278,7 +279,8 @@ async def handle_create_organization(message: types.Message):
     if is_created is None:
         organization = await organization_service.create_organization(user, name)
         waiting_for_name.remove(user_id)
-        keyboard = await presentation.keyboards.build_org_keyboard()
+        ids, names = await organization_service.show_owned_orgs(user.id)
+        keyboard = await presentation.keyboards.build_org_keyboard(ids,names)
         await message.answer(f"Организация {name} успешно создана")
         await message.answer("Вы вошли как организатор", reply_markup=keyboard)
     else:
@@ -287,6 +289,7 @@ async def handle_create_organization(message: types.Message):
             "Введите другое название:"
         )
 
+#Проверка наличия приглашения при входе и его обработка
 async def check_invite(message: types.Message,state: FSMContext, user_id: int, pool):
     data = await state.get_data()
     args = data.get("start_args")
