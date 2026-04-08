@@ -243,6 +243,7 @@ async def choose_worker(callback, state: FSMContext):
 
      if worker.middle_name:
         await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name} {worker.middle_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
+        await callback.message.answer(f"middle_name: {repr(worker.middle_name)} ({type(worker.middle_name)}")
      else:
         await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
 
