@@ -315,7 +315,7 @@ async def check_invite(message: types.Message,state: FSMContext, user_id: int, p
 
     if not args or not args.startswith("join_"):
         keyboard = presentation.keyboards.build_start_keyboard()
-        await message.answer("Войти как:", reply_markup=keyboard)
+        await message.edit_text("Войти как:", reply_markup=keyboard)
     else:
         invite_code = args[5:]
 
