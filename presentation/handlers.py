@@ -5,7 +5,7 @@ from aiogram.types import inline_keyboard_button, reply_keyboard_markup, reply_m
 from asyncpg import pool
 from app.models import Organization, Role, User
 from app.services import OrganizationMemberRepository, UserService, OrganizationService
-from app.states import RegistrationState
+from app.states import RegistrationState, UserState
 from infrastructure.database import get_db_pool
 from infrastructure.repositories import UserRepository, SettingsRepository, OrganizationRepository, InviteRepository
 import presentation.keyboards
@@ -46,13 +46,13 @@ async def reg_first_name(message: Message, state: FSMContext):
     await state.set_state(RegistrationState.last_name)
 
 @router.message(RegistrationState.last_name, F.text)
-async def reg_first_name(message: Message, state: FSMContext):
+async def reg_last_name(message: Message, state: FSMContext):
     await state.update_data(last_name=message.text.strip())
     await message.answer("Введите отчество: (при отстутствии отправьте прочерк -)")
     await state.set_state(RegistrationState.middle_name)
 
 @router.message(RegistrationState.middle_name, F.text)
-async def reg_first_name(message: Message, state: FSMContext):
+async def reg_middle_name(message: Message, state: FSMContext):
     middle_name = message.text.strip()
     if middle_name == "-":
         middle_name = None
@@ -151,7 +151,7 @@ async def cancel_delete_org(callback: CallbackQuery):
 
 #Войти как организатор
 @router.callback_query(F.data.startswith("owner"))
-async def as_org(callback: CallbackQuery):
+async def as_org(callback: CallbackQuery, state):
     pool = await get_db_pool()
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
     org_service = OrganizationService(OrganizationRepository(pool),OrganizationMemberRepository(pool), InviteRepository(pool))
@@ -162,10 +162,12 @@ async def as_org(callback: CallbackQuery):
     keyboard = await presentation.keyboards.build_org_keyboard(ids, names)
     await callback.message.edit_text("Вы вошли как организатор\nВыберите организацию или создайте новую",reply_markup=keyboard)
     await callback.answer()
+    state.set_state(UserState.organization)
+
 
 #Выбор организации для управления
 @router.callback_query(F.data.startswith("select.org_"))
-async def choose_org(callback: types.CallbackQuery):
+async def choose_org(callback: types.CallbackQuery,state):
     org_id = int(callback.data.split("_")[-1])
 
     pool = await get_db_pool()
@@ -175,6 +177,8 @@ async def choose_org(callback: types.CallbackQuery):
     keyboard = presentation.keyboards.build_manage_org_keyboard(org_id)
 
     await callback.message.edit_text(f"Организация {name.name}:", reply_markup=keyboard)
+    state.set_state(UserState.menu)
+    state.set_data(selected_org_id=org_id)
 
 @router.callback_query(F.data == "create_org")
 async def start_create_org(callback: types.CallbackQuery):
@@ -198,7 +202,7 @@ async def choose_org(callback: types.CallbackQuery):
 
     keyboard = presentation.keyboards.build_manage_org_keyboard(org_id)
 
-    await callback.message.edit_text(f"Организация {name.name}", reply_markup=keyboard)
+    await callback.message.edit_text(f"Организация {name.name}:", reply_markup=keyboard)
 
 @router.callback_query(F.data.startswith("mng.workers_"))
 async def manage_workers(callback: types.CallbackQuery):
@@ -207,6 +211,34 @@ async def manage_workers(callback: types.CallbackQuery):
     keyboard = presentation.keyboards.build_manage_workers_keyboard(org_id)
     
     await callback.message.edit_text("Управление работниками", reply_markup=keyboard)
+
+#Просмотр списка работников организации
+@router.callback_query(F.data.startswith("list.workers_"))
+async def manage_workers(callback: types.CallbackQuery):
+    org_id = int(callback.data.split("_")[-1])
+
+    pool = await get_db_pool()
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    workers_list = await org_service.get_workers_list(org_id)
+
+    
+    keyboard = presentation.keyboards.build_list_workers_keyboard(workers_list, 0 ,org_id)
+    await callback.message.edit_text(reply_markup=keyboard)
+
+@router.callback_query(F.data.startswith("wrk.page_"))
+async def manage_workers(callback: types.CallbackQuery, state):
+    page = int(callback.data.split("_")[-1])
+    org_id = state.get_data().get("selected_org_id")
+
+    pool = await get_db_pool()
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    workers_list = await org_service.get_workers_list(org_id)
+
+    
+    keyboard = presentation.keyboards.build_list_workers_keyboard(workers_list, page ,org_id)
+    await callback.message.edit_text(reply_markup=keyboard)
+
+
 
 @router.callback_query(F.data.startswith("invite.worker_"))
 async def invite_worker(callback: types.CallbackQuery):
@@ -239,7 +271,7 @@ async def update_invite_worker(callback: types.CallbackQuery):
 
     keyboard = presentation.keyboards.build_invite_workers_keyboard(org_id)
 
-    await callback.message.edit_text(f"Приглашение для работников:\n`{link}`\nНажмите на ссылку, чтобы скопировать", parse_mode="MarkdownV2", reply_markup=keyboard)
+    await callback.message.edit_text(f"Приглашение для работников:\n\n`{link}`\n\nНажмите на ссылку, чтобы скопировать", parse_mode="MarkdownV2", reply_markup=keyboard)
   
 
 
@@ -254,7 +286,7 @@ async def handle_text_messages(message: types.Message):
         await handle_create_organization(message)
         return
     
-    await message.answer("Неизвестная команда. Используйте /create или /delete.")
+    await message.answer("Неизвестная команда. Используйте /start.")
 
 
 ## Вспомогательные функции
@@ -319,3 +351,5 @@ async def check_invite(message: types.Message,state: FSMContext, user_id: int, p
     
         keyboard = presentation.keyboards.build_start_keyboard()
         await message.answer("Войти как:", reply_markup=keyboard)
+        state.clear()
+        state.set_state(UserState.role)

@@ -48,31 +48,35 @@ class OrganizationMemberRepository:
     def __init__(self,pool):
         self.pool = pool
 
+    #Создание связи участника с организацией (добавление участника в организацию)
     async def create(self,member: OrganizationMember):
         sql = "insert into organization_member (user_id, role_id, organization_id) values ($1, $2, $3) returning id"
         row = await self.pool.fetchrow(sql, member.user_id, member.role_id, member.organization_id)
 
         member.id = row["id"]
         return member
-
+    
+    #Получение связи участника с организацией по id участника и id организации
     async def get_by_user_and_org(self, user_id, org_id):
         sql = "select * from organization_member where user_id = $1 and organization_id = $2"
 
         row = await self.pool.fetchrow(sql, user_id, org_id)
         return OrganizationMember(row["id"], row["user_id"], row["role_id"], row["organization_id"]) if row else None
 
+    #Удаление связи участника с организацией
     async def delete(self, organization_member: OrganizationMember):
         sql = """delete from organization_member 
                where id = $1"""
         row = await self.pool.fetchrow(sql,organization_member.id)
         return
 
+    #Удаление всех связей участника с организацией (при удалении организации)
     async def delete_all_by_org_id(self,org_id):
         sql = "delete from organization_member where organization_id = $1"
         deleted = await self.pool.execute(sql,org_id)
 
         return deleted
-
+    #Получение всех организаций, в которых пользователь является участником с определенной ролью
     async def get_membered_orgs(self, user_id, role_id):
         sql = """select organization_member.organization_id from organization_member
                  inner join organization on organization_member.organization_id = organization.id
@@ -81,12 +85,21 @@ class OrganizationMemberRepository:
 
         return [org["organization_id"] for org in org_ids]
 
+    #Получение названий организаций по их id
     async def get_names_by_ids(self, org_ids):
         sql = """select id, name from organization where id = any($1)"""
         rows = await self.pool.fetch(sql, org_ids)
 
         return [row["name"] for row in rows]
 
+    #Получение всех участников организации с определенной ролью
+    async def get_members_by_org_and_role(self, org_id, role_id):
+        sql = """select om.user_id, concat_ws(' ',u.first_name,u.last_name,coalesce(u.middle_name,'')) as name
+                from organization_member om 
+                join users u on om.user_id = u.id
+                where organization_id = $1 and role_id = $2"""
+        rows = await self.pool.fetch(sql, org_id, role_id)
+        return [(row["user_id"], row["name"]) for row in rows]
 
 class GymRepository:
     def __init__(self,pool):
