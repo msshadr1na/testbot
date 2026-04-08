@@ -1,5 +1,6 @@
 from infrastructure.repositories import BookingRepository, UserRepository, SettingsRepository, OrganizationRepository, OrganizationMemberRepository, TrainingRepository, InviteRepository
 from app.models import Settings, User, Organization, OrganizationMember
+from presentation.handlers import delete_worker
 
 class UserService:
     def __init__(self, user_repository : UserRepository, settings_repository: SettingsRepository):
@@ -105,6 +106,11 @@ class OrganizationService:
     async def get_workers_list(self, org_id):
         workers = await self.organizationMember_repository.get_members_by_org_and_role(org_id, 2)
         return workers
+
+    async def delete_worker(self, org_id, user_id):
+        worker = await self.organizationMember_repository.get_by_user_and_org(user_id, org_id, 2)
+        await self.organizationMember_repository.delete(worker)
+        return worker
 
 
 

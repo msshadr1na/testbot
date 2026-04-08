@@ -67,18 +67,18 @@ class OrganizationMemberRepository:
         return member
     
     #Получение связи участника с организацией по id участника и id организации
-    async def get_by_user_and_org(self, user_id, org_id):
-        sql = "select * from organization_member where user_id = $1 and organization_id = $2"
+    async def get_by_user_and_org(self, user_id, org_id, role_id):
+        sql = "select * from organization_member where user_id = $1 and organization_id = $2 and role_id = $3"
 
-        row = await self.pool.fetchrow(sql, user_id, org_id)
+        row = await self.pool.fetchrow(sql, user_id, org_id, role_id)
         return OrganizationMember(row["id"], row["user_id"], row["role_id"], row["organization_id"]) if row else None
 
     #Удаление связи участника с организацией
     async def delete(self, organization_member: OrganizationMember):
         sql = """delete from organization_member 
                where id = $1"""
-        row = await self.pool.fetchrow(sql,organization_member.id)
-        return
+        row = await self.pool.execute(sql,organization_member.id)
+        return 
 
     #Удаление всех связей участника с организацией (при удалении организации)
     async def delete_all_by_org_id(self,org_id):

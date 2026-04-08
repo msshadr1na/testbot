@@ -57,7 +57,6 @@ def build_invite_workers_keyboard(org_id):
 def build_confirm_delete_org(org_id):
     buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"confirm_del_{org_id}")],
                [InlineKeyboardButton(text="Отмена", callback_data="cancel_del")]]
-    print(buttons)
     keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
     return keyboard
 
@@ -71,7 +70,7 @@ def build_list_workers_keyboard(workers_list, page, org_id):
     buttons = []
 
     for id, name in current:
-        buttons.append([InlineKeyboardButton(text=name,callback_data=f"worker.chosen_{id}")])
+        buttons.append([InlineKeyboardButton(text=name,callback_data=f"worker_chosen_{id}")])
 
     nav_buttons = []
     if page > 0:
@@ -92,5 +91,12 @@ def build_manage_worker_keyboard(wrk_id):
                [InlineKeyboardButton(text="Расписание работника", callback_data=f"wrk.schedule_{wrk_id}")],
                [InlineKeyboardButton(text="Назад", callback_data=f"wrk.page_0")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+#Удаление работника из организации
+def build_confirm_delete_worker(wrk_id):
+    buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"wrk_confirm_del_{wrk_id}")],
+               [InlineKeyboardButton(text="Отмена", callback_data=f"worker_chosen_{wrk_id}")]]
+    keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
     return keyboard
 

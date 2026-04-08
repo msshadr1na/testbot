@@ -248,13 +248,21 @@ async def choose_worker(callback, state: FSMContext):
         await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
 
 
-@router.message(Command("debug"))
-async def debug_state(message: types.Message, state: FSMContext):
-    
-     current_state = await state.get_state()
-     data = await state.get_data()
 
-     await message.answer(f"\Состояние: {current_state}\nДанные: {data}")
+@router.callback_query(F.data.startswith("wrk_confirm_del_"))
+async def delete_worker(callback, state: FSMContext):
+     wrk_id = int(callback.data.split("_")[-1])
+
+     pool = await get_db_pool()
+     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+     data = await state.get_data()
+     org_id = data.get("selected_org_id")
+     await organization_service.delete_worker(org_id, wrk_id)
+
+     await callback.message.edit_text(f"Работник успешно удалён из организации")
+     keyboard = presentation.keyboards.build_manage_workers_keyboard(org_id)
+     await callback.message.answer(f"Управление работниками", reply_markup=keyboard)
+
 
 
 @router.callback_query(F.data.startswith("invite.worker_"))
