@@ -339,5 +339,5 @@ async def check_invite(message: types.Message,state: FSMContext, user_id: int, p
     
         keyboard = presentation.keyboards.build_start_keyboard()
         await message.answer("Войти как:", reply_markup=keyboard)
-        state.clear()
-        state.set_state(UserState.role)
+        await state.clear()
+        await state.set_state(UserState.role)
