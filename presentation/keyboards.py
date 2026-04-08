@@ -70,7 +70,7 @@ def build_list_workers_keyboard(workers_list, page, org_id):
     buttons = []
 
     for id, name in current:
-        buttons.append([InlineKeyboardButton(text=name,callback_data=f"worker_chosen_{id}")])
+        buttons.append([InlineKeyboardButton(text=name,callback_data=f"worker.chosen_{id}")])
 
     nav_buttons = []
     if page > 0:
