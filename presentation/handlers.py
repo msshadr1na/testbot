@@ -223,7 +223,7 @@ async def manage_workers(callback: types.CallbackQuery):
 
     
     keyboard = presentation.keyboards.build_list_workers_keyboard(workers_list, 0 ,org_id)
-    await callback.message.edit_text(reply_markup=keyboard)
+    await callback.message.edit_text(f"Список работников (страница 1):", reply_markup=keyboard)
 
 @router.callback_query(F.data.startswith("wrk.page_"))
 async def manage_workers(callback: types.CallbackQuery, state):
@@ -236,7 +236,7 @@ async def manage_workers(callback: types.CallbackQuery, state):
 
     
     keyboard = presentation.keyboards.build_list_workers_keyboard(workers_list, page ,org_id)
-    await callback.message.edit_text(reply_markup=keyboard)
+    await callback.message.edit_text(f"Список работников (страница {page + 1}):", reply_markup=keyboard)
 
 
 
