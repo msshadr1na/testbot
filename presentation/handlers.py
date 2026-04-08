@@ -243,7 +243,6 @@ async def choose_worker(callback, state: FSMContext):
 
      if worker.middle_name:
         await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name} {worker.middle_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
-        await callback.message.answer(f"middle_name: {repr(worker.middle_name)} ({type(worker.middle_name)}")
      else:
         await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
 
@@ -251,6 +250,24 @@ async def choose_worker(callback, state: FSMContext):
 
 @router.callback_query(F.data.startswith("del_worker_"))
 async def delete_worker(callback, state: FSMContext):
+     wrk_id = int(callback.data.split("_")[-1])
+
+     pool = await get_db_pool()
+     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+     user_service = UserService(UserRepository(pool),SettingsRepository(pool))
+
+     data = await state.get_data()
+     org_id = data.get("selected_org_id")
+     org_id = int(callback.data.split("_")[-1])
+     worker = await user_service.get_by_id(wrk_id)
+
+     keyboard = presentation.keyboards.build_confirm_delete_org(org_id)
+    
+     await callback.message.edit_text(f"Вы уверены, что хотите удалить {worker.first_name} {worker.last_name} из организации?", reply_markup=keyboard)
+
+
+@router.callback_query(F.data.startswith("confirm_worker_del"))
+async def confirm_delete_worker(callback, state: FSMContext):
      wrk_id = int(callback.data.split("_")[-1])
 
      pool = await get_db_pool()
