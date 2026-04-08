@@ -261,7 +261,7 @@ async def delete_worker(callback, state: FSMContext):
      org_id = int(callback.data.split("_")[-1])
      worker = await user_service.get_by_id(wrk_id)
 
-     keyboard = presentation.keyboards.build_confirm_delete_org(org_id)
+     keyboard = presentation.keyboards.build_confirm_delete_worker(wrk_id)
     
      await callback.message.edit_text(f"Вы уверены, что хотите удалить {worker.first_name} {worker.last_name} из организации?", reply_markup=keyboard)
 
