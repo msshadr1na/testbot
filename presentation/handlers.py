@@ -176,23 +176,6 @@ async def choose_org(callback: types.CallbackQuery):
 
     await callback.message.edit_text(f"Организация {name.name}", reply_markup=keyboard)
 
-@router.callback_query(F.data.startswith("orgs"))
-async def choose_org(callback):
-
-    pool = await get_db_pool()
-    user_service = UserService(UserRepository(pool), SettingsRepository(pool))
-    org_service = OrganizationService(OrganizationRepository(pool),OrganizationMemberRepository(pool), InviteRepository(pool))
-
-    user = await user_service.find_by_tgid(callback.from_user.id)
-    ids, names = await org_service.show_owned_orgs(user.id)
-
-    if len(names) < 1:
-        keyboard = presentation.keyboards.build_zero_orgs_keyboard()
-        await callback.message.edit_text("У вас нет организаций", reply_markup=keyboard)
-    else:
-        keyboard = presentation.keyboards.build_choose_org_keyboard(ids,names)
-        await callback.message.edit_text("Выберите организацию:", reply_markup=keyboard)
-
 @router.callback_query(F.data == "create_org")
 async def start_create_org(callback: types.CallbackQuery):
     user_id = callback.from_user.id
