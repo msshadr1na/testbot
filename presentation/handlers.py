@@ -201,9 +201,9 @@ async def manage_workers(callback: types.CallbackQuery):
 
 #Просмотр списка работников организации
 @router.callback_query(F.data.startswith("list.workers_"))
-async def list_workers_first_page(callback: types.CallbackQuery):
+async def list_workers_first_page(callback: types.CallbackQuery, state: FSMContext):
     org_id = int(callback.data.split("_")[-1])
-
+    await state.update_data(selected_org_id=org_id)
     pool = await get_db_pool()
     org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
     workers_list = await org_service.get_workers_list(org_id)
