@@ -230,7 +230,7 @@ async def list_workers_pages(callback: types.CallbackQuery, state):
     await callback.message.edit_text(f"Список работников (страница {page + 1}):", reply_markup=keyboard)
 
 #Управление работником
-@router.callback_query(F.data.startswith("worker.chosen_"))
+@router.callback_query(F.data.startswith("worker_chosen_"))
 async def choose_worker(callback, state: FSMContext):
      wrk_id = int(callback.data.split("_")[-1])
 

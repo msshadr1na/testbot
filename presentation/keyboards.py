@@ -70,7 +70,7 @@ def build_list_workers_keyboard(workers_list, page, org_id):
     buttons = []
 
     for id, name in current:
-        buttons.append([InlineKeyboardButton(text=name,callback_data=f"worker.chosen_{id}")])
+        buttons.append([InlineKeyboardButton(text=name,callback_data=f"worker_chosen_{id}")])
 
     nav_buttons = []
     if page > 0:
@@ -96,7 +96,7 @@ def build_manage_worker_keyboard(wrk_id):
 #Удаление работника из организации
 def build_confirm_delete_worker(wrk_id):
     buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"wrk_confirm_del_{wrk_id}")],
-               [InlineKeyboardButton(text="Отмена", callback_data=f"worker_chosen_{wrk_id}")]]
+               [InlineKeyboardButton(text="Отмена", callback_data=f"worker.chosen_{wrk_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
     return keyboard
 
