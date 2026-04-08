@@ -241,12 +241,19 @@ async def choose_worker(callback, state: FSMContext):
      
      keyboard = presentation.keyboards.build_manage_worker_keyboard(wrk_id)
 
-     current_state = await state.get_state()
-     data = await state.get_data()
      if worker.middle_name:
-        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name} {worker.middle_name}\n\nНомер телефона: {worker.phone}\n\n\nСостояние: {current_state}, Данные: {data}", reply_markup=keyboard)
+        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name} {worker.middle_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
      else:
         await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
+
+
+@router.message(Command("debug"))
+async def debug_state(message: types.Message, state: FSMContext):
+    
+     current_state = await state.get_state()
+     data = await state.get_data()
+
+     await message.answer(f"\Состояние: {current_state}\nДанные: {data}")
 
 
 @router.callback_query(F.data.startswith("invite.worker_"))
