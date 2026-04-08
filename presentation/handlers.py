@@ -162,7 +162,7 @@ async def as_org(callback: CallbackQuery, state):
     keyboard = await presentation.keyboards.build_org_keyboard(ids, names)
     await callback.message.edit_text("Вы вошли как организатор\nВыберите организацию или создайте новую",reply_markup=keyboard)
     await callback.answer()
-    state.set_state(UserState.organization)
+    await state.set_state(UserState.organization)
 
 
 @router.callback_query(F.data == "create_org")

@@ -48,8 +48,7 @@ def build_manage_workers_keyboard(org_id):
 
 #Клавиатура для управления ссылкой-приглашением для работников организации
 def build_invite_workers_keyboard(org_id):
-    buttons = [[InlineKeyboardButton(text="Ссылка-приглашение", callback_data=f"get.code2_{org_id}")],
-               [InlineKeyboardButton(text="Обновить ссылку-приглашение", callback_data=f"upd.code2_{org_id}")],
+    buttons = [[InlineKeyboardButton(text="Обновить ссылку-приглашение", callback_data=f"upd.code2_{org_id}")],
                [InlineKeyboardButton(text="Назад", callback_data=f"mng.workers_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
