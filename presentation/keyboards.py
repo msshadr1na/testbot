@@ -42,8 +42,7 @@ def build_manage_org_keyboard(org_id):
     return keyboard
 
 def build_manage_workers_keyboard(org_id):
-    buttons = [[InlineKeyboardButton(text="Список работников", callback_data="list_workers")],
-               [InlineKeyboardButton(text="Удалить работника", callback_data="del_worker")],
+    buttons = [[InlineKeyboardButton(text="Просмотреть работников", callback_data="list_workers")],
                [InlineKeyboardButton(text="Пригласить работников", callback_data=f"invite.worker_{org_id}")],
                [InlineKeyboardButton(text="Назад", callback_data=f"choose.org_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)

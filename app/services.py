@@ -93,6 +93,11 @@ class OrganizationService:
             raise ValueError("Приглашение не найдено")
         return invite.organization_id
 
+#Обновление ссылки-приглашения для организации и роли
+    async def update_invite(self, organization_id, role_id):
+        await self.invite_repository.delete_by_org_and_role(organization_id, role_id)
+        return await self.create_invite(organization_id, role_id)
+
 
 
 

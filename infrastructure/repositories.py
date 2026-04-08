@@ -193,14 +193,14 @@ class ReviewRepository:
 class InviteRepository:
     def __init__(self, pool):
         self.pool = pool
-
+    # Создание ссылки-приглашения для организации и роли
     async def create(self, organization_id, role_id):
         code = secrets.token_urlsafe(12)
         sql ="""insert into invites (organization_id, role_id, code) values ($1, $2, $3)
             returning id, organization_id, role_id, code"""
         row = await self.pool.fetchrow(sql, organization_id, role_id, code)
         return Invite(**row)
-
+    # Получение ссылки-приглашения по коду
     async def get_by_code(self, code):
         sql = """select id, organization_id, role_id, code from invites
             where code = $1"""
@@ -208,7 +208,7 @@ class InviteRepository:
         if row:
             return Invite(**row)
         return None
-
+    # Получение ссылки-приглашения для организации и роли
     async def get_by_org_and_role(self, organization_id: int, role_id: int):
         sql = """select id, organization_id, role_id, code from invites
             where organization_id = $1 and role_id = $2"""
@@ -216,3 +216,8 @@ class InviteRepository:
         if row:
             return Invite(**row)
         return None
+
+    #Удаление ссылки-приглашения для организации и роли
+    async def delete_by_org_and_role(self, organization_id: int, role_id: int):
+        sql = """delete from invites where organization_id = $1 and role_id = $2"""
+        await self.pool.execute(sql, organization_id, role_id)

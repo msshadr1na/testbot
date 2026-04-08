@@ -174,7 +174,7 @@ async def choose_org(callback: types.CallbackQuery):
 
     keyboard = presentation.keyboards.build_manage_org_keyboard(org_id)
 
-    await callback.message.edit_text(f"Организация {name.name}", reply_markup=keyboard)
+    await callback.message.edit_text(f"Организация {name.name}:", reply_markup=keyboard)
 
 @router.callback_query(F.data == "create_org")
 async def start_create_org(callback: types.CallbackQuery):
@@ -265,7 +265,7 @@ async def handle_create_organization(message: types.Message):
         ids, names = await organization_service.show_owned_orgs(user.id)
         keyboard = await presentation.keyboards.build_org_keyboard(ids,names)
         await message.answer(f"Организация {name} успешно создана")
-        await message.answer("Вы вошли как организатор", reply_markup=keyboard)
+        await message.answer("Выберите организацию или создайте новую:", reply_markup=keyboard)
     else:
         await message.answer(
             f"Организация с названием {name} уже существует.\n"
