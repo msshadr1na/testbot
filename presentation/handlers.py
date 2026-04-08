@@ -194,11 +194,11 @@ async def choose_org(callback: types.CallbackQuery, state):
 @router.callback_query(F.data.startswith("edit_org_"))
 async def edit_org(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
-    keyboard = presentation.keyboards.build_edit_org_keyboard(org_id)
+    keyboard = presentation.keyboards.build_edit_org_name_keyboard(org_id)
     await callback.message.edit_text("Редактирование организации", reply_markup=keyboard)
 
 #Редактирование названия организации
-@router.callback_query(F.data.startswith("edit_org_name_"))
+@router.callback_query(F.data.startswith("edit_name_org"))
 async def edit_org_name(callback: types.CallbackQuery, state):
     org_id = int(callback.data.split("_")[-1])
     await state.update_data(editing_org_id=org_id)
