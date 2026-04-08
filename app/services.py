@@ -31,6 +31,12 @@ class OrganizationService:
     async def get_by_id(self,id):
         organization = await self.organization_repository.find_by_id(id)
         return organization
+# Редактирование названия организации
+    async def update_name(self, org_id, new_name):
+        organization = await self.organization_repository.find_by_id(org_id)
+        organization.name = new_name
+        updated_organization = await self.organization_repository.update(organization)
+        return updated_organization
 
 # Создание организации (добавление в бд)
     async def create_organization(self, user: User, name):

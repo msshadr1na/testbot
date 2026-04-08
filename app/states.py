@@ -9,4 +9,5 @@ class RegistrationState(StatesGroup):
 class UserState(StatesGroup):
     role = State()
     organization = State()
+    editing_name = State()
     menu = State()

@@ -175,7 +175,6 @@ async def start_create_org(callback: types.CallbackQuery):
 
     await callback.answer()
 
-
 #Выбор организации для управления
 @router.callback_query(F.data.startswith("choose.org_"))
 async def choose_org(callback: types.CallbackQuery, state):
@@ -190,6 +189,45 @@ async def choose_org(callback: types.CallbackQuery, state):
     await callback.message.edit_text(f"Организация {name.name}:", reply_markup=keyboard)
     await state.set_state(UserState.menu)
     await state.update_data(selected_org_id=org_id)
+
+#Раздел управления организацией
+@router.callback_query(F.data.startswith("edit_org_"))
+async def edit_org(callback: types.CallbackQuery):
+    org_id = int(callback.data.split("_")[-1])
+    keyboard = presentation.keyboards.build_edit_org_keyboard(org_id)
+    await callback.message.edit_text("Редактирование организации", reply_markup=keyboard)
+
+#Редактирование названия организации
+@router.callback_query(F.data.startswith("edit_name_"))
+async def edit_org_name(callback: types.CallbackQuery, state):
+    org_id = int(callback.data.split("_")[-1])
+    await state.update_data(editing_org_id=org_id)
+    await callback.message.edit_text("Введите новое название организации:")
+    await state.set_state(UserState.editing_name)
+
+@router.message(UserState.editing_name, F.text)
+async def edit_org_name(message: Message, state: FSMContext):
+    name=message.text.strip()
+    data = await state.get_data()
+    org_id = data.get("editing_org_id")
+
+    pool = await get_db_pool()
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+
+    is_created = await org_service.find_by_name(name)
+    
+    if is_created:
+        await message.answer(
+            f"Организация с названием {name} уже существует.\nВведите другое название:")
+    else:
+        await org_service.organization_repository.update_name(org_id, name)
+        await message.answer(f"Название организации успешно изменено на {name}")
+        await state.update_data(editing_org_id=None)
+        await message.answer("Редактированиее организации", reply_markup=presentation.keyboards.build_edit_org_keyboard(org_id))
+
+    await state.set_state(UserState.organization)
+
+
 
 #Раздел работники
 @router.callback_query(F.data.startswith("mng.workers_"))
@@ -246,8 +284,7 @@ async def choose_worker(callback, state: FSMContext):
      else:
         await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
 
-
-
+#Подтверждение удаления работника из организации
 @router.callback_query(F.data.startswith("del_worker_"))
 async def delete_worker(callback, state: FSMContext):
      wrk_id = int(callback.data.split("_")[-1])
@@ -265,23 +302,25 @@ async def delete_worker(callback, state: FSMContext):
     
      await callback.message.edit_text(f"Вы уверены, что хотите удалить {worker.first_name} {worker.last_name} из организации?", reply_markup=keyboard)
 
-
+#Удаление работника из организации
 @router.callback_query(F.data.startswith("wrk_confirm_del_"))
 async def confirm_delete_worker(callback, state: FSMContext):
      wrk_id = int(callback.data.split("_")[-1])
 
      pool = await get_db_pool()
      organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+     user_service = UserService(UserRepository(pool),SettingsRepository(pool))
+     worker = await user_service.get_by_id(wrk_id)
      data = await state.get_data()
      org_id = data.get("selected_org_id")
      await organization_service.delete_worker(org_id, wrk_id)
 
-     await callback.message.edit_text(f"Работник успешно удалён из организации")
+     await callback.message.edit_text(f"Работник {worker.first_name} {worker.last_name} успешно удалён из организации")
      keyboard = presentation.keyboards.build_manage_workers_keyboard(org_id)
      await callback.message.answer(f"Управление работниками", reply_markup=keyboard)
 
 
-
+#Приглашение работников в организацию (создание ссылки-приглашения)
 @router.callback_query(F.data.startswith("invite.worker_"))
 async def invite_worker(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])

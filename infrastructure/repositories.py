@@ -164,6 +164,11 @@ class OrganizationRepository:
         row = await self.pool.fetchrow(sql,org_id)
         return
 
+    async def update(self, organization: Organization):
+        sql = "update organization set name = $2 where id = $1"
+        row = await self.pool.execute(sql, organization.id, organization.name)
+        return organization
+
 class TrainingRepository:
     def __init__(self,pool):
         self.pool = pool
