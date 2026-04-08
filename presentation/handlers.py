@@ -266,7 +266,7 @@ async def delete_worker(callback, state: FSMContext):
      await callback.message.edit_text(f"Вы уверены, что хотите удалить {worker.first_name} {worker.last_name} из организации?", reply_markup=keyboard)
 
 
-@router.callback_query(F.data.startswith("confirm_worker_del"))
+@router.callback_query(F.data.startswith("wrk_confirm_del_"))
 async def confirm_delete_worker(callback, state: FSMContext):
      wrk_id = int(callback.data.split("_")[-1])
 
@@ -395,3 +395,9 @@ async def check_invite(message: types.Message,state: FSMContext, user_id: int, p
         await message.answer("Войти как:", reply_markup=keyboard)
         await state.clear()
         await state.set_state(UserState.role)
+
+@router.message(Command("debug"))
+async def debug_state(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    data = await state.get_data()
+    await message.answer(f"Состояние: {current_state}\nДанные: {data}")
