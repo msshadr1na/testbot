@@ -3,7 +3,7 @@ from aiogram import Router, types, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import inline_keyboard_button, reply_keyboard_markup, reply_markup_union, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message
 from asyncpg import pool
-from app.models import Organization, User
+from app.models import Organization, Role, User
 from app.services import OrganizationMemberRepository, UserService, OrganizationService
 from app.states import RegistrationState
 from infrastructure.database import get_db_pool
@@ -218,14 +218,30 @@ async def invite_worker(callback: types.CallbackQuery):
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
     org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
 
-    user = await user_service.find_by_tgid(callback.message.from_user.id)
+    link = await org_service.get_or_create_invite(org_id, role_id)
 
-    link = await org_service.get_or_create_invite(org_id, 2)
-
-    keyboard = presentation.keyboards.build_invite_code_keyboard(link, org_id)
+    keyboard = presentation.keyboards.build_invite_workers_keyboard(org_id)
 
     await callback.message.edit_text(f"Приглашение для работников:\n{link}", reply_markup=keyboard)
-   
+
+#Обновление ссылки-приглашения для работников
+@router.callback_query(F.data.startswith("upd.code2_"))
+async def update_invite_worker(callback: types.CallbackQuery):
+    org_id = int(callback.data.split("_")[-1])
+    role_id = 2
+
+    pool = await get_db_pool()
+    invite_repo = InviteRepository(pool)
+    user_service = UserService(UserRepository(pool), SettingsRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+
+    link = await org_service.update_invite(org_id, role_id)
+
+    keyboard = presentation.keyboards.build_invite_workers_keyboard(org_id)
+
+    await callback.message.edit_text(f"Приглашение для работников:\n`{link}`\nНажмите на ссылку, чтобы скопировать", parse_mode="MarkdownV2", reply_markup=keyboard)
+  
+
 
 
 

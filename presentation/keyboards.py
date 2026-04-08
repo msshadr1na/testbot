@@ -55,12 +55,6 @@ def build_invite_workers_keyboard(org_id):
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
-def build_invite_code_keyboard(invite_code,org_id):
-    buttons = [[InlineKeyboardButton(text="Скопировать ссылку-приглашение", callback_data=f"copy.code_{invite_code}")],
-               [InlineKeyboardButton(text="Назад", callback_data=f"invite.worker_{org_id}")]]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-    return keyboard
-
 def build_delete_org_keyboard(orgs,names):
     buttons = [[InlineKeyboardButton(text=name, callback_data=f"del_org_{org_id}")] for org_id, name in zip(orgs,names)]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
