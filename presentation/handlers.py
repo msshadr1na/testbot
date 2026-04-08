@@ -191,6 +191,7 @@ async def choose_org(callback: types.CallbackQuery, state):
     await state.set_state(UserState.menu)
     await state.update_data(selected_org_id=org_id)
 
+#Раздел работники
 @router.callback_query(F.data.startswith("mng.workers_"))
 async def manage_workers(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
@@ -225,10 +226,24 @@ async def list_workers_pages(callback: types.CallbackQuery, state):
     org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
     workers_list = await org_service.get_workers_list(org_id)
 
-    
     keyboard = presentation.keyboards.build_list_workers_keyboard(workers_list, page ,org_id)
     await callback.message.edit_text(f"Список работников (страница {page + 1}):", reply_markup=keyboard)
 
+#Управление работником
+@router.callback_query(F.data.startswith("worker.chosen_"))
+async def choose_worker(callback):
+     wrk_id = int(callback.data.split("_")[-1])
+
+     pool = await get_db_pool()
+     user_service = UserService(UserRepository(pool),SettingsRepository(pool))
+
+     worker = user_service.get_by_id(wrk_id)
+     
+     keyboard = presentation.keyboards.build_manage_worker_keyboard(wrk_id)
+     if worker.middle_name:
+        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name} {worker.middle_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
+     else:
+        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
 
 
 @router.callback_query(F.data.startswith("invite.worker_"))

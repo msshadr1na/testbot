@@ -30,10 +30,10 @@ def build_choose_org_keyboard(orgs,names):
 
 #Клавиатура для управления организацией
 def build_manage_org_keyboard(org_id):
-    buttons = [[InlineKeyboardButton(text="Редактировать организацию", callback_data=f"edit.org_{org_id}")],
-               [InlineKeyboardButton(text="Управление работниками", callback_data=f"mng.workers_{org_id}")],
-               [InlineKeyboardButton(text="Управление клиентами", callback_data=f"mng.clients_{org_id}")],
-               [InlineKeyboardButton(text="Управление мероприятиями", callback_data=f"mng.events_{org_id}")],
+    buttons = [[InlineKeyboardButton(text="Редактировать", callback_data=f"edit.org_{org_id}")],
+               [InlineKeyboardButton(text="Работники", callback_data=f"mng.workers_{org_id}")],
+               [InlineKeyboardButton(text="Клиенты", callback_data=f"mng.clients_{org_id}")],
+               [InlineKeyboardButton(text="Мероприятия", callback_data=f"mng.events_{org_id}")],
                [InlineKeyboardButton(text="Назад", callback_data="owner")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
@@ -53,20 +53,15 @@ def build_invite_workers_keyboard(org_id):
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
-#Клавиатура для удаления организации
-def build_delete_org_keyboard(orgs,names):
-    buttons = [[InlineKeyboardButton(text=name, callback_data=f"del_org_{org_id}")] for org_id, name in zip(orgs,names)]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-    return keyboard
-
 #Клавиатура для подтверждения удаления организации
 def build_confirm_delete_org(org_id):
-    buttons = [[InlineKeyboardButton(text="Да, удалить", callback_data=f"confirm_del_{org_id}")],
+    buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"confirm_del_{org_id}")],
                [InlineKeyboardButton(text="Отмена", callback_data="cancel_del")]]
     print(buttons)
     keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
     return keyboard
 
+#Список работников организации
 def build_list_workers_keyboard(workers_list, page, org_id):
     total_pages = (len(workers_list) + 4) // 5
     start = page * 5
@@ -90,3 +85,12 @@ def build_list_workers_keyboard(workers_list, page, org_id):
     buttons.append([InlineKeyboardButton(text="Назад", callback_data=f"mng.workers_{org_id}")])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+#Управление конкретным работником организации
+def build_manage_worker_keyboard(wrk_id):
+    buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"del.worker_{wrk_id}")],
+               [InlineKeyboardButton(text="Расписание работника", callback_data=f"wrk.schedule_{wrk_id}")],
+               [InlineKeyboardButton(text="Назад", callback_data=f"wrk.page_0")]]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+

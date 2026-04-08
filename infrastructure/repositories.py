@@ -29,6 +29,16 @@ class UserRepository:
         user.id = row["id"]
         return user
 
+    async def get_by_id(self, user_id: int):
+        sql = "select * from users where id = $1"
+        row = await self.pool.fetchrow(sql,user_id)
+
+        if not row:
+            return None
+        else:
+            user = User(row["id"], row["telegram_id"], row["phone"], row["first_name"], row["last_name"], row["middle_name"], row["settings_id"])
+            return user
+
     async def find(self, telegram_id):
         sql = "select * from users where telegram_id = $1"
         row = await self.pool.fetchrow(sql,telegram_id)

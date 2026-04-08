@@ -9,6 +9,9 @@ class UserService:
     async def find_by_tgid(self, telegram_id):
         return await self.user_repository.find(telegram_id)
 
+    async def get_by_id(self, user_id):
+        return await self.user_repository.get_by_id(user_id)
+
     async def registration(self, telegram_id, phone, first_name, last_name, middle_name):
         default_settings = Settings(id=None, notification_settings={"before_hour": 0, "before_day": 1})
         saved_settings = await self.settings_repository.create(default_settings)
