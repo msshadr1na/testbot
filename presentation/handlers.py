@@ -176,7 +176,7 @@ async def start_create_org(callback: types.CallbackQuery):
     await callback.answer()
 
 #Выбор организации для управления
-@router.callback_query(F.data.startswith("choose.org_"))
+@router.callback_query(F.data.startswith("choose_org_"))
 async def choose_org(callback: types.CallbackQuery, state):
     org_id = int(callback.data.split("_")[-1])
 

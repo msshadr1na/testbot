@@ -13,7 +13,7 @@ async def build_org_keyboard(orgs,names):
     buttons = []
 
     for org_id, name in zip(orgs, names):
-        buttons.append([InlineKeyboardButton(text=name, callback_data=f"choose.org_{org_id}")])
+        buttons.append([InlineKeyboardButton(text=name, callback_data=f"choose_org_{org_id}")])
     
     buttons.append([InlineKeyboardButton(text="Создать организацию",callback_data="create_org")])
     buttons.append([InlineKeyboardButton(text="Назад", callback_data="start")])
@@ -23,7 +23,7 @@ async def build_org_keyboard(orgs,names):
 
 #Клавиатура при выборе конкретной организации для управления
 def build_choose_org_keyboard(orgs,names):
-    buttons = [[InlineKeyboardButton(text=name, callback_data=f"choose.org_{org_id}")] for org_id, name in zip(orgs,names)]
+    buttons = [[InlineKeyboardButton(text=name, callback_data=f"choose_org_{org_id}")] for org_id, name in zip(orgs,names)]
     buttons.append([InlineKeyboardButton(text="Назад", callback_data="owner")])
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
@@ -42,7 +42,7 @@ def build_manage_org_keyboard(org_id):
 def build_manage_workers_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Просмотреть работников", callback_data=f"list.workers_{org_id}")],
                [InlineKeyboardButton(text="Пригласить работников", callback_data=f"invite.worker_{org_id}")],
-               [InlineKeyboardButton(text="Назад", callback_data=f"choose.org_{org_id}")]]
+               [InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
@@ -104,7 +104,7 @@ def build_confirm_delete_worker(wrk_id):
 def build_edit_org_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Редактировать название", callback_data=f"edit_name_org_{org_id}")],
                [InlineKeyboardButton(text="Удалить организацию", callback_data=f"del_org_{org_id}")],
-               [InlineKeyboardButton(text="Назад", callback_data=f"choose.org_{org_id}")]]
+               [InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
