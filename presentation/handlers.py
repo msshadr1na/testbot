@@ -228,9 +228,10 @@ async def edit_org_name(message: Message, state: FSMContext):
     await state.set_state(UserState.organization)
 
 
-
+#
 #Раздел работники
-@router.callback_query(F.data.startswith("mng.workers_"))
+#
+@router.callback_query(F.data.startswith("mng_workers_"))
 async def manage_workers(callback: types.CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
 
@@ -354,8 +355,45 @@ async def update_invite_worker(callback: types.CallbackQuery):
 
     await callback.message.edit_text(f"Приглашение для работников:\n\n`{link}`\n\nНажмите на ссылку, чтобы скопировать", parse_mode="MarkdownV2", reply_markup=keyboard)
   
+#
+#Раздел клиенты
+#
+@router.callback_query(F.data.startswith("mng_clients_"))
+async def manage_workers(callback: types.CallbackQuery):
+    org_id = int(callback.data.split("_")[-1])
 
+    keyboard = presentation.keyboards.build_manage_clients_keyboard(org_id)
+    
+    await callback.message.edit_text("Управление клиентами", reply_markup=keyboard)
 
+#Просмотр списка клиентов организации
+@router.callback_query(F.data.startswith("list_clients_"))
+async def list_clients_first_page(callback: types.CallbackQuery, state: FSMContext):
+    org_id = int(callback.data.split("_")[-1])
+    await state.update_data(selected_org_id=org_id)
+    pool = await get_db_pool()
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    clients_list = await org_service.get_clients_list(org_id)
+
+    if clients_list:
+        keyboard = presentation.keyboards.build_list_clients_keyboard(clients_list, 0 ,org_id)
+        await callback.message.edit_text(f"Список клиентов (страница 1):", reply_markup=keyboard)
+    else:
+        keyboard = presentation.keyboards.build_list_clients_keyboard(clients_list, 0 ,org_id)
+        await callback.message.edit_text(f"Клиентов нет. Добавьте их в свою организацию при помощи ссылки-приглашения", reply_markup=keyboard)
+
+@router.callback_query(F.data.startswith("client_page_"))
+async def list_clients_pages(callback: types.CallbackQuery, state):
+    page = int(callback.data.split("_")[-1])
+    data = await state.get_data()
+    org_id = data.get("selected_org_id")
+
+    pool = await get_db_pool()
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    clients_list = await org_service.get_clients_list(org_id)
+
+    keyboard = presentation.keyboards.build_list_workers_keyboard(clients_list, page ,org_id)
+    await callback.message.edit_text(f"Список работников (страница {page + 1}):", reply_markup=keyboard)
 
 
 # Текстовые сообщения

@@ -117,6 +117,10 @@ class OrganizationService:
         await self.organizationMember_repository.delete(worker)
         return worker
 
+    #Получение всех клиентов организации
+    async def get_clients_list(self, org_id):
+        clients = await self.organizationMember_repository.get_members_by_org_and_role(org_id, 3)
+        return clients
 
 
 
