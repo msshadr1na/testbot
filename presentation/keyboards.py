@@ -118,7 +118,10 @@ def build_manage_clients_keyboard(org_id):
 
 #Список клиентов организации
 def build_list_clients_keyboard(clients_list, page, org_id):
-    total_pages = (len(clients_list) + 4) // 5
+    if len(clients_list) % 5 == 0:
+        total_pages = len(clients_list) // 5
+    else:
+        total_pages = len(clients_list) // 5 + 1
     start = page * 5
     end = start + 5
     current = clients_list[start:end]

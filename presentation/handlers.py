@@ -393,7 +393,7 @@ async def list_clients_pages(callback: types.CallbackQuery, state):
     clients_list = await org_service.get_clients_list(org_id)
 
     keyboard = presentation.keyboards.build_list_workers_keyboard(clients_list, page ,org_id)
-    await callback.message.edit_text(f"Список работников (страница {page + 1}):", reply_markup=keyboard)
+    await callback.message.edit_text(f"Список клиентов (страница {page + 1}):", reply_markup=keyboard)
 
 
 # Текстовые сообщения
