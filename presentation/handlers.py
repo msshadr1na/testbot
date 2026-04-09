@@ -226,6 +226,7 @@ async def edit_org_name(message: Message, state: FSMContext):
         await message.answer("Редактированиее организации", reply_markup=presentation.keyboards.build_edit_org_keyboard(org_id))
 
     await state.set_state(UserState.organization)
+    await state.update_data(selected_org_id=org_id)
 
 
 #
@@ -392,7 +393,7 @@ async def list_clients_pages(callback: types.CallbackQuery, state):
     org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
     clients_list = await org_service.get_clients_list(org_id)
 
-    keyboard = presentation.keyboards.build_list_workers_keyboard(clients_list, page ,org_id)
+    keyboard = presentation.keyboards.build_list_clients_keyboard(clients_list, page ,org_id)
     await callback.message.edit_text(f"Список клиентов (страница {page + 1}):", reply_markup=keyboard)
 
 
