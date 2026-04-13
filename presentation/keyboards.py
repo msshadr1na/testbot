@@ -146,3 +146,9 @@ def build_list_clients_keyboard(clients_list, page, org_id):
     buttons.append([InlineKeyboardButton(text="Назад", callback_data=f"mng_clients_{org_id}")])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def build_invite_clients_keyboard(org_id):
+    buttons = [[InlineKeyboardButton(text="Обновить ссылку-приглашение", callback_data=f"upd_code3_{org_id}")],
+               [InlineKeyboardButton(text="Назад", callback_data=f"mng_clients_{org_id}")]]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard

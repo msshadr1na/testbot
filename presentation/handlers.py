@@ -393,6 +393,40 @@ async def list_clients_pages(callback: types.CallbackQuery, state):
     keyboard = presentation.keyboards.build_list_clients_keyboard(clients_list, page ,org_id)
     await callback.message.edit_text(f"Список клиентов (страница {page + 1}):", reply_markup=keyboard)
 
+#Приглашение клиентов в организацию (создание ссылки-приглашения)
+@router.callback_query(F.data.startswith("invite_client_"))
+async def invite_client(callback: types.CallbackQuery):
+    org_id = int(callback.data.split("_")[-1])
+    role_id = 3
+
+    pool = await get_db_pool()
+    invite_repo = InviteRepository(pool)
+    user_service = UserService(UserRepository(pool), SettingsRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+
+    link = await org_service.get_or_create_invite(org_id, role_id)
+
+    keyboard = presentation.keyboards.build_invite_clients_keyboard(org_id)
+
+    await callback.message.edit_text(f"Приглашение для клиентов:\n\n`{link}`\n\nНажмите на ссылку, чтобы скопировать", parse_mode="MarkdownV2", reply_markup=keyboard)
+
+#Обновление ссылки-приглашения для клиентов
+@router.callback_query(F.data.startswith("upd_code3_"))
+async def update_invite_client(callback: types.CallbackQuery):
+    org_id = int(callback.data.split("_")[-1])
+    role_id = 3     
+
+    pool = await get_db_pool()
+    invite_repo = InviteRepository(pool)
+    user_service = UserService(UserRepository(pool), SettingsRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+
+    link = await org_service.update_invite(org_id, role_id)
+
+    keyboard = presentation.keyboards.build_invite_clients_keyboard(org_id)
+
+    await callback.message.edit_text(f"Приглашение для клиентов:\n\n`{link}`\n\nНажмите на ссылку, чтобы скопировать", parse_mode="MarkdownV2", reply_markup=keyboard)
+
 
 # Текстовые сообщения
 @router.message()
