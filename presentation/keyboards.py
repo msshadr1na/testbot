@@ -149,6 +149,11 @@ def build_manage_place_keyboard(place_id):
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
+#Клавиатура для редактирования названия помещения
+def build_edit_place_name_keyboard(place_id):
+    buttons = [[InlineKeyboardButton(text="Отмена", callback_data=f"place_chosen_{place_id}")]]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
 #Клавиатура для управления клиентами организации
 def build_manage_clients_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Просмотреть клиентов", callback_data=f"list_clients_{org_id}")],

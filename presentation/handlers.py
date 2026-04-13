@@ -256,8 +256,17 @@ async def list_places_pages(callback: types.CallbackQuery, state: FSMContext):
     pool = await get_db_pool()
     org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
     places_list = await org_service.get_places_list(org_id)
-    keyboard = presentation.keyboards.build_list_places_keyboard(places_list, org_id)
+    keyboard = presentation.keyboards.build_list_places_keyboard(places_list, page, org_id)
     await callback.message.edit_text(f"Список помещений (страница {page + 1}):", reply_markup=keyboard)
+
+#Редактирование названия помещения организации
+@router.callback_query(F.data.startswith("edit_name_place_"))
+async def edit_place_name(callback: types.CallbackQuery, state):
+    place_id = int(callback.data.split("_")[-1])
+    await state.update_data(editing_place_id=place_id)
+    keyboard = presentation.keyboards.build_edit_name_place_keyboard(place_id)
+    await callback.message.edit_text("Введите новое название организации:", reply_markup=keyboard)
+    await state.set_state(UserState.editing_name)
 
 #Карточка помещения организации
 @router.callback_query(F.data.startswith("place_chosen_"))
