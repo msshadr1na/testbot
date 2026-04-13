@@ -152,3 +152,18 @@ def build_invite_clients_keyboard(org_id):
                [InlineKeyboardButton(text="Назад", callback_data=f"mng_clients_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
+
+#Управление конкретным клиентом организации
+def build_manage_client_keyboard(client_id):
+    buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"del_client_{client_id}")],
+               [InlineKeyboardButton(text="Расписание клиента", callback_data=f"client_schedule_{client_id}")],
+               [InlineKeyboardButton(text="Назад", callback_data=f"client_page_0")]]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+#Удаление клиента из организации
+def build_confirm_delete_client(client_id):
+    buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"client_confirm_del_{client_id}")],
+               [InlineKeyboardButton(text="Отмена", callback_data=f"client_chosen_{client_id}")]]
+    keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
+    return keyboard

@@ -427,6 +427,58 @@ async def update_invite_client(callback: types.CallbackQuery):
 
     await callback.message.edit_text(f"Приглашение для клиентов:\n\n`{link}`\n\nНажмите на ссылку, чтобы скопировать", parse_mode="MarkdownV2", reply_markup=keyboard)
 
+#Управление работником
+@router.callback_query(F.data.startswith("worker_chosen_"))
+async def choose_worker(callback, state: FSMContext):
+     wrk_id = int(callback.data.split("_")[-1])
+
+     pool = await get_db_pool()
+     user_service = UserService(UserRepository(pool),SettingsRepository(pool))
+
+     worker = await user_service.get_by_id(wrk_id)
+     
+     keyboard = presentation.keyboards.build_manage_worker_keyboard(wrk_id)
+
+     if worker.middle_name:
+        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name} {worker.middle_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
+     else:
+        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
+
+#Подтверждение удаления клиента из организации
+@router.callback_query(F.data.startswith("del_client_"))
+async def delete_client(callback, state: FSMContext):
+     client_id = int(callback.data.split("_")[-1])
+
+     pool = await get_db_pool()
+     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+     user_service = UserService(UserRepository(pool),SettingsRepository(pool))
+
+     data = await state.get_data()
+     org_id = data.get("selected_org_id")
+     org_id = int(callback.data.split("_")[-1])
+     client = await user_service.get_by_id(client_id)
+
+     keyboard = presentation.keyboards.build_confirm_delete_client(client_id)
+    
+     await callback.message.edit_text(f"Вы уверены, что хотите удалить {client.first_name} {client.last_name} из организации?", reply_markup=keyboard)
+
+#Удаление клиента из организации
+@router.callback_query(F.data.startswith("client_confirm_del_"))
+async def confirm_delete_client(callback, state: FSMContext):
+     client_id = int(callback.data.split("_")[-1])
+
+     pool = await get_db_pool()
+     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+     user_service = UserService(UserRepository(pool),SettingsRepository(pool))
+     client = await user_service.get_by_id(client_id)
+     data = await state.get_data()
+     org_id = data.get("selected_org_id")
+     await organization_service.delete_client(org_id, client_id)
+
+     await callback.message.edit_text(f"Клиент {client.first_name} {client.last_name} успешно удалён из организации")
+     keyboard = presentation.keyboards.build_manage_clients_keyboard(org_id)
+     await callback.message.answer(f"Управление клиентами", reply_markup=keyboard)
+
 
 # Текстовые сообщения
 @router.message()
