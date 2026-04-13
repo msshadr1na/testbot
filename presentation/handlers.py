@@ -427,22 +427,22 @@ async def update_invite_client(callback: types.CallbackQuery):
 
     await callback.message.edit_text(f"Приглашение для клиентов:\n\n`{link}`\n\nНажмите на ссылку, чтобы скопировать", parse_mode="MarkdownV2", reply_markup=keyboard)
 
-#Управление работником
-@router.callback_query(F.data.startswith("worker_chosen_"))
-async def choose_worker(callback, state: FSMContext):
-     wrk_id = int(callback.data.split("_")[-1])
+#Управление клиентом
+@router.callback_query(F.data.startswith("client_chosen_"))
+async def choose_client(callback, state: FSMContext):
+     client_id = int(callback.data.split("_")[-1])
 
      pool = await get_db_pool()
      user_service = UserService(UserRepository(pool),SettingsRepository(pool))
 
-     worker = await user_service.get_by_id(wrk_id)
+     client = await user_service.get_by_id(client_id)
      
-     keyboard = presentation.keyboards.build_manage_worker_keyboard(wrk_id)
+     keyboard = presentation.keyboards.build_manage_client_keyboard(client_id)
 
-     if worker.middle_name:
-        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name} {worker.middle_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
+     if client.middle_name:
+        await callback.message.edit_text(f"Клиент:\n\nИмя: {client.first_name} {client.last_name} {client.middle_name}\n\nНомер телефона: {client.phone}", reply_markup=keyboard)
      else:
-        await callback.message.edit_text(f"Работник:\n\nИмя: {worker.first_name} {worker.last_name}\n\nНомер телефона: {worker.phone}", reply_markup=keyboard)
+        await callback.message.edit_text(f"Клиент:\n\nИмя: {client.first_name} {client.last_name}\n\nНомер телефона: {client.phone}", reply_markup=keyboard)
 
 #Подтверждение удаления клиента из организации
 @router.callback_query(F.data.startswith("del_client_"))
