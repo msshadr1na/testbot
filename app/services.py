@@ -1,4 +1,4 @@
-from infrastructure.repositories import BookingRepository, UserRepository, SettingsRepository, OrganizationRepository, OrganizationMemberRepository, TrainingRepository, InviteRepository
+from infrastructure.repositories import BookingRepository, UserRepository, SettingsRepository, OrganizationRepository, OrganizationMemberRepository, TrainingRepository, InviteRepository,GymRepository
 from app.models import Settings, User, Organization, OrganizationMember
 
 class UserService:
@@ -19,10 +19,11 @@ class UserService:
         return await self.user_repository.create(newUser)
 
 class OrganizationService:
-    def __init__(self, organization_repository : OrganizationRepository, organizationMember_repository : OrganizationMemberRepository, invite_repository: InviteRepository):
+    def __init__(self, organization_repository : OrganizationRepository, organizationMember_repository : OrganizationMemberRepository, invite_repository: InviteRepository, gym_repository: GymRepository):
         self.organization_repository = organization_repository
         self.organizationMember_repository = organizationMember_repository
         self.invite_repository = invite_repository
+        self.gym_repository = gym_repository
 
 # Поиск организации по названию
     async def find_by_name(self, name):
@@ -129,5 +130,14 @@ class OrganizationService:
         clients = await self.organizationMember_repository.get_members_by_org_and_role(org_id, 3)
         return clients
 
+    #Получение всех помещений организации
+    async def get_places_list(self, org_id):
+        gyms = await self.gym_repository.get_gyms_by_org(org_id)
+        return gyms
+
+    #Получение помещения по id
+    async def get_place_by_id(self, place_id):
+        gym = await self.gym_repository.find_by_id(place_id)
+        return gym
 
 

@@ -123,11 +123,25 @@ class GymRepository:
         gym.id = row["id"]
         return gym
 
+    async def find_by_id(self, gym_id):
+        sql = "select * from gym where id = $1"
+        row = await self.pool.fetchrow(sql, gym_id)
+
+        if not row:
+            return None
+        else:
+            return Gym(row["id"], row["name"], row["organization_id"])
+
     async def delete_all_by_org_id(self,org_id):
         sql = "delete from gym where organization_id = $1"
         deleted = await self.pool.execute(sql,org_id)
 
         return deleted
+
+    async def get_gyms_by_org_id(self, org_id):
+        sql = "select id, name from gym where organization_id = $1"
+        rows = await self.pool.fetch(sql,org_id)
+        return [(row["id"], row["name"]) for row in rows]
 
 class OrganizationRepository:
     def __init__(self, pool):

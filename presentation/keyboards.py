@@ -30,7 +30,7 @@ def build_choose_org_keyboard(orgs,names):
 
 #Клавиатура для управления организацией
 def build_manage_org_keyboard(org_id):
-    buttons = [[InlineKeyboardButton(text="Редактировать", callback_data=f"edit_org_{org_id}")],
+    buttons = [[InlineKeyboardButton(text="Настройки", callback_data=f"edit_org_{org_id}")],
                [InlineKeyboardButton(text="Работники", callback_data=f"mng_workers_{org_id}")],
                [InlineKeyboardButton(text="Клиенты", callback_data=f"mng_clients_{org_id}")],
                [InlineKeyboardButton(text="Мероприятия", callback_data=f"mng_events_{org_id}")],
@@ -103,8 +103,17 @@ def build_confirm_delete_worker(wrk_id):
 #Клавиатура для управления организацией
 def build_edit_org_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Редактировать название", callback_data=f"edit_name_org_{org_id}")],
+               [InlineKeyboardButton(text="Управление помещениями", callback_data=f"manage_places_{org_id}")],
                [InlineKeyboardButton(text="Удалить организацию", callback_data=f"del_org_{org_id}")],
                [InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")]]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
+
+#Клавиатура для управления помещениями организации
+def build_manage_places_keyboard(org_id):
+    buttons = [[InlineKeyboardButton(text="Просмотреть помещения", callback_data=f"list_places_{org_id}")],
+               [InlineKeyboardButton(text="Добавить помещение", callback_data=f"add_place_{org_id}")],
+               [InlineKeyboardButton(text="Назад", callback_data=f"edit_org_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
@@ -112,6 +121,33 @@ def build_edit_org_keyboard(org_id):
 def build_edit_name_org_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Отмена", callback_data=f"edit_org_{org_id}")]]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+#Клавиатура для списка помещений организации
+def build_list_places_keyboard(places_list, page, org_id):
+    total_pages = (len(places_list) + 4) // 5
+    start = page * 5
+    end = start + 5
+    current = places_list[start:end]
+    buttons = []
+    for id, name in current:
+        buttons.append([InlineKeyboardButton(text=name,callback_data=f"place_chosen_{id}")])
+    nav_buttons = []
+    if page > 0:
+        nav_buttons.append(InlineKeyboardButton(text="<=", callback_data=f"place_page_{page - 1}"))
+    if page < total_pages - 1:
+        nav_buttons.append(InlineKeyboardButton(text="=>", callback_data=f"place_page_{page + 1}"))
+    if nav_buttons:
+        buttons.append(nav_buttons)
+    buttons.append([InlineKeyboardButton(text="Назад", callback_data=f"manage_places_{org_id}")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+#Клавиатура для управления конкретным помещением организации
+def build_manage_place_keyboard(place_id):
+    buttons = [[InlineKeyboardButton(text="Редактировать название", callback_data=f"edit_name_place_{place_id}")],###
+               [InlineKeyboardButton(text="Удалить помещение", callback_data=f"del_place_{place_id}")],###
+               [InlineKeyboardButton(text="Назад", callback_data=f"place_page_0")]]
+    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    return keyboard
 
 #Клавиатура для управления клиентами организации
 def build_manage_clients_keyboard(org_id):

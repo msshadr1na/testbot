@@ -3,11 +3,11 @@ from aiogram import Router, types, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import inline_keyboard_button, reply_keyboard_markup, reply_markup_union, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message
 from asyncpg import pool
-from app.models import Organization, Role, User
+from app.models import Gym, Organization, Role, User
 from app.services import OrganizationMemberRepository, UserService, OrganizationService
 from app.states import RegistrationState, UserState
 from infrastructure.database import get_db_pool
-from infrastructure.repositories import UserRepository, SettingsRepository, OrganizationRepository, InviteRepository
+from infrastructure.repositories import UserRepository, SettingsRepository, OrganizationRepository, InviteRepository,GymRepository
 import presentation.keyboards
 from aiogram.fsm.context import FSMContext
 
@@ -91,7 +91,7 @@ async def start_create_note(message: types.Message):
     pool = await get_db_pool()
 
     user_service = UserService(UserRepository(pool),SettingsRepository(pool))
-    org_service = OrganizationService(OrganizationRepository(pool),OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool),OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
 
 
     user = await user_service.find_by_tgid(message.from_user.id)
@@ -134,7 +134,7 @@ async def confirm_delete_org(callback: CallbackQuery):
     org_repo = OrganizationRepository(pool)
     org_member_repo = OrganizationMemberRepository(pool)
     user_service = UserService(user_repo, SettingsRepository(pool))
-    org_service = OrganizationService(org_repo, org_member_repo, InviteRepository(pool))
+    org_service = OrganizationService(org_repo, org_member_repo, InviteRepository(pool), GymRepository(pool))
 
     user = await user_service.find_by_tgid(callback.from_user.id)
     org = await org_service.get_by_id(org_id)
@@ -149,7 +149,7 @@ async def confirm_delete_org(callback: CallbackQuery):
 async def as_org(callback: CallbackQuery, state):
     pool = await get_db_pool()
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
-    org_service = OrganizationService(OrganizationRepository(pool),OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool),OrganizationMemberRepository(pool), InviteRepository(pool),GymRepository(pool))
     user = await user_service.find_by_tgid(callback.from_user.id)
     ids, names = await org_service.show_owned_orgs(user.id)
 
@@ -176,7 +176,7 @@ async def choose_org(callback: types.CallbackQuery, state):
     org_id = int(callback.data.split("_")[-1])
 
     pool = await get_db_pool()
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
     name = await org_service.get_by_id(org_id)
 
     keyboard = presentation.keyboards.build_manage_org_keyboard(org_id)
@@ -209,7 +209,7 @@ async def edit_org_name(message: Message, state: FSMContext):
     org_id = data.get("editing_org_id")
 
     pool = await get_db_pool()
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool),GymRepository(pool))
 
     is_created = await org_service.find_by_name(name)
     
@@ -224,6 +224,50 @@ async def edit_org_name(message: Message, state: FSMContext):
 
     await state.set_state(UserState.organization)
     await state.update_data(selected_org_id=org_id)
+
+#Раздел управления помещениями организации
+@router.callback_query(F.data.startswith("manage_places_"))
+async def manage_places(callback: types.CallbackQuery):
+    org_id = int(callback.data.split("_")[-1])
+    keyboard = presentation.keyboards.build_manage_places_keyboard(org_id)
+
+    await callback.message.edit_text("Управление помещениями", reply_markup=keyboard)
+
+#Просмотреть помещения организации
+@router.callback_query(F.data.startswith("list_places_"))
+async def list_places(callback: types.CallbackQuery):
+    org_id = int(callback.data.split("_")[-1])
+    pool = await get_db_pool()
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
+    places_list = await org_service.get_places_list(org_id)
+    if places_list:
+        keyboard = presentation.keyboards.build_list_places_keyboard(places_list, org_id)
+        await callback.message.edit_text(f"Список помещений:", reply_markup=keyboard)
+    else:
+        keyboard = presentation.keyboards.build_list_places_keyboard(places_list, org_id)
+        await callback.message.edit_text(f"Помещений нет. Добавьте их в свою организацию", reply_markup=keyboard)
+
+#Просмотреть страницу списка помещений
+@router.callback_query(F.data.startswith("place_page_"))
+async def list_places_pages(callback: types.CallbackQuery, state: FSMContext):
+    page = int(callback.data.split("_")[-1])
+    data = await state.get_data()
+    org_id = data.get("selected_org_id")
+    pool = await get_db_pool()
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
+    places_list = await org_service.get_places_list(org_id)
+    keyboard = presentation.keyboards.build_list_places_keyboard(places_list, org_id)
+    await callback.message.edit_text(f"Список помещений (страница {page + 1}):", reply_markup=keyboard)
+
+#Карточка помещения организации
+@router.callback_query(F.data.startswith("place_chosen_"))
+async def choose_place(callback: types.CallbackQuery, state: FSMContext):
+    place_id = int(callback.data.split("_")[-1])
+    pool = await get_db_pool()
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
+    place = await org_service.get_place_by_id(place_id)
+    keyboard = presentation.keyboards.build_manage_place_keyboard(place_id)
+    await callback.message.edit_text(f"Помещение:\n\nНазвание: {place.name}", reply_markup=keyboard)
 
 
 #
@@ -243,7 +287,7 @@ async def list_workers_first_page(callback: types.CallbackQuery, state: FSMConte
     org_id = int(callback.data.split("_")[-1])
     await state.update_data(selected_org_id=org_id)
     pool = await get_db_pool()
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
     workers_list = await org_service.get_workers_list(org_id)
 
     if workers_list:
@@ -260,7 +304,7 @@ async def list_workers_pages(callback: types.CallbackQuery, state):
     org_id = data.get("selected_org_id")
 
     pool = await get_db_pool()
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
     workers_list = await org_service.get_workers_list(org_id)
 
     keyboard = presentation.keyboards.build_list_workers_keyboard(workers_list, page ,org_id)
@@ -289,7 +333,7 @@ async def delete_worker(callback, state: FSMContext):
      wrk_id = int(callback.data.split("_")[-1])
 
      pool = await get_db_pool()
-     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool),GymRepository(pool))
      user_service = UserService(UserRepository(pool),SettingsRepository(pool))
 
      data = await state.get_data()
@@ -307,7 +351,7 @@ async def confirm_delete_worker(callback, state: FSMContext):
      wrk_id = int(callback.data.split("_")[-1])
 
      pool = await get_db_pool()
-     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
      user_service = UserService(UserRepository(pool),SettingsRepository(pool))
      worker = await user_service.get_by_id(wrk_id)
      data = await state.get_data()
@@ -328,7 +372,7 @@ async def invite_worker(callback: types.CallbackQuery):
     pool = await get_db_pool()
     invite_repo = InviteRepository(pool)
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
 
     link = await org_service.get_or_create_invite(org_id, role_id)
 
@@ -345,7 +389,7 @@ async def update_invite_worker(callback: types.CallbackQuery):
     pool = await get_db_pool()
     invite_repo = InviteRepository(pool)
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
 
     link = await org_service.update_invite(org_id, role_id)
 
@@ -370,7 +414,7 @@ async def list_clients_first_page(callback: types.CallbackQuery, state: FSMConte
     org_id = int(callback.data.split("_")[-1])
     await state.update_data(selected_org_id=org_id)
     pool = await get_db_pool()
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
     clients_list = await org_service.get_clients_list(org_id)
 
     if clients_list:
@@ -387,7 +431,7 @@ async def list_clients_pages(callback: types.CallbackQuery, state):
     org_id = data.get("selected_org_id")
 
     pool = await get_db_pool()
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
     clients_list = await org_service.get_clients_list(org_id)
 
     keyboard = presentation.keyboards.build_list_clients_keyboard(clients_list, page ,org_id)
@@ -402,7 +446,7 @@ async def invite_client(callback: types.CallbackQuery):
     pool = await get_db_pool()
     invite_repo = InviteRepository(pool)
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
 
     link = await org_service.get_or_create_invite(org_id, role_id)
 
@@ -419,7 +463,7 @@ async def update_invite_client(callback: types.CallbackQuery):
     pool = await get_db_pool()
     invite_repo = InviteRepository(pool)
     user_service = UserService(UserRepository(pool), SettingsRepository(pool))
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
 
     link = await org_service.update_invite(org_id, role_id)
 
@@ -450,7 +494,7 @@ async def delete_client(callback, state: FSMContext):
      client_id = int(callback.data.split("_")[-1])
 
      pool = await get_db_pool()
-     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
      user_service = UserService(UserRepository(pool),SettingsRepository(pool))
 
      data = await state.get_data()
@@ -468,7 +512,7 @@ async def confirm_delete_client(callback, state: FSMContext):
      client_id = int(callback.data.split("_")[-1])
 
      pool = await get_db_pool()
-     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool))
+     organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
      user_service = UserService(UserRepository(pool),SettingsRepository(pool))
      client = await user_service.get_by_id(client_id)
      data = await state.get_data()
@@ -505,7 +549,7 @@ async def handle_create_organization(message: types.Message):
     userRepo = UserRepository(pool)
     settingsRepos = SettingsRepository(pool)
     user_service = UserService(userRepo, settingsRepos)
-    organization_service = OrganizationService(organizationRepo, organizationMemberRepo,InviteRepository(pool))
+    organization_service = OrganizationService(organizationRepo, organizationMemberRepo,InviteRepository(pool), GymRepository(pool))
 
     user = await user_service.find_by_tgid(user_id)
     is_created = await organization_service.find_by_name(name)
@@ -537,7 +581,7 @@ async def check_invite(message: types.Message,state: FSMContext, user_id: int, p
         org_repo = OrganizationRepository(pool)
         org_member_repo = OrganizationMemberRepository(pool)
         invite_repo = InviteRepository(pool)
-        org_service = OrganizationService(org_repo, org_member_repo, invite_repo)
+        org_service = OrganizationService(org_repo, org_member_repo, invite_repo,GymRepository(pool))
     
         try:
             role_id = await org_service.accept_invite(invite_code, user_id)
