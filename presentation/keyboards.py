@@ -104,7 +104,7 @@ def build_confirm_delete_worker(wrk_id):
 def build_edit_org_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Редактировать название", callback_data=f"edit_name_org_{org_id}")],
                [InlineKeyboardButton(text="Удалить организацию", callback_data=f"del_org_{org_id}")],
-               [InlineKeyboardButton(text="Назад", callback_data=f"edit_org_{org_id}")]]
+               [InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
