@@ -187,8 +187,9 @@ async def choose_org(callback: types.CallbackQuery, state):
 
 #Раздел управления организацией
 @router.callback_query(F.data.startswith("edit_org_"))
-async def edit_org(callback: types.CallbackQuery):
+async def edit_org(callback: types.CallbackQuery, state):
     org_id = int(callback.data.split("_")[-1])
+    await state.set_state(UserState.menu)
     keyboard = presentation.keyboards.build_edit_org_keyboard(org_id)
     await callback.message.edit_text("Редактирование организации", reply_markup=keyboard)
 
@@ -197,7 +198,8 @@ async def edit_org(callback: types.CallbackQuery):
 async def edit_org_name(callback: types.CallbackQuery, state):
     org_id = int(callback.data.split("_")[-1])
     await state.update_data(editing_org_id=org_id)
-    await callback.message.edit_text("Введите новое название организации:")
+    keyboard = presentation.keyboards.build_edit_name_org_keyboard(org_id)
+    await callback.message.edit_text("Введите новое название организации:", reply_markup=keyboard)
     await state.set_state(UserState.editing_name)
 
 @router.message(UserState.editing_name, F.text)
