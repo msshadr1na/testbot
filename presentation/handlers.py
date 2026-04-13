@@ -241,11 +241,11 @@ async def list_places(callback: types.CallbackQuery):
     org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool), InviteRepository(pool), GymRepository(pool))
     places_list = await org_service.get_places_list(org_id)
     if places_list:
-        keyboard = presentation.keyboards.build_list_places_keyboard(places_list, org_id)
+        keyboard = presentation.keyboards.build_list_places_keyboard(places_list, 0, org_id)
         await callback.message.edit_text(f"Список помещений:", reply_markup=keyboard)
     else:
-        keyboard = presentation.keyboards.build_list_places_keyboard(places_list, org_id)
-        await callback.message.edit_text(f"Помещений нет. Добавьте их в свою организацию", reply_markup=keyboard)
+        keyboard = presentation.keyboards.build_list_places_keyboard(places_list, 0, org_id)
+        await callback.message.edit_text(f"Помещений нет. Добавьте их в свою организацию в разделе управления помещениями.", reply_markup=keyboard)
 
 #Просмотреть страницу списка помещений
 @router.callback_query(F.data.startswith("place_page_"))
