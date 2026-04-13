@@ -132,7 +132,7 @@ class OrganizationService:
 
     #Получение всех помещений организации
     async def get_places_list(self, org_id):
-        gyms = await self.gym_repository.get_gyms_by_org(org_id)
+        gyms = await self.gym_repository.get_gyms_by_org_id(org_id)
         return gyms
 
     #Получение помещения по id
