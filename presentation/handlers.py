@@ -144,11 +144,6 @@ async def confirm_delete_org(callback: CallbackQuery):
 
     await callback.answer()
 
-@router.callback_query(F.data.startswith("cancel_del"))
-async def cancel_delete_org(callback: CallbackQuery):
-    await callback.message.edit_text(f"Организация не была удалена.")
-    await callback.answer()
-
 #Войти как организатор
 @router.callback_query(F.data.startswith("owner"))
 async def as_org(callback: CallbackQuery, state):

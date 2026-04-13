@@ -56,7 +56,7 @@ def build_invite_workers_keyboard(org_id):
 #Клавиатура для подтверждения удаления организации
 def build_confirm_delete_org(org_id):
     buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"confirm_del_{org_id}")],
-               [InlineKeyboardButton(text="Отмена", callback_data="cancel_del")]]
+               [InlineKeyboardButton(text="Отмена", callback_data=f"choose_org_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
     return keyboard
 
