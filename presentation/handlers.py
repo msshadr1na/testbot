@@ -264,7 +264,7 @@ async def list_places_pages(callback: types.CallbackQuery, state: FSMContext):
 async def edit_place_name(callback: types.CallbackQuery, state):
     place_id = int(callback.data.split("_")[-1])
     await state.update_data(editing_place_id=place_id)
-    keyboard = presentation.keyboards.build_edit_name_place_keyboard(place_id)
+    keyboard = presentation.keyboards.build_edit_place_name_keyboard(place_id)
     await callback.message.edit_text("Введите новое название организации:", reply_markup=keyboard)
     await state.set_state(UserState.editing_name)
 
