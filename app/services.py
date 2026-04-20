@@ -139,7 +139,7 @@ class OrganizationService:
 
     #Создание помещения
     async def create_place(self, org_id, name):
-        gym = await self.gym_repository.create(org_id,name)
+        gym = await self.gym_repository.create(name, org_id)
         return gym
 
 
