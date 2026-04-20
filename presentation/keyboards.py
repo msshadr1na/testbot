@@ -31,6 +31,7 @@ def build_choose_org_keyboard(orgs,names):
 #Клавиатура для управления организацией
 def build_manage_org_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Настройки", callback_data=f"edit_org_{org_id}")],
+               [InlineKeyboardButton(text="Помещения", callback_data=f"manage_places_{org_id}")],
                [InlineKeyboardButton(text="Работники", callback_data=f"mng_workers_{org_id}")],
                [InlineKeyboardButton(text="Клиенты", callback_data=f"mng_clients_{org_id}")],
                [InlineKeyboardButton(text="Мероприятия", callback_data=f"mng_events_{org_id}")],
@@ -103,7 +104,6 @@ def build_confirm_delete_worker(wrk_id):
 #Клавиатура для управления организацией
 def build_edit_org_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Редактировать название", callback_data=f"edit_name_org_{org_id}")],
-               [InlineKeyboardButton(text="Управление помещениями", callback_data=f"manage_places_{org_id}")],
                [InlineKeyboardButton(text="Удалить организацию", callback_data=f"del_org_{org_id}")],
                [InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)

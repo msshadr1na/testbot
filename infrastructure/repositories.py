@@ -116,11 +116,11 @@ class GymRepository:
     def __init__(self,pool):
         self.pool = pool
 
-    async def create(self,gym: Gym):
+    async def create(self,name, org_id):
         sql ="insert into gym (name, organization_id) values ($1, $2) returning id"
-        row = await self.pool.fetchrow(sql, gym.name, gym.organization_id)
+        row = await self.pool.fetchrow(sql, name, org_id)
 
-        gym.id = row["id"]
+        gym = Gym(row["id"],name, org_id)
         return gym
 
     async def find_by_id(self, gym_id):

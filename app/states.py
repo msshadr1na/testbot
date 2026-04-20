@@ -6,8 +6,13 @@ class RegistrationState(StatesGroup):
     middle_name = State()
     phone = State()
 
+class CreatingOrganizationState(StatesGroup):
+    name = State()
+    place_name = State()
+
 class UserState(StatesGroup):
     role = State()
     organization = State()
-    editing_name = State()
+    editing_org_name = State()
+    creating_place = State()
     menu = State()

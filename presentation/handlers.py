@@ -5,7 +5,7 @@ from aiogram.types import inline_keyboard_button, reply_keyboard_markup, reply_m
 from asyncpg import pool
 from app.models import Gym, Organization, Role, User
 from app.services import OrganizationMemberRepository, UserService, OrganizationService
-from app.states import RegistrationState, UserState
+from app.states import CreatingOrganizationState, RegistrationState, UserState
 from infrastructure.database import get_db_pool
 from infrastructure.repositories import UserRepository, SettingsRepository, OrganizationRepository, InviteRepository,GymRepository
 import presentation.keyboards
@@ -77,14 +77,6 @@ async def reg_phone(message: types.Message, state: FSMContext):
 
     await state.clear()
     await message.answer("Регистрация завершена", reply_markup=types.ReplyKeyboardRemove())
-
-
-
-@router.message(Command("create"))
-async def start_create_note(message: types.Message):
-    waiting_for_name.add(message.from_user.id)
-    
-    await message.answer("Введите название для будущей организации:")
 
 @router.message(Command("delete"))
 async def start_create_note(message: types.Message):
@@ -161,7 +153,7 @@ async def as_org(callback: CallbackQuery, state):
 
 
 @router.callback_query(F.data == "create_org")
-async def start_create_org(callback: types.CallbackQuery):
+async def start_create_org(callback: types.CallbackQuery,state: FSMContext):
     user_id = callback.from_user.id
     waiting_for_name.add(user_id)
     await callback.message.delete()
@@ -169,6 +161,7 @@ async def start_create_org(callback: types.CallbackQuery):
     await callback.message.answer("Введите название для будущей организации:")
 
     await callback.answer()
+    await state.set_state(CreatingOrganizationState.name)
 
 #Выбор организации для управления
 @router.callback_query(F.data.startswith("choose_org_"))
@@ -200,9 +193,9 @@ async def edit_org_name(callback: types.CallbackQuery, state):
     await state.update_data(editing_org_id=org_id)
     keyboard = presentation.keyboards.build_edit_name_org_keyboard(org_id)
     await callback.message.edit_text("Введите новое название организации:", reply_markup=keyboard)
-    await state.set_state(UserState.editing_name)
+    await state.set_state(UserState.editing_org_name)
 
-@router.message(UserState.editing_name, F.text)
+@router.message(UserState.editing_org_name, F.text)
 async def edit_org_name(message: Message, state: FSMContext):
     name=message.text.strip()
     data = await state.get_data()
@@ -232,6 +225,15 @@ async def manage_places(callback: types.CallbackQuery):
     keyboard = presentation.keyboards.build_manage_places_keyboard(org_id)
 
     await callback.message.edit_text("Управление помещениями", reply_markup=keyboard)
+
+#Добавление нового помещения
+@router.callback_query(F.data.startswith("add_place_"))
+async def add_place(callback: types.CallbackQuery, state: FSMContext):
+    org_id = int(callback.data.split("_")[-1])
+    keyboard = presentation.keyboards.build_add_place(org_id) #^
+
+    await state.set_state(UserState.creating_place)
+    await state.update_data(selected_org_id=org_id)
 
 #Просмотреть помещения организации
 @router.callback_query(F.data.startswith("list_places_"))
@@ -266,7 +268,7 @@ async def edit_place_name(callback: types.CallbackQuery, state):
     await state.update_data(editing_place_id=place_id)
     keyboard = presentation.keyboards.build_edit_place_name_keyboard(place_id)
     await callback.message.edit_text("Введите новое название помещения:", reply_markup=keyboard)######## Продумать логику, чтобы хотя бы одно помещение всегда было!!!! И в начале чтоб создавалось однооооооооооооооооо
-    await state.set_state(UserState.editing_name)
+    await state.set_state(UserState.editing_org_name)
 
 #Карточка помещения организации
 @router.callback_query(F.data.startswith("place_chosen_"))
@@ -548,9 +550,10 @@ async def handle_text_messages(message: types.Message):
 ## Вспомогательные функции
 
 #Создание организации
-async def handle_create_organization(message: types.Message):
+@router.message(CreatingOrganizationState.name, F.text)
+async def handle_create_organization(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
-    name = message.text
+    name = message.text.strip()
 
     pool = await get_db_pool()
     organizationRepo = OrganizationRepository(pool)
@@ -565,16 +568,36 @@ async def handle_create_organization(message: types.Message):
 
     if is_created is None:
         organization = await organization_service.create_organization(user, name)
-        waiting_for_name.remove(user_id)
-        ids, names = await organization_service.show_owned_orgs(user.id)
-        keyboard = await presentation.keyboards.build_org_keyboard(ids,names)
         await message.answer(f"Организация {name} успешно создана")
-        await message.answer("Выберите организацию или создайте новую:", reply_markup=keyboard)
+        await message.answer("Введите название для помещения новой организации:\n\n*Можно будет добавить ещё помещения в разделе управления организацией:")
+        await state.set_state(CreatingOrganizationState.place_name)
+        await state.update_data(org_id = organization.id)
     else:
         await message.answer(
             f"Организация с названием {name} уже существует.\n"
             "Введите другое название:"
         )
+
+@router.message(CreatingOrganizationState.place_name, F.text)
+async def handle_create_first_place(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
+    name = message.text.strip()
+    data = await state.get_data()
+
+    pool = await get_db_pool()
+    user_service = UserService(UserRepository(pool), SettingsRepository(pool))
+    organization_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool),InviteRepository(pool), GymRepository(pool))
+
+    user = await user_service.find_by_tgid(user_id)
+    org_id = data.get("org_id")
+    new_place = await organization_service.create_place(org_id,name)
+    await message.answer(f"Помещение {name} успешно создано")
+    keyboard = presentation.keyboards.build_manage_org_keyboard(org_id)
+    await message.answer("Управление организацией:", reply_markup=keyboard)
+    await state.set_state(UserState.menu)
+    await state.update_data(selected_org_id = org_id)
+
+    
 
 #Проверка наличия приглашения при входе и его обработка
 async def check_invite(message: types.Message,state: FSMContext, user_id: int, pool):

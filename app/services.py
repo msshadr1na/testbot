@@ -62,9 +62,6 @@ class OrganizationService:
         names = await self.organizationMember_repository.get_names_by_ids(org_ids)
         return org_ids, names
 
-# Редактирование созданной организации
-
-
 #Создание ссылки-приглашения для организации
     async def create_invite(self, organization_id, role_id):
         invite = await self.invite_repository.create(organization_id, role_id)
@@ -138,6 +135,11 @@ class OrganizationService:
     #Получение помещения по id
     async def get_place_by_id(self, place_id):
         gym = await self.gym_repository.find_by_id(place_id)
+        return gym
+
+    #Создание помещения
+    async def create_place(self, org_id, name):
+        gym = await self.gym_repository.create(org_id,name)
         return gym
 
 
