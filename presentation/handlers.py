@@ -536,15 +536,7 @@ async def confirm_delete_client(callback, state: FSMContext):
 
 
 # Текстовые сообщения
-@router.message()
-async def handle_text_messages(message: types.Message):
-    user_id = message.from_user.id    
 
-    if user_id in waiting_for_name:
-        await handle_create_organization(message)
-        return
-    
-    await message.answer("Неизвестная команда. Используйте /start.")
 
 
 ## Вспомогательные функции
