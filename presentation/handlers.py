@@ -265,7 +265,7 @@ async def edit_place_name(callback: types.CallbackQuery, state):
     place_id = int(callback.data.split("_")[-1])
     await state.update_data(editing_place_id=place_id)
     keyboard = presentation.keyboards.build_edit_place_name_keyboard(place_id)
-    await callback.message.edit_text("Введите новое название организации:", reply_markup=keyboard)
+    await callback.message.edit_text("Введите новое название помещения:", reply_markup=keyboard)######## Продумать логику, чтобы хотя бы одно помещение всегда было!!!! И в начале чтоб создавалось однооооооооооооооооо
     await state.set_state(UserState.editing_name)
 
 #Карточка помещения организации
