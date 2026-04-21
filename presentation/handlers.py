@@ -92,9 +92,9 @@ async def show_day_trainings(callback: CallbackQuery):
 # 📋 Список расписания
 @router.callback_query(F.data.startswith("sched_list_"))
 async def show_schedule_list(callback: CallbackQuery):
-    data = callback.data.split("_")
-    org_id = int(data[1])
-    page = int(data[2])
+    parts = callback.data.split("_")
+    org_id = int(parts[2])
+    page = int(parts[3])
 
     pool = await get_db_pool()
     training_repo = TrainingRepository(pool)
