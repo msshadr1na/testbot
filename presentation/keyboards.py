@@ -235,11 +235,11 @@ def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: d
                 if count == 0:
                     text = str(day)
                 elif 1 <= count <= 2:
-                    text = f"🟡 {day}"
+                    text = f"🟡фф {day}"
                 elif 3 <= count <= 5:
-                    text = f"🟠 {day}"
+                    text = f"🟠а {day}"
                 else:
-                    text = f"🔴 {day}"
+                    text = f"🔴уу {day}"
 
                 week_buttons.append(InlineKeyboardButton(
                     text=text,
