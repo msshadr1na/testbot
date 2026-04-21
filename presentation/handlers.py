@@ -78,26 +78,37 @@ async def show_day_trainings(callback: CallbackQuery):
     date_str = parts[2]  # '2026-04-21'
     org_id = int(parts[3])
 
-    # Преобразуем строку в date
     target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
     pool = await get_db_pool()
     training_repo = TrainingRepository(pool)
 
-    # Передаём date, а не строку
-    rows = await training_repo.get_trainings_by_org_and_date_range(
+    # Получаем объекты Training
+    trainings = await training_repo.get_trainings_by_org_and_date_range(
         org_id, target_date, target_date + timedelta(days=1)
     )
 
-    if not rows:
+    if not trainings:
         text = f"📅 {date_str}: нет тренировок."
     else:
         lines = [f"📅 {date_str}:\n"]
-        for r in rows:
-            start = r["date_start"].strftime("%H:%M")
-            end = r["date_end"].strftime("%H:%M")
-            trainer = f"{r['first_name']} {r['last_name']}"
-            lines.append(f"• {start}–{end} — {r['type_name']} ({r['gym_name']}, {trainer})")
+        for t in trainings:
+            start = t.date_start.strftime("%H:%M")
+            end = t.date_end.strftime("%H:%M")
+
+            # Получим имена из БД для отображения
+            user_repo = UserRepository(pool)
+            gym_repo = GymRepository(pool)
+            type_repo = TrainingTypeRepository(pool)  # ← если есть
+
+            user = await user_repo.get_by_id(t.trainer_id)
+            gym = await gym_repo.find_by_id(t.gym_id)
+            # type_obj = await type_repo.get_by_id(t.type_id)  # если есть
+
+            trainer_name = f"{user.first_name} {user.last_name}" if user else "Неизвестный"
+            gym_name = gym.name if gym else "Неизвестный зал"
+
+            lines.append(f"• {start}–{end} — Тренировка (зал: {gym_name}, тренер: {trainer_name})")
         text = "\n".join(lines)
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[

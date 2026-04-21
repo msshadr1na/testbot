@@ -207,41 +207,30 @@ class TrainingRepository:
         return deleted
     
     async def get_trainings_by_org_and_date_range(self, org_id: int, start_date, end_date):
-        sql = """
-            SELECT t.*, u.first_name, u.last_name, g.name as gym_name, tt.name as type_name
-            FROM training t
-            JOIN users u ON t.trainer_id = u.id
-            JOIN gym g ON t.gym_id = g.id
-            JOIN training_type tt ON t.type_id = tt.id
-            WHERE t.organization_id = $1
-              AND DATE(t.date_start) >= $2 AND DATE(t.date_start) < $3
-            ORDER BY t.date_start
-        """
-        return await self.pool.fetch(sql, org_id, start_date, end_date)
+        """Получить тренировки в организации в диапазоне дат"""
 
-    async def get_trainings_by_org_grouped_by_day(self, org_id: int, start_date, end_date):
-        """Получить тренировки, сгруппированные по дням"""
-        sql = """
-            SELECT DATE(t.date_start) as day,
-                   COUNT(*) as count,
-                   json_agg(json_build_object(
-                       'id', t.id,
-                       'date_start', t.date_start,
-                       'date_end', t.date_end,
-                       'trainer_name', u.first_name || ' ' || u.last_name,
-                       'gym_name', g.name,
-                       'type_name', tt.name
-                   )) as trainings
-            FROM training t
-            JOIN users u ON t.trainer_id = u.id
-            JOIN gym g ON t.gym_id = g.id
-            JOIN training_type tt ON t.type_id = tt.id
-            WHERE t.organization_id = $1
-              AND t.date_start >= $2 AND t.date_start < $3
-            GROUP BY DATE(t.date_start)
-            ORDER BY day
-        """
-        return await self.pool.fetch(sql, org_id, start_date, end_date)
+        sql = """select * from training
+        where organization_id = $1 and date(date_start) >= $2 and date(date_start) < $3
+        order by date_start"""
+        rows = await self.pool.fetch(sql, org_id, start_date, end_date)
+
+        trainings = []
+        for row in rows:
+            training = Training(id=row["id"],organization_id=row["organization_id"], gym_id=row["gym_id"],
+                                trainer_id=row["trainer_id"],date_start=row["date_start"],date_end=row["date_end"],
+                                type_id=row["type_id"], max_clients=row["max_clients"])
+            trainings.append(training)
+        return trainings
+
+    async def get_trainings_counts_by_org_grouped_by_day(self, org_id: int, start_date, end_date):
+        """Получить количество тренировок в день (дата, количество)"""
+
+        sql = """select date(date_start) as day, count(*) as count from training
+        where organization_id = $1 and date(date_start) >= $2 and date(date_start) < $3
+        group by date(date_start) order by day"""
+        rows = await self.pool.fetch(sql, org_id, start_date, end_date)
+
+        return [(row["day"], row["count"]) for row in rows]
 
     async def get_trainings_by_trainer_in_period(self, trainer_id: int, start_date, end_date):
         """Получить тренировки тренера в периоде (для карточки работника)"""

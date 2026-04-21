@@ -32,15 +32,20 @@ class OrganizationService:
         self.training_repository = training_repository
 
     async def get_schedule_for_calendar(self, org_id: int, year: int, month: int):
-        """Возвращает тренировки по дням для календаря"""
+        """Возвращает словарь {дата: количество тренировок} для календаря"""
+
         start_date = date(year, month, 1)
         if month == 12:
             end_date = date(year + 1, 1, 1)
         else:
             end_date = date(year, month + 1, 1)
 
-        rows = await self.training_repository.get_trainings_by_org_grouped_by_day(org_id, start_date, end_date)
-        by_day = {r['day']: r['count'] for r in rows}
+        # Теперь вызываем новую функцию
+        counts = await self.training_repository.get_trainings_counts_by_org_grouped_by_day(
+            org_id, start_date, end_date
+        )
+        # Преобразуем в словарь
+        by_day = {day: count for day, count in counts}
         return by_day
 
     async def get_schedule_for_worker(self, worker_id: int, days_ahead: int = 7):
