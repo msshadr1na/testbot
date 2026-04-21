@@ -243,7 +243,7 @@ def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: d
 
                 week_buttons.append(InlineKeyboardButton(
                     text=text,
-                    callback_data=f"cal_day_{date_key}_{org_id}"
+                    callback_data=f"cal_day_{datetime.date(year, month, day)}_{org_id}"
                 ))
         date_buttons.append(week_buttons)
 

@@ -93,7 +93,7 @@ async def show_day_trainings(callback: CallbackQuery):
         text = "\n".join(lines)
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🗓️ Календарь", callback_data=f"calendar_{org_id}_current")],
+        [InlineKeyboardButton(text="🗓️ Календарь", callback_data=f"calendar_{org_id}")],
         [InlineKeyboardButton(text="Назад", callback_data=f"calendar_{org_id}_{date_str[:7].replace('-', '_')}")]
     ])
 
