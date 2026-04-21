@@ -24,11 +24,16 @@ waiting_for_delete_confirm = set()
 async def show_calendar(callback: CallbackQuery):
     data = callback.data.split("_")
     org_id = int(data[1])
+
     if data[2] == "current":
         now = datetime.now()
         year, month = now.year, now.month
     else:
-        year, month = map(int, data[2].split("-"))
+        parts = data[2].split("-")
+        if len(parts) != 2:
+            await callback.answer("Неверный формат даты", show_alert=True)
+            return
+        year, month = map(int, parts)
 
     pool = await get_db_pool()
     org_service = OrganizationService(
@@ -38,14 +43,18 @@ async def show_calendar(callback: CallbackQuery):
 
     by_day = await org_service.get_schedule_for_calendar(org_id, year, month)
 
-    keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month)
+    keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month, schedule_data=by_day)
     await callback.message.edit_text(f"🗓️ Календарь: {calendar.month_name[month]} {year}", reply_markup=keyboard)
 
 # 🗓️ Навигация по месяцам
 @router.callback_query(F.data.startswith("cal_prev_"))
 async def prev_month(callback: CallbackQuery):
     data = callback.data.split("_")
-    year, month = map(int, data[2].split("-"))
+    parts = data[2].split("-")
+    if len(parts) != 2:
+        await callback.answer("Неверный формат даты", show_alert=True)
+        return
+    year, month = map(int, parts)
     org_id = int(data[3])
     keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month)
     await callback.message.edit_text(f"🗓️ Календарь: {calendar.month_name[month]} {year}", reply_markup=keyboard)
@@ -53,7 +62,11 @@ async def prev_month(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("cal_next_"))
 async def next_month(callback: CallbackQuery):
     data = callback.data.split("_")
-    year, month = map(int, data[2].split("-"))
+    parts = data[2].split("-")
+    if len(parts) != 2:
+        await callback.answer("Неверный формат даты", show_alert=True)
+        return
+    year, month = map(int, parts)
     org_id = int(data[3])
     keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month)
     await callback.message.edit_text(f"🗓️ Календарь: {calendar.month_name[month]} {year}", reply_markup=keyboard)

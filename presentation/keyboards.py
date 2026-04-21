@@ -212,9 +212,14 @@ def build_confirm_delete_client(client_id):
 
 
 #Создание календаря с тренировками
-def build_calendar_keyboard(org_id: int, year: int, month: int):
-    cal = calendar.monthcalendar(year, month)
+def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: dict = None):
+    import calendar
     month_name = calendar.month_name[month]
+    cal = calendar.monthcalendar(year, month)
+
+    # Если передали данные по дням — используем их
+    if schedule_data is None:
+        schedule_data = {}
 
     date_buttons = []
     for week in cal:
@@ -223,12 +228,26 @@ def build_calendar_keyboard(org_id: int, year: int, month: int):
             if day == 0:
                 week_buttons.append(InlineKeyboardButton(text=" ", callback_data="ignore"))
             else:
+                date_key = f"{year}-{month:02d}-{day:02d}"
+                count = schedule_data.get(date_key, 0)
+
+                # Выбираем эмодзи по количеству тренировок
+                if count == 0:
+                    text = str(day)
+                elif 1 <= count <= 2:
+                    text = f"🟡 {day}"
+                elif 3 <= count <= 5:
+                    text = f"🟠 {day}"
+                else:
+                    text = f"🔴 {day}"
+
                 week_buttons.append(InlineKeyboardButton(
-                    text=str(day),
-                    callback_data=f"cal_day_{year}-{month:02d}-{day:02d}_{org_id}"
+                    text=text,
+                    callback_data=f"cal_day_{date_key}_{org_id}"
                 ))
         date_buttons.append(week_buttons)
 
+    # ... остальная часть клавиатуры (навигация) ...
     prev_month = (month - 2) % 12 + 1
     prev_year = year if month > 1 else year - 1
     next_month = (month % 12) + 1
@@ -236,9 +255,9 @@ def build_calendar_keyboard(org_id: int, year: int, month: int):
 
     nav_buttons = [
         [
-            InlineKeyboardButton(text="<=", callback_data=f"cal_prev_{prev_year}-{prev_month:02d}_{org_id}"),
+            InlineKeyboardButton(text="◀️", callback_data=f"cal_prev_{prev_year}-{prev_month:02d}_{org_id}"),
             InlineKeyboardButton(text=month_name, callback_data="ignore"),
-            InlineKeyboardButton(text="=>", callback_data=f"cal_next_{next_year}-{next_month:02d}_{org_id}")
+            InlineKeyboardButton(text="▶️", callback_data=f"cal_next_{next_year}-{next_month:02d}_{org_id}")
         ],
         [
             InlineKeyboardButton(text="📊 Анализ", callback_data=f"analytics_{org_id}"),
