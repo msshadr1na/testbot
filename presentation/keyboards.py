@@ -208,18 +208,20 @@ def build_confirm_delete_client(client_id):
 
 
 
-
+def build_manage_events_keyboard(org_id):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🗓️ Календарь", callback_data=f"calendar_{org_id}")],
+        [InlineKeyboardButton(text="📋 Список", callback_data=f"sched_list_{org_id}_0")],
+        [InlineKeyboardButton(text="Создать тренировку", callback_data=f"add_training_{org_id}")],
+        [InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")]
+    ])
+    return keyboard
 
 
 #Создание календаря с тренировками
 def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: dict = None):
-    import calendar
     month_name = calendar.month_name[month]
     cal = calendar.monthcalendar(year, month)
-
-    # Если передали данные по дням — используем их
-    if schedule_data is None:
-        schedule_data = {}
 
     date_buttons = []
     for week in cal:
@@ -228,10 +230,8 @@ def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: d
             if day == 0:
                 week_buttons.append(InlineKeyboardButton(text=" ", callback_data="ignore"))
             else:
-                date_key = f"{year}-{month:02d}-{day:02d}"
-                count = schedule_data.get(date_key, 0)
+                count = schedule_data.get(datetime.date(year, month, day),0)
 
-                # Выбираем эмодзи по количеству тренировок
                 if count == 0:
                     text = str(day)
                 elif 1 <= count <= 2:
@@ -299,7 +299,7 @@ def build_schedule_list_keyboard(org_id: int, trainings_by_day: dict, page: int,
         buttons.append(nav_buttons)
 
     buttons.append([
-        InlineKeyboardButton(text="🗓️ Календарь", callback_data=f"calendar_{org_id}_current"),
+        InlineKeyboardButton(text="🗓️ Календарь", callback_data=f"calendar_{org_id}"),
         InlineKeyboardButton(text="📊 Анализ", callback_data=f"analytics_{org_id}")
     ])
     buttons.append([InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")])

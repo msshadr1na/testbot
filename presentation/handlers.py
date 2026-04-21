@@ -15,36 +15,20 @@ import calendar
 
 router = Router()
 
-waiting_for_name = set()
-waiting_for_org_num = set()
-waiting_for_delete_confirm = set()
-
-# 📅 Открытие календаря
 @router.callback_query(F.data.startswith("calendar_"))
 async def show_calendar(callback: CallbackQuery):
-    data = callback.data.split("_")
-    org_id = int(data[1])
-
-    if data[2] == "current":
-        now = datetime.now()
-        year, month = now.year, now.month
-    else:
-        parts = data[2].split("-")
-        if len(parts) != 2:
-            await callback.answer("Неверный формат даты", show_alert=True)
-            return
-        year, month = map(int, parts)
+    org_id = int(callback.data.split("_")[-1])
+    now = datetime.now()
+    year, month = now.year, now.month
 
     pool = await get_db_pool()
-    org_service = OrganizationService(
-        OrganizationRepository(pool), OrganizationMemberRepository(pool),
-        InviteRepository(pool), GymRepository(pool), TrainingRepository(pool)
-    )
-
+    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool),
+                                      InviteRepository(pool), GymRepository(pool), TrainingRepository(pool))
     by_day = await org_service.get_schedule_for_calendar(org_id, year, month)
 
     keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month, schedule_data=by_day)
     await callback.message.edit_text(f"🗓️ Календарь: {calendar.month_name[month]} {year}", reply_markup=keyboard)
+    
 
 # 🗓️ Навигация по месяцам
 @router.callback_query(F.data.startswith("cal_prev_"))
@@ -96,14 +80,11 @@ async def show_day_trainings(callback: CallbackQuery):
             start = t.date_start.strftime("%H:%M")
             end = t.date_end.strftime("%H:%M")
 
-            # Получим имена из БД для отображения
             user_repo = UserRepository(pool)
             gym_repo = GymRepository(pool)
-            type_repo = TrainingTypeRepository(pool)  # ← если есть
 
             user = await user_repo.get_by_id(t.trainer_id)
             gym = await gym_repo.find_by_id(t.gym_id)
-            # type_obj = await type_repo.get_by_id(t.type_id)  # если есть
 
             trainer_name = f"{user.first_name} {user.last_name}" if user else "Неизвестный"
             gym_name = gym.name if gym else "Неизвестный зал"
@@ -178,13 +159,7 @@ async def show_day_detail(callback: CallbackQuery):
 async def manage_events(callback: CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
 
-    # Показываем меню выбора: календарь или список
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🗓️ Календарь", callback_data=f"calendar_{org_id}_current")],
-        [InlineKeyboardButton(text="📋 Список", callback_data=f"sched_list_{org_id}_0")],
-        [InlineKeyboardButton(text="📊 Анализ (в разработке)", callback_data="ignore")],
-        [InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")]
-    ])
+    keyboard = presentation.keyboards.build_manage_events_keyboard(org_id)
 
     await callback.message.edit_text("📅 Управление мероприятиями", reply_markup=keyboard)
 
@@ -335,7 +310,6 @@ async def as_org(callback: CallbackQuery, state):
 @router.callback_query(F.data == "create_org")
 async def start_create_org(callback: types.CallbackQuery,state: FSMContext):
     user_id = callback.from_user.id
-    waiting_for_name.add(user_id)
     await callback.message.delete()
     
     await callback.message.answer("Введите название для будущей организации:")

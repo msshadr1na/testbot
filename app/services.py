@@ -42,8 +42,7 @@ class OrganizationService:
 
         # Теперь вызываем новую функцию
         counts = await self.training_repository.get_trainings_counts_by_org_grouped_by_day(
-            org_id, start_date, end_date
-        )
+            org_id, start_date, end_date)
         # Преобразуем в словарь
         by_day = {day: count for day, count in counts}
         return by_day
