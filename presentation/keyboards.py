@@ -206,8 +206,6 @@ def build_confirm_delete_client(client_id):
     return keyboard
 
 
-
-
 def build_manage_events_keyboard(org_id):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🗓️ Календарь", callback_data=f"calendar_{org_id}")],
@@ -218,8 +216,11 @@ def build_manage_events_keyboard(org_id):
     return keyboard
 
 
-#Создание календаря с тренировками
-def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: dict = None):
+def build_calendar_keyboard(org_id: int, year: int, month: int, schedule: dict = None):
+
+    if schedule_data is None:
+        schedule_data = {}
+
     month_name = calendar.month_name[month]
     cal = calendar.monthcalendar(year, month)
 
@@ -230,7 +231,8 @@ def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: d
             if day == 0:
                 week_buttons.append(InlineKeyboardButton(text=" ", callback_data="ignore"))
             else:
-                count = schedule_data.get(date(year,month,day),0)
+                date_key = date(year, month, day)
+                count = schedule_data.get(date_key, 0)
 
                 if count == 0:
                     text = str(day)
@@ -243,11 +245,10 @@ def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: d
 
                 week_buttons.append(InlineKeyboardButton(
                     text=text,
-                    callback_data=f"cal_day_{date(year, month, day)}_{org_id}"
+                    callback_data=f"cal_day_{date_key.strftime('%Y-%m-%d')}_{org_id}"
                 ))
         date_buttons.append(week_buttons)
 
-    # ... остальная часть клавиатуры (навигация) ...
     prev_month = (month - 2) % 12 + 1
     prev_year = year if month > 1 else year - 1
     next_month = (month % 12) + 1
@@ -270,13 +271,11 @@ def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: d
 
     return InlineKeyboardMarkup(inline_keyboard=date_buttons + nav_buttons)
 
+
 def build_schedule_list_keyboard(org_id: int, trainings_by_day: dict, page: int, total_pages: int):
     buttons = []
-
-    # Сортируем дни
     sorted_days = sorted(trainings_by_day.keys())
 
-    # Показываем 3 дня за раз
     start_idx = page * 3
     end_idx = min(start_idx + 3, len(sorted_days))
     current_days = sorted_days[start_idx:end_idx]
@@ -288,7 +287,6 @@ def build_schedule_list_keyboard(org_id: int, trainings_by_day: dict, page: int,
             callback_data=f"day_detail_{day.strftime('%Y-%m-%d')}_{org_id}"
         )])
 
-    # Навигация
     nav_buttons = []
     if page > 0:
         nav_buttons.append(InlineKeyboardButton(text="◀️", callback_data=f"sched_list_{org_id}_{page - 1}"))

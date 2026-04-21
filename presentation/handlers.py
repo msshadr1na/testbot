@@ -18,19 +18,21 @@ router = Router()
 @router.callback_query(F.data.startswith("calendar_"))
 async def show_calendar(callback: CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
+
     now = datetime.now()
     year, month = now.year, now.month
 
     pool = await get_db_pool()
-    org_service = OrganizationService(OrganizationRepository(pool), OrganizationMemberRepository(pool),
-                                      InviteRepository(pool), GymRepository(pool), TrainingRepository(pool))
+    org_service = OrganizationService(
+        OrganizationRepository(pool), OrganizationMemberRepository(pool),
+        InviteRepository(pool), GymRepository(pool), TrainingRepository(pool)
+    )
     by_day = await org_service.get_schedule_for_calendar(org_id, year, month)
 
     keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month, schedule_data=by_day)
     await callback.message.edit_text(f"🗓️ Календарь: {calendar.month_name[month]} {year}", reply_markup=keyboard)
-    
 
-# 🗓️ Навигация по месяцам
+
 @router.callback_query(F.data.startswith("cal_prev_"))
 async def prev_month(callback: CallbackQuery):
     data = callback.data.split("_")
@@ -40,8 +42,15 @@ async def prev_month(callback: CallbackQuery):
         return
     year, month = map(int, parts)
     org_id = int(data[3])
-    keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month)
+    pool = await get_db_pool()
+    org_service = OrganizationService(
+        OrganizationRepository(pool), OrganizationMemberRepository(pool),
+        InviteRepository(pool), GymRepository(pool), TrainingRepository(pool)
+    )
+    by_day = await org_service.get_schedule_for_calendar(org_id, year, month)
+    keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month, schedule_data=by_day)
     await callback.message.edit_text(f"🗓️ Календарь: {calendar.month_name[month]} {year}", reply_markup=keyboard)
+
 
 @router.callback_query(F.data.startswith("cal_next_"))
 async def next_month(callback: CallbackQuery):
@@ -52,10 +61,16 @@ async def next_month(callback: CallbackQuery):
         return
     year, month = map(int, parts)
     org_id = int(data[3])
-    keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month)
+    pool = await get_db_pool()
+    org_service = OrganizationService(
+        OrganizationRepository(pool), OrganizationMemberRepository(pool),
+        InviteRepository(pool), GymRepository(pool), TrainingRepository(pool)
+    )
+    by_day = await org_service.get_schedule_for_calendar(org_id, year, month)
+    keyboard = presentation.keyboards.build_calendar_keyboard(org_id, year, month, schedule_data=by_day)
     await callback.message.edit_text(f"🗓️ Календарь: {calendar.month_name[month]} {year}", reply_markup=keyboard)
 
-# 📅 Показ тренировок на день
+
 @router.callback_query(F.data.startswith("cal_day_"))
 async def show_day_trainings(callback: CallbackQuery):
     parts = callback.data.split("_")
@@ -67,7 +82,6 @@ async def show_day_trainings(callback: CallbackQuery):
     pool = await get_db_pool()
     training_repo = TrainingRepository(pool)
 
-    # Получаем объекты Training
     trainings = await training_repo.get_trainings_by_org_and_date_range(
         org_id, target_date, target_date + timedelta(days=1)
     )
@@ -99,7 +113,7 @@ async def show_day_trainings(callback: CallbackQuery):
 
     await callback.message.edit_text(text, reply_markup=keyboard)
 
-# 📋 Список расписания
+
 @router.callback_query(F.data.startswith("sched_list_"))
 async def show_schedule_list(callback: CallbackQuery):
     parts = callback.data.split("_")
@@ -108,17 +122,18 @@ async def show_schedule_list(callback: CallbackQuery):
 
     pool = await get_db_pool()
     training_repo = TrainingRepository(pool)
-    rows = await training_repo.get_trainings_by_org_grouped_by_day(
+
+    counts = await training_repo.get_trainings_counts_by_org_grouped_by_day(
         org_id, datetime.now().date(), datetime.now().date() + timedelta(days=30)
     )
+    trainings_by_day = {day: count for day, count in counts}
 
-    by_day = {r['day']: r['trainings'] for r in rows}
-    total_pages = (len(by_day) + 2) // 3
+    total_pages = (len(trainings_by_day) + 2) // 3
 
-    keyboard = presentation.keyboards.build_schedule_list_keyboard(org_id, by_day, page, total_pages)
+    keyboard = presentation.keyboards.build_schedule_list_keyboard(org_id, trainings_by_day, page, total_pages)
     await callback.message.edit_text("📋 Расписание по дням:", reply_markup=keyboard)
 
-# 📅 Детали дня (из списка)
+
 @router.callback_query(F.data.startswith("day_detail_"))
 async def show_day_detail(callback: CallbackQuery):
     prefix, org_part = callback.data.rsplit("_", 1)
@@ -126,26 +141,33 @@ async def show_day_detail(callback: CallbackQuery):
     parts = prefix.split("_")
     date_str = parts[2]  # '2026-04-21'
 
-    # Преобразуем строку в объект date
     target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
     pool = await get_db_pool()
     training_repo = TrainingRepository(pool)
 
-    # Передаём date, а не строку
-    rows = await training_repo.get_trainings_by_org_and_date_range(
+    trainings = await training_repo.get_trainings_by_org_and_date_range(
         org_id, target_date, target_date + timedelta(days=1)
     )
 
-    if not rows:
+    if not trainings:
         text = f"📅 {date_str}: нет тренировок."
     else:
         lines = [f"📅 {date_str}:\n"]
-        for r in rows:
-            start = r["date_start"].strftime("%H:%M")
-            end = r["date_end"].strftime("%H:%M")
-            trainer = f"{r['first_name']} {r['last_name']}"
-            lines.append(f"• {start}–{end} — {r['type_name']} ({r['gym_name']}, {trainer})")
+        for t in trainings:
+            start = t.date_start.strftime("%H:%M")
+            end = t.date_end.strftime("%H:%M")
+
+            user_repo = UserRepository(pool)
+            gym_repo = GymRepository(pool)
+
+            user = await user_repo.get_by_id(t.trainer_id)
+            gym = await gym_repo.find_by_id(t.gym_id)
+
+            trainer_name = f"{user.first_name} {user.last_name}" if user else "Неизвестный"
+            gym_name = gym.name if gym else "Неизвестный зал"
+
+            lines.append(f"• {start}–{end} — Тренировка (зал: {gym_name}, тренер: {trainer_name})")
         text = "\n".join(lines)
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -155,16 +177,12 @@ async def show_day_detail(callback: CallbackQuery):
 
     await callback.message.edit_text(text, reply_markup=keyboard)
 
+
 @router.callback_query(F.data.startswith("mng_events_"))
 async def manage_events(callback: CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
-
     keyboard = presentation.keyboards.build_manage_events_keyboard(org_id)
-
     await callback.message.edit_text("📅 Управление мероприятиями", reply_markup=keyboard)
-
-
-
 
 
 
