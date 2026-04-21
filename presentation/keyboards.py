@@ -21,13 +21,6 @@ async def build_org_keyboard(orgs,names):
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
-#Клавиатура при выборе конкретной организации для управления
-def build_choose_org_keyboard(orgs,names):
-    buttons = [[InlineKeyboardButton(text=name, callback_data=f"choose_org_{org_id}")] for org_id, name in zip(orgs,names)]
-    buttons.append([InlineKeyboardButton(text="Назад", callback_data="owner")])
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-    return keyboard
-
 #Клавиатура для управления организацией
 def build_manage_org_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Настройки", callback_data=f"edit_org_{org_id}")],
@@ -113,7 +106,7 @@ def build_edit_org_keyboard(org_id):
 def build_manage_places_keyboard(org_id):
     buttons = [[InlineKeyboardButton(text="Просмотреть помещения", callback_data=f"list_places_{org_id}")],
                [InlineKeyboardButton(text="Добавить помещение", callback_data=f"add_place_{org_id}")],
-               [InlineKeyboardButton(text="Назад", callback_data=f"edit_org_{org_id}")]]
+               [InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 

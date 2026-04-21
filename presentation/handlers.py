@@ -105,7 +105,7 @@ async def start_create_note(message: types.Message):
 @router.callback_query(F.data.startswith("start"))
 async def cancel_delete_org(callback: CallbackQuery):
     keyboard = presentation.keyboards.build_start_keyboard()
-    await callback.message.answer("Войти как:", reply_markup=keyboard)
+    await callback.message.edit_text("Войти как:", reply_markup=keyboard)
 
 
 @router.callback_query(F.data.startswith("del_org_"))
