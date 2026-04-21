@@ -534,6 +534,13 @@ async def confirm_delete_client(callback, state: FSMContext):
      keyboard = presentation.keyboards.build_manage_clients_keyboard(org_id)
      await callback.message.answer(f"Управление клиентами", reply_markup=keyboard)
 
+### Раздел Мероприятия
+@router.callback_query(F.data.startswith("manage_events_"))
+async def manage_events(callback: types.CallbackQuery):
+     org_id = int(callback.data.split("_")[-1])
+
+     keyboard = presentation.keyboards.build_manage_events_keyboard(org_id)
+     await callback.message.edit_text("Управление мероприятиями", reply_markup=keyboard)
 
 # Текстовые сообщения
 

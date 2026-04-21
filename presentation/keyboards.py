@@ -27,7 +27,7 @@ def build_manage_org_keyboard(org_id):
                [InlineKeyboardButton(text="Помещения", callback_data=f"manage_places_{org_id}")],
                [InlineKeyboardButton(text="Работники", callback_data=f"mng_workers_{org_id}")],
                [InlineKeyboardButton(text="Клиенты", callback_data=f"mng_clients_{org_id}")],
-               [InlineKeyboardButton(text="Мероприятия", callback_data=f"mng_events_{org_id}")],
+               [InlineKeyboardButton(text="Мероприятия", callback_data=f"manage_events_{org_id}")],
                [InlineKeyboardButton(text="Назад", callback_data="owner")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
@@ -200,4 +200,13 @@ def build_confirm_delete_client(client_id):
     buttons = [[InlineKeyboardButton(text="Удалить", callback_data=f"client_confirm_del_{client_id}")],
                [InlineKeyboardButton(text="Отмена", callback_data=f"client_chosen_{client_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
+    return keyboard
+
+def build_manage_events_keyboard(org_id):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🗓️ Календарь", callback_data=f"calendar_{org_id}")],
+        [InlineKeyboardButton(text="📋 Список", callback_data=f"sched_list_{org_id}_0")],
+        [InlineKeyboardButton(text="Создать тренировку", callback_data=f"add_training_{org_id}")],
+        [InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")]
+    ])
     return keyboard
