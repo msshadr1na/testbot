@@ -61,14 +61,19 @@ async def next_month(callback: CallbackQuery):
 # 📅 Показ тренировок на день
 @router.callback_query(F.data.startswith("cal_day_"))
 async def show_day_trainings(callback: CallbackQuery):
-    data = callback.data.split("_")
-    date_str = data[2]  # YYYY-MM-DD
-    org_id = int(data[3])
+    parts = callback.data.split("_")
+    date_str = parts[2]  # '2026-04-21'
+    org_id = int(parts[3])
+
+    # Преобразуем строку в date
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
     pool = await get_db_pool()
     training_repo = TrainingRepository(pool)
+
+    # Передаём date, а не строку
     rows = await training_repo.get_trainings_by_org_and_date_range(
-        org_id, date_str, (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).date()
+        org_id, target_date, target_date + timedelta(days=1)
     )
 
     if not rows:
