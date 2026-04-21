@@ -560,8 +560,7 @@ async def handle_create_organization(message: types.Message, state: FSMContext):
 
     if is_created is None:
         organization = await organization_service.create_organization(user, name)
-        await message.answer(f"Организация {name} успешно создана")
-        await message.answer("Введите название для помещения новой организации:\n\n*Можно будет добавить ещё помещения в разделе управления организацией:")
+        await message.answer("Введите название для основного(первого) помещения новой организации:\n\n*Можно будет добавить ещё помещения в разделе управления организацией:")
         await state.set_state(CreatingOrganizationState.place_name)
         await state.update_data(org_id = organization.id)
     else:
@@ -582,8 +581,9 @@ async def handle_create_first_place(message: types.Message, state: FSMContext):
 
     user = await user_service.find_by_tgid(user_id)
     org_id = data.get("org_id")
+    org = await organization_service.get_by_id(org_id)
     new_place = await organization_service.create_place(org_id,name)
-    await message.answer(f"Помещение {name} успешно создано")
+    await message.answer(f"Организация {org.name} с помещением {name} успешно создана")
     keyboard = presentation.keyboards.build_manage_org_keyboard(org_id)
     await message.answer("Управление организацией:", reply_markup=keyboard)
     await state.set_state(UserState.menu)
