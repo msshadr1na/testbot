@@ -111,9 +111,10 @@ async def show_schedule_list(callback: CallbackQuery):
 # 📅 Детали дня (из списка)
 @router.callback_query(F.data.startswith("day_detail_"))
 async def show_day_detail(callback: CallbackQuery):
-    data = callback.data.split("_")
-    date_str = data[1]  # YYYY-MM-DD
-    org_id = int(data[2])
+    prefix, org_part = callback.data.rsplit("_", 1)
+    org_id = int(org_part)
+    parts = prefix.split("_")
+    date_str = parts[2]
 
     pool = await get_db_pool()
     training_repo = TrainingRepository(pool)
