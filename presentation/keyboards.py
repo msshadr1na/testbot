@@ -216,8 +216,7 @@ def build_manage_events_keyboard(org_id):
     return keyboard
 
 
-def build_calendar_keyboard(org_id: int, year: int, month: int, schedule: dict = None):
-
+def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: dict = None):
     if schedule_data is None:
         schedule_data = {}
 

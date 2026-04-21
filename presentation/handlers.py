@@ -15,6 +15,21 @@ import calendar
 
 router = Router()
 
+from datetime import datetime, timedelta
+from aiogram import Router, types, F
+from aiogram.filters import CommandStart, Command
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message
+from app.services import OrganizationService
+from app.models import Training
+from infrastructure.repositories import (
+    TrainingRepository, OrganizationRepository, OrganizationMemberRepository,
+    InviteRepository, GymRepository, UserRepository
+)
+from infrastructure.database import get_db_pool
+import presentation.keyboards
+
+router = Router()
+
 @router.callback_query(F.data.startswith("calendar_"))
 async def show_calendar(callback: CallbackQuery):
     org_id = int(callback.data.split("_")[-1])
