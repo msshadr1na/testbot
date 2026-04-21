@@ -1,6 +1,6 @@
 from aiogram.types import inline_keyboard_button, keyboard_button, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from app.models import User
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from collections import defaultdict
 import calendar
 
@@ -230,7 +230,7 @@ def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: d
             if day == 0:
                 week_buttons.append(InlineKeyboardButton(text=" ", callback_data="ignore"))
             else:
-                count = schedule_data.get(datetime.date(year, month, day),0)
+                count = schedule_data.get(date(year,month,day),0)
 
                 if count == 0:
                     text = str(day)
@@ -243,7 +243,7 @@ def build_calendar_keyboard(org_id: int, year: int, month: int, schedule_data: d
 
                 week_buttons.append(InlineKeyboardButton(
                     text=text,
-                    callback_data=f"cal_day_{datetime.date(year, month, day)}_{org_id}"
+                    callback_data=f"cal_day_{date(year, month, day)}_{org_id}"
                 ))
         date_buttons.append(week_buttons)
 
