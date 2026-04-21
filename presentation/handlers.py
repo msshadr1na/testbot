@@ -114,12 +114,17 @@ async def show_day_detail(callback: CallbackQuery):
     prefix, org_part = callback.data.rsplit("_", 1)
     org_id = int(org_part)
     parts = prefix.split("_")
-    date_str = parts[2]
+    date_str = parts[2]  # '2026-04-21'
+
+    # Преобразуем строку в объект date
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
     pool = await get_db_pool()
     training_repo = TrainingRepository(pool)
+
+    # Передаём date, а не строку
     rows = await training_repo.get_trainings_by_org_and_date_range(
-        org_id, date_str, (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).date()
+        org_id, target_date, target_date + timedelta(days=1)
     )
 
     if not rows:

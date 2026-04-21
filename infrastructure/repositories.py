@@ -207,7 +207,6 @@ class TrainingRepository:
         return deleted
     
     async def get_trainings_by_org_and_date_range(self, org_id: int, start_date, end_date):
-        """Получить тренировки в организации в диапазоне дат"""
         sql = """
             SELECT t.*, u.first_name, u.last_name, g.name as gym_name, tt.name as type_name
             FROM training t
@@ -215,7 +214,7 @@ class TrainingRepository:
             JOIN gym g ON t.gym_id = g.id
             JOIN training_type tt ON t.type_id = tt.id
             WHERE t.organization_id = $1
-              AND t.date_start >= $2 AND t.date_start < $3
+              AND DATE(t.date_start) >= $2 AND DATE(t.date_start) < $3
             ORDER BY t.date_start
         """
         return await self.pool.fetch(sql, org_id, start_date, end_date)
