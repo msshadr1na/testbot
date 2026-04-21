@@ -1,5 +1,8 @@
 from aiogram.types import inline_keyboard_button, keyboard_button, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from app.models import User
+from datetime import datetime, timedelta
+from collections import defaultdict
+import calendar
 
 def build_start_keyboard():
     buttons =[[InlineKeyboardButton(text="Организатор", callback_data="owner")],
@@ -201,3 +204,85 @@ def build_confirm_delete_client(client_id):
                [InlineKeyboardButton(text="Отмена", callback_data=f"client_chosen_{client_id}")]]
     keyboard = InlineKeyboardMarkup(inline_keyboard = buttons)
     return keyboard
+
+
+
+
+
+
+
+#Создание календаря с тренировками
+def build_calendar_keyboard(org_id: int, year: int, month: int):
+    cal = calendar.monthcalendar(year, month)
+    month_name = calendar.month_name[month]
+
+    date_buttons = []
+    for week in cal:
+        week_buttons = []
+        for day in week:
+            if day == 0:
+                week_buttons.append(InlineKeyboardButton(text=" ", callback_data="ignore"))
+            else:
+                week_buttons.append(InlineKeyboardButton(
+                    text=str(day),
+                    callback_data=f"cal_day_{year}-{month:02d}-{day:02d}_{org_id}"
+                ))
+        date_buttons.append(week_buttons)
+
+    prev_month = (month - 2) % 12 + 1
+    prev_year = year if month > 1 else year - 1
+    next_month = (month % 12) + 1
+    next_year = year if month < 12 else year + 1
+
+    nav_buttons = [
+        [
+            InlineKeyboardButton(text="<=", callback_data=f"cal_prev_{prev_year}-{prev_month:02d}_{org_id}"),
+            InlineKeyboardButton(text=month_name, callback_data="ignore"),
+            InlineKeyboardButton(text="=>", callback_data=f"cal_next_{next_year}-{next_month:02d}_{org_id}")
+        ],
+        [
+            InlineKeyboardButton(text="📊 Анализ", callback_data=f"analytics_{org_id}"),
+            InlineKeyboardButton(text="📋 Список", callback_data=f"sched_list_{org_id}_0")
+        ],
+        [
+            InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")
+        ]
+    ]
+
+    return InlineKeyboardMarkup(inline_keyboard=date_buttons + nav_buttons)
+
+def build_schedule_list_keyboard(org_id: int, trainings_by_day: dict, page: int, total_pages: int):
+    buttons = []
+
+    # Сортируем дни
+    sorted_days = sorted(trainings_by_day.keys())
+
+    # Показываем 3 дня за раз
+    start_idx = page * 3
+    end_idx = min(start_idx + 3, len(sorted_days))
+    current_days = sorted_days[start_idx:end_idx]
+
+    for day in current_days:
+        day_str = day.strftime("%d.%m")
+        buttons.append([InlineKeyboardButton(
+            text=f"📅 {day_str}",
+            callback_data=f"day_detail_{day.strftime('%Y-%m-%d')}_{org_id}"
+        )])
+
+    # Навигация
+    nav_buttons = []
+    if page > 0:
+        nav_buttons.append(InlineKeyboardButton(text="◀️", callback_data=f"sched_list_{org_id}_{page - 1}"))
+    if page < total_pages - 1:
+        nav_buttons.append(InlineKeyboardButton(text="▶️", callback_data=f"sched_list_{org_id}_{page + 1}"))
+
+    if nav_buttons:
+        buttons.append(nav_buttons)
+
+    buttons.append([
+        InlineKeyboardButton(text="🗓️ Календарь", callback_data=f"calendar_{org_id}_current"),
+        InlineKeyboardButton(text="📊 Анализ", callback_data=f"analytics_{org_id}")
+    ])
+    buttons.append([InlineKeyboardButton(text="Назад", callback_data=f"choose_org_{org_id}")])
+
+    return InlineKeyboardMarkup(inline_keyboard=buttons)

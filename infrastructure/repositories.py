@@ -206,6 +206,57 @@ class TrainingRepository:
 
         return deleted
 
+async def get_trainings_by_org_and_date_range(self, org_id: int, start_date, end_date):
+    """Получить тренировки в организации в диапазоне дат"""
+    sql = """
+        SELECT t.*, u.first_name, u.last_name, g.name as gym_name, tt.name as type_name
+        FROM training t
+        JOIN users u ON t.trainer_id = u.id
+        JOIN gym g ON t.gym_id = g.id
+        JOIN training_type tt ON t.type_id = tt.id
+        WHERE t.organization_id = $1
+          AND t.date_start >= $2 AND t.date_start < $3
+        ORDER BY t.date_start
+    """
+    return await self.pool.fetch(sql, org_id, start_date, end_date)
+
+async def get_trainings_by_org_grouped_by_day(self, org_id: int, start_date, end_date):
+    """Получить тренировки, сгруппированные по дням"""
+    sql = """
+        SELECT DATE(t.date_start) as day,
+               COUNT(*) as count,
+               json_agg(json_build_object(
+                   'id', t.id,
+                   'date_start', t.date_start,
+                   'date_end', t.date_end,
+                   'trainer_name', u.first_name || ' ' || u.last_name,
+                   'gym_name', g.name,
+                   'type_name', tt.name
+               )) as trainings
+        FROM training t
+        JOIN users u ON t.trainer_id = u.id
+        JOIN gym g ON t.gym_id = g.id
+        JOIN training_type tt ON t.type_id = tt.id
+        WHERE t.organization_id = $1
+          AND t.date_start >= $2 AND t.date_start < $3
+        GROUP BY DATE(t.date_start)
+        ORDER BY day
+    """
+    return await self.pool.fetch(sql, org_id, start_date, end_date)
+
+async def get_trainings_by_trainer_in_period(self, trainer_id: int, start_date, end_date):
+    """Получить тренировки тренера в периоде (для карточки работника)"""
+    sql = """
+        SELECT t.*, g.name as gym_name, tt.name as type_name
+        FROM training t
+        JOIN gym g ON t.gym_id = g.id
+        JOIN training_type tt ON t.type_id = tt.id
+        WHERE t.trainer_id = $1
+          AND t.date_start >= $2 AND t.date_start < $3
+        ORDER BY t.date_start
+    """
+    return await self.pool.fetch(sql, trainer_id, start_date, end_date)
+
 class BookingRepository:
     def __init__(self,pool):
         self.pool = pool

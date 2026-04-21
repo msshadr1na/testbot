@@ -1,5 +1,7 @@
 from infrastructure.repositories import BookingRepository, UserRepository, SettingsRepository, OrganizationRepository, OrganizationMemberRepository, TrainingRepository, InviteRepository,GymRepository
 from app.models import Settings, User, Organization, OrganizationMember
+import calendar
+from datetime import date
 
 class UserService:
     def __init__(self, user_repository : UserRepository, settings_repository: SettingsRepository):
@@ -19,11 +21,40 @@ class UserService:
         return await self.user_repository.create(newUser)
 
 class OrganizationService:
-    def __init__(self, organization_repository : OrganizationRepository, organizationMember_repository : OrganizationMemberRepository, invite_repository: InviteRepository, gym_repository: GymRepository):
+    def __init__(self, organization_repository : OrganizationRepository, 
+                 organizationMember_repository : OrganizationMemberRepository, 
+                 invite_repository: InviteRepository, gym_repository: GymRepository, 
+                 training_repository: TrainingRepository):
         self.organization_repository = organization_repository
         self.organizationMember_repository = organizationMember_repository
         self.invite_repository = invite_repository
         self.gym_repository = gym_repository
+        self.training_repository = training_repository
+
+    async def get_schedule_for_calendar(self, org_id: int, year: int, month: int):
+        """Возвращает тренировки по дням для календаря"""
+        start_date = date(year, month, 1)
+        if month == 12:
+            end_date = date(year + 1, 1, 1)
+        else:
+            end_date = date(year, month + 1, 1)
+
+        rows = await self.training_repository.get_trainings_by_org_grouped_by_day(org_id, start_date, end_date)
+        by_day = {r['day']: r['count'] for r in rows}
+        return by_day
+
+    async def get_schedule_for_worker(self, worker_id: int, days_ahead: int = 7):
+        """Возвращает тренировки работника на N дней вперёд"""
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        future = now + timedelta(days=days_ahead)
+        rows = await self.training_repository.get_trainings_by_trainer_in_period(worker_id, now, future)
+        return rows
+
+
+
+
+
 
 # Поиск организации по названию
     async def find_by_name(self, name):
