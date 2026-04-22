@@ -14,7 +14,16 @@ async def health():
 async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
     org_service = create_organization_service(db)
     user_service = create_user_service(db)
+
+    # WebApp иногда передает Telegram ID, а иногда внутренний user.id.
+    # Поддерживаем оба варианта, чтобы список организаций стабильно открывался.
     user = await user_service.find_by_tgid(user_id)
+    if user is None:
+        user = await user_service.get_by_id(user_id)
+
+    if user is None:
+        return {"organizations": []}
+
     org_ids,names = await org_service.show_owned_orgs(user.id)
 
     organizations = []
