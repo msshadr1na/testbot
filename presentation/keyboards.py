@@ -8,7 +8,7 @@ def build_start_keyboard():
     buttons =[[InlineKeyboardButton(text="Организатор", callback_data="owner")],
               [InlineKeyboardButton(text="Работник", callback_data="worker")],
               [InlineKeyboardButton(text="Клиент", callback_data="client")], 
-              [InlineKeyboardButton(text="Управление в Web App", web_app=WebAppInfo(url="https://your-domain.com:8000/app"))]]
+              [InlineKeyboardButton(text="Управление в Web App", web_app=WebAppInfo(url="https://2.26.113.88:8000/app"))]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
