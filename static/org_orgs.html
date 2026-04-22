@@ -190,21 +190,26 @@
     <script>
         const tg = Telegram.WebApp;
         tg.ready();
+        console.log("Telegram WebApp ready");
 
         const user = tg.initDataUnsafe?.user;
+        console.log("User from Telegram:", user);
         if (!user) {
             document.getElementById("org-list").innerHTML =
                 '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя</div>';
             return;
         }
-
+        console.log("Sending request with user_id:", user.id);
         // Запрос к твоему API
         fetch(`/api/v1/org/organizations?user_id=${user.id}`)
             .then(res => {
+                console.log("Response status:", res.status);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
                 return res.json();
             })
             .then(data => {
+                console.log("Received data:", data);
                 const container = document.getElementById("org-list");
 
                 if (data.organizations.length === 0) {
