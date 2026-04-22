@@ -1,7 +1,7 @@
 
 from aiogram import Router, types, F
 from aiogram.filters import CommandStart, Command
-from aiogram.types import inline_keyboard_button, reply_keyboard_markup, reply_markup_union, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message
+from aiogram.types import inline_keyboard_button, reply_keyboard_markup, reply_markup_union, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message,WebAppInfo
 from asyncpg import pool
 from app.models import Gym, Organization, Role, User
 from app.services import OrganizationMemberRepository, TrainingRepository, UserService, OrganizationService

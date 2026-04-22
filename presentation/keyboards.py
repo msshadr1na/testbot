@@ -1,4 +1,4 @@
-from aiogram.types import inline_keyboard_button, keyboard_button, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from aiogram.types import inline_keyboard_button, keyboard_button, users_shared, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, WebAppInfo
 from app.models import User
 from datetime import datetime, timedelta, date
 from collections import defaultdict
@@ -7,7 +7,8 @@ import calendar
 def build_start_keyboard():
     buttons =[[InlineKeyboardButton(text="Организатор", callback_data="owner")],
               [InlineKeyboardButton(text="Работник", callback_data="worker")],
-              [InlineKeyboardButton(text="Клиент", callback_data="client")]]
+              [InlineKeyboardButton(text="Клиент", callback_data="client")], 
+              [InlineKeyboardButton(text="Управление в Web App", web_app=WebAppInfo(url="https://your-domain.com:8000/app"))]]
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
     return keyboard
 
