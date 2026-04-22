@@ -55,32 +55,25 @@
             font-weight: 400;
         }
 
-        .debug-info {
-            position: fixed;
-            top: 0;
-            left: 0;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px;
-            z-index: 9999;
-            font-size: 12px;
-            max-height: 100px;
-            overflow-y: auto;
-            width: 100%;
-            box-sizing: border-box;
-            text-align: left;
-        }
-
         .org-list-container {
             background: #EFEEFC;
-            border-radius: 20px 20px 20px 20px;
+            border-radius: 20px 20px 0 0; /* 🔥 Так же, как на главной */
             padding: 20px 0;
+            flex-grow: 1; /* 🔥 Растягивает на оставшееся место */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .org-list {
+            flex-grow: 1;
+            padding: 0 20px;
         }
 
         .org-btn {
-            width: 313px;
+            width: 100%;
+            max-width: 313px;
             height: 70px;
-            margin: 0 auto;
+            margin: 0 auto 8px;
             border: none;
             border-radius: 20px;
             font-family: 'Russo One', sans-serif;
@@ -97,39 +90,43 @@
             position: relative;
         }
 
+            .org-btn:last-child {
+                margin-bottom: 0;
+            }
+
             .org-btn:hover {
                 transform: translateY(-3px);
                 box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
             }
 
-            .org-btn:nth-child(4n) {
+            .org-btn.white {
                 background: #FFFFFF;
                 border: 1px solid #E0E0E0;
             }
 
-                .org-btn:nth-child(4n):hover {
+                .org-btn.white:hover {
                     border-color: #C0C0C0;
                     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
                 }
 
-            .org-btn:not(:last-child) {
-                margin-bottom: 0;
-            }
-
-            .org-btn:nth-child(odd):not(.org-btn:nth-child(4n)) {
+            .org-btn:nth-child(odd):not(.white) {
                 background: #CBBAFD;
             }
 
-            .org-btn:nth-child(even):not(.org-btn:nth-child(4n)) {
+            .org-btn:nth-child(even):not(.white) {
                 background: #CBE949;
             }
 
         .pagination {
-            display: flex;
+            display: none; /* Скрыт по умолчанию */
             justify-content: space-between;
             width: 313px;
             margin: 40px auto 0;
         }
+
+            .pagination.visible {
+                display: flex;
+            }
 
         .pag-btn {
             width: 56px;
@@ -165,8 +162,6 @@
 </head>
 <body>
 
-    <div class="debug-info" id="debug-log">Логи: загрузка...</div>
-
     <div class="bg-gradient"></div>
 
     <div class="container">
@@ -175,12 +170,12 @@
         </div>
 
         <div class="org-list-container">
-            <div id="org-list">Загрузка...</div>
-        </div>
+            <div class="org-list" id="org-list">Загрузка...</div>
 
-        <div class="pagination">
-            <button class="pag-btn" onclick="alert('Предыдущая страница')">←</button>
-            <button class="pag-btn" onclick="alert('Следующая страница')">→</button>
+            <div class="pagination" id="pagination">
+                <button class="pag-btn" id="prev-page">←</button>
+                <button class="pag-btn" id="next-page">→</button>
+            </div>
         </div>
 
         <div class="footer">
@@ -189,101 +184,112 @@
     </div>
 
     <script>
-        function log(text) {
-            const debugEl = document.getElementById("debug-log");
-            const now = new Date().toISOString().slice(11, 23); // HH:mm:ss.SSS
-            debugEl.innerHTML += `[${now}] ${text}\n`;
-            debugEl.scrollTop = debugEl.scrollHeight;
-        }
-
-        log("✅ org_orgs.html загружен");
-
         const tg = Telegram.WebApp;
         tg.ready();
-        log("✅ Telegram WebApp ready");
 
         const user = tg.initDataUnsafe?.user;
-        log("👤 User from Telegram: " + JSON.stringify(user));
-
         if (!user) {
-            log("❌ Не удалось определить пользователя из Telegram");
             document.getElementById("org-list").innerHTML =
                 '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя</div>';
         } else {
             const userId = user.id;
-            log("🆔 Отправляем user_id: " + userId);
 
             fetch(`/api/v1/org/organizations?user_id=${userId}`)
                 .then(res => {
-                    log("📡 Ответ от API: статус " + res.status);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     return res.json();
                 })
                 .then(data => {
-                    log("📥 Получены данные: " + JSON.stringify(data));
                     const container = document.getElementById("org-list");
+                    const pagination = document.getElementById("pagination");
 
                     if (data.organizations.length === 0) {
-                        log("⚠️ У пользователя нет организаций");
                         container.innerHTML = `
-                <div style="
-                  text-align: center;
-                  padding: 40px 20px;
-                  color: #555;
-                  font-size: 16px;
-                ">
-                  У вас нет организаций.<br>
-                  <button onclick="alert('Создать новую организацию')"
-                          style="
-                            margin-top: 16px;
-                            padding: 12px 24px;
-                            background: #CBBAFD;
-                            border: none;
-                            border-radius: 20px;
-                            color: #000;
-                            font-family: 'Russo One', sans-serif;
-                            font-size: 16px;
-                            cursor: pointer;
-                          ">
-                    Создать новую
-                  </button>
-                </div>
-              `;
+                    <div style="
+                      text-align: center;
+                      padding: 40px 20px;
+                      color: #555;
+                      font-size: 16px;
+                    ">
+                      У вас нет организаций.<br>
+                      <button onclick="alert('Создать новую организацию')"
+                              style="
+                                margin-top: 16px;
+                                padding: 12px 24px;
+                                background: #CBBAFD;
+                                border: none;
+                                border-radius: 20px;
+                                color: #000;
+                                font-family: 'Russo One', sans-serif;
+                                font-size: 16px;
+                                cursor: pointer;
+                              ">
+                        Создать новую
+                      </button>
+                    </div>
+                  `;
                         return;
                     }
 
-                    log("✅ Отображаем " + data.organizations.length + " организаций");
+                    const totalOrgs = data.organizations.length;
+                    const perPage = 5;
+                    let currentPage = 0;
 
-                    data.organizations.forEach((org, index) => {
-                        const btn = document.createElement("button");
-                        btn.className = "org-btn";
-                        btn.textContent = org.name.toUpperCase();
+                    if (totalOrgs > perPage) {
+                        pagination.classList.add('visible');
+                    }
 
-                        if ((index + 1) % 4 === 0) {
-                            btn.style.background = "#FFFFFF";
-                            btn.style.border = "1px solid #E0E0E0";
-                        } else if (index % 2 === 0) {
-                            btn.style.background = "#CBBAFD";
-                        } else {
-                            btn.style.background = "#CBE949";
+                    function renderPage(page) {
+                        container.innerHTML = '';
+
+                        const start = page * perPage;
+                        const end = Math.min(start + perPage, totalOrgs);
+                        const pageOrgs = data.organizations.slice(start, end);
+
+                        pageOrgs.forEach((org, index) => {
+                            const btn = document.createElement("button");
+                            btn.className = "org-btn";
+
+                            // Присваиваем класс white для каждой 3-й кнопки (начиная с 3-й)
+                            if ((start + index + 1) % 3 === 0) {
+                                btn.classList.add('white');
+                            }
+
+                            btn.textContent = org.name.toUpperCase();
+
+                            btn.onclick = () => {
+                                localStorage.setItem("selectedOrgId", org.id);
+                                alert(`Выбрана: ${org.name}`);
+                            };
+
+                            container.appendChild(btn);
+                        });
+                    }
+
+                    // Обработчики пагинации
+                    document.getElementById("next-page").onclick = () => {
+                        if ((currentPage + 1) * perPage < totalOrgs) {
+                            currentPage++;
+                            renderPage(currentPage);
                         }
+                    };
 
-                        btn.onclick = () => {
-                            localStorage.setItem("selectedOrgId", org.id);
-                            log("✅ Выбрана организация: " + org.name + " (id: " + org.id + ")");
-                            alert(`Выбрана: ${org.name}`);
-                        };
+                    document.getElementById("prev-page").onclick = () => {
+                        if (currentPage > 0) {
+                            currentPage--;
+                            renderPage(currentPage);
+                        }
+                    };
 
-                        container.appendChild(btn);
-                    });
+                    // Рендерим первую страницу
+                    renderPage(currentPage);
                 })
                 .catch(err => {
-                    log("❌ Ошибка: " + err.message);
                     document.getElementById("org-list").innerHTML = `
-              <div style="text-align:center; padding:40px; color:#d32f2f;">
-                Ошибка загрузки<br><small>${err.message}</small>
-              </div>
-            `;
+                  <div style="text-align:center; padding:40px; color:#d32f2f;">
+                    Ошибка загрузки<br><small>${err.message}</small>
+                  </div>
+                `;
                 });
         }
     </script>
