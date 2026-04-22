@@ -3,160 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление организацией</title>
+    <title>mmmBot — Управление</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 16px;
-            background-color: #f5f5f5;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
+        body {
+            width: 375px;
+            height: 812px;
+            font-family: 'Russo One', sans-serif;
+            overflow: hidden;
+            position: relative;
         }
 
-        h1, h2 {
-            color: #333;
+        .bg-gradient {
+            width: 375px;
+            height: 812px;
+            background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
+            box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
-        button {
-            background-color: #0088cc;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 4px;
-            cursor: pointer;
+        .welcome-container {
+            position: absolute;
+            width: 313px;
+            left: 31px;
+            top: 40px;
+            text-align: left;
+        }
+
+        .welcome-line-1 {
+            font-size: 24px;
+            line-height: 26px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #000000;
+            margin-bottom: 4px;
+        }
+
+        .welcome-line-2 {
+            font-size: 24px;
+            line-height: 26px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #7A23B8;
+        }
+
+        .content {
+            position: absolute;
+            width: 375px;
+            height: 685px;
+            left: 0;
+            top: 127px;
+            background: #FFFFFF;
+            border-radius: 20px 20px 0 0;
+            padding-top: 50px;
+        }
+
+        /* 🔥 Обновлённый стиль для "ВОЙТИ КАК" — градиентная рамка с закруглёнными углами */
+        .login-label-wrapper {
+            position: absolute;
+            width: 166px;
+            height: 66px;
+            left: 105px;
+            top: 25px; /* изменить при необходимости */
+            border-radius: 20px;
+            background: linear-gradient(127.42deg, #CBBAFD, #CBE949);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3px; /* толщина рамки */
+            box-sizing: border-box;
+        }
+
+        .login-label {
             width: 100%;
-            margin-top: 10px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            line-height: 26px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #000000; /* 🔶 Текст — чёрный */
+            background: #FFFFFF; /* белый фон внутри */
+            border-radius: 17px; /* 20px - 3px padding */
+            text-align: center;
+            box-sizing: border-box;
         }
 
-            button:hover {
-                background-color: #0077b3;
-            }
-
-        .section {
-            display: none;
+        .button {
+            position: absolute;
+            width: 313px;
+            height: 70px;
+            left: 31px;
+            border: none;
+            border-radius: 20px;
+            font-family: 'Russo One', sans-serif;
+            font-size: 20px;
+            line-height: 26px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #000000;
         }
 
-            .section.active {
-                display: block;
-            }
-
-        .error {
-            color: red;
+        .btn-organizer {
+            top: 111px;
+            background: #CBBAFD;
         }
 
-        .success {
-            color: green;
+        .btn-worker {
+            top: 201px;
+            background: #CBE949;
+        }
+
+        .btn-client {
+            top: 291px;
+            background: #CBBAFD;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1 id="welcome-text">Добро пожаловать!</h1>
-
-        <div id="loading-orgs">Загрузка организаций...</div>
-        <div id="org-list" style="display:none;">
-            <h2>Ваши организации:</h2>
-            <div id="org-buttons"></div>
+    <div class="bg-gradient">
+        <div class="welcome-container">
+            <div class="welcome-line-1">ДОБРО ПОЖАЛОВАТЬ,</div>
+            <div class="welcome-line-2" id="username">ИМЯ ФАМИЛИЯ</div>
         </div>
-        <div id="error-orgs" class="error" style="display:none;"></div>
-
-        <!-- Навигация -->
-        <div id="navigation" style="display:none;">
-            <h2>Навигация</h2>
-            <button onclick="showSection('schedule')">📅 Расписание</button>
-            <button onclick="showSection('workers')">👥 Работники</button>
-            <button onclick="showSection('clients')">👤 Клиенты</button>
-            <button onclick="showSection('gyms')">🏋️ Залы</button>
-            <button onclick="Telegram.WebApp.close()">❌ Закрыть Web App</button>
-        </div>
-
-        <!-- Секции -->
-        <div id="schedule-section" class="section">
-            <h2>Расписание (заглушка)</h2>
-            <div id="schedule-content">Здесь будет отображаться расписание.</div>
-        </div>
-
-        <div id="workers-section" class="section">
-            <h2>Работники (заглушка)</h2>
-            <div id="workers-content">Здесь будет список работников.</div>
-        </div>
-
-        <div id="clients-section" class="section">
-            <h2>Клиенты (заглушка)</h2>
-            <div id="clients-content">Здесь будет список клиентов.</div>
-        </div>
-
-        <div id="gyms-section" class="section">
-            <h2>Залы (заглушка)</h2>
-            <div id="gyms-content">Здесь будет список залов.</div>
-        </div>
-
     </div>
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <div class="content">
+        <!-- 🔥 Новый элемент — градиентная рамка -->
+        <div class="login-label-wrapper">
+            <div class="login-label">ВОЙТИ КАК</div>
+        </div>
+        <button class="button btn-organizer" onclick="alert('Выбрано: Организатор')">
+            ОРГАНИЗАТОР
+        </button>
+        <button class="button btn-worker" onclick="alert('Выбрано: Работник')">
+            РАБОТНИК
+        </button>
+        <button class="button btn-client" onclick="alert('Выбрано: Клиент')">
+            КЛИЕНТ
+        </button>
+    </div>
+
+    <div class="footer">
+        © mmmBot 2026
+    </div>
+
     <script>
-        // Инициализация WebApp
         const tg = Telegram.WebApp;
         tg.ready();
-        tg.expand(); // Разворачивает Web App на весь экран (необязательно)
 
-        // Получаем информацию о пользователе
         const user = tg.initDataUnsafe?.user;
         if (user) {
-            document.getElementById('welcome-text').textContent = `Привет, ${user.first_name}!`;
-        } else {
-            document.getElementById('welcome-text').textContent = 'Привет!';
+            document.getElementById('username').textContent = `${user.first_name} ${user.last_name || ''}`;
         }
-
-        // Функция для показа нужной секции
-        function showSection(sectionId) {
-            // Скрываем все секции
-            document.querySelectorAll('.section').forEach(el => {
-                el.classList.remove('active');
-            });
-            // Показываем выбранную
-            const section = document.getElementById(`${sectionId}-section`);
-            if (section) {
-                section.classList.add('active');
-            }
-        }
-
-        // Пример загрузки организаций (заглушка)
-        // Позже заменим на реальный вызов API
-        setTimeout(() => {
-            document.getElementById('loading-orgs').style.display = 'none';
-            document.getElementById('org-list').style.display = 'block';
-
-            // Заглушка: добавляем 2 организации
-            const orgButtonsDiv = document.getElementById('org-buttons');
-            orgButtonsDiv.innerHTML = '';
-            const orgs = [
-                { id: 1, name: "Фитнес-клуб 'Сила'" },
-                { id: 2, name: "Студия йоги 'Дыхание'" }
-            ];
-
-            orgs.forEach(org => {
-                const btn = document.createElement('button');
-                btn.textContent = org.name;
-                btn.onclick = () => {
-                    alert(`Выбрана организация: ${org.name}`);
-                    document.getElementById('navigation').style.display = 'block'; // Показываем навигацию
-                    showSection('schedule'); // Открываем первую вкладку
-                };
-                orgButtonsDiv.appendChild(btn);
-            });
-
-        }, 1000); // Имитация загрузки
-
     </script>
 </body>
 </html>
