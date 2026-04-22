@@ -19,33 +19,34 @@
             font-family: 'Russo One', sans-serif;
             overflow-x: hidden;
             min-height: 100vh;
-            background: #FFFFFF; /* белый фон */
+            position: relative;
+        }
+
+        /* 🔥 Градиентный фон — на весь экран */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(120.42deg, #CBBAFD 35.38%, #CBE949 50.67%);
+            box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+            z-index: -1; /* чтобы был позади контента */
         }
 
         .container {
             width: 100%;
             max-width: 375px;
-            height: 812px;
             margin: 0 auto;
             position: relative;
-            overflow: hidden;
-        }
-
-        .bg-gradient {
-            width: 100%;
-            height: 812px;
-            background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
-            box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-            position: absolute;
-            top: 0;
-            left: 0;
+            padding-top: 20px; /* отступ сверху */
         }
 
         .welcome-container {
-            position: absolute;
+            position: relative;
             width: 313px;
             left: 31px;
-            top: 40px;
+            top: 100px;
             text-align: left;
         }
 
@@ -67,10 +68,9 @@
         }
 
         .content {
-            position: absolute;
+            position: relative;
             width: 100%;
             height: 685px;
-            left: 0;
             top: 127px;
             background: #FFFFFF;
             border-radius: 20px 20px 0 0;
@@ -156,12 +156,14 @@
 </head>
 <body>
 
+    <!-- 🔥 Фон — на весь экран -->
+    <div class="bg-gradient"></div>
+
+    <!-- Контент — центрированный -->
     <div class="container">
-        <div class="bg-gradient">
-            <div class="welcome-container">
-                <div class="welcome-line-1">ДОБРО ПОЖАЛОВАТЬ,</div>
-                <div class="welcome-line-2" id="username">ИМЯ ФАМИЛИЯ</div>
-            </div>
+        <div class="welcome-container">
+            <div class="welcome-line-1">ДОБРО ПОЖАЛОВАТЬ,</div>
+            <div class="welcome-line-2" id="username">ИМЯ ФАМИЛИЯ</div>
         </div>
 
         <div class="content">
@@ -179,9 +181,7 @@
             </button>
         </div>
 
-        <div class="footer">
-            © mmmBot 2026
-        </div>
+        <div class="footer">© mmmBot 2026</div>
     </div>
 
     <script>
