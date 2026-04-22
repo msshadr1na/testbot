@@ -92,9 +92,16 @@ class OrganizationService:
         return organization
 
 # Просмотр организаций, которыми пользователь владеет
-    async def show_owned_orgs(self,user_id):
+    async def show_owned_orgs(self, user_id):
+        # Получаем только ID организаций, где пользователь — владелец (role_id = 1)
         org_ids = await self.organizationMember_repository.get_membered_orgs(user_id, 1)
-        names = await self.organizationMember_repository.get_names_by_ids(org_ids)
+
+        if not org_ids:
+            return [], []
+
+        # Теперь получаем названия напрямую по ID
+        names = await self.organization_repository.get_names_by_ids(org_ids)
+
         return org_ids, names
 
 #Создание ссылки-приглашения для организации

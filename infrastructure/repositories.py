@@ -154,6 +154,16 @@ class OrganizationRepository:
         organization.id = row["id"]
         return organization
 
+    async def get_names_by_ids(self, org_ids: list):
+        if not org_ids:
+            return []
+        sql = """select id, name from organization where id = any($1)"""
+        rows = await self.pool.fetch(sql, org_ids)
+        # Создаём словарь для быстрого поиска
+        org_map = {row["id"]: row["name"] for row in rows}
+        # Возвращаем в том же порядке, что и org_ids
+        return [org_map.get(org_id, "") for org_id in org_ids]
+
     async def find_by_name(self, name):
         sql = "select * from organization where name = $1"
         row = await self.pool.fetchrow(sql,name)
