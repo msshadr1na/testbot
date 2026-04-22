@@ -55,6 +55,22 @@
             font-weight: 400;
         }
 
+        .debug-info {
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            z-index: 9999;
+            font-size: 12px;
+            max-height: 100px;
+            overflow-y: auto;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
         .org-list-container {
             background: #EFEEFC;
             border-radius: 20px 20px 20px 20px;
@@ -86,7 +102,6 @@
                 box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
             }
 
-            /* Для белых кнопок — добавляем тонкую границу при hover */
             .org-btn:nth-child(4n) {
                 background: #FFFFFF;
                 border: 1px solid #E0E0E0;
@@ -98,32 +113,17 @@
                 }
 
             .org-btn:not(:last-child) {
-                margin-bottom: 0; /* 🔥 Соприкосновение — без отступа */
+                margin-bottom: 0;
             }
 
-            /* Цвета кнопок: чередование */
-            .org-btn:nth-child(1),
-            .org-btn:nth-child(3),
-            .org-btn:nth-child(5),
-            .org-btn:nth-child(7) {
-                background: #CBBAFD; /* фиолетовый */
+            .org-btn:nth-child(odd):not(.org-btn:nth-child(4n)) {
+                background: #CBBAFD;
             }
 
-            .org-btn:nth-child(2),
-            .org-btn:nth-child(4),
-            .org-btn:nth-child(6),
-            .org-btn:nth-child(8) {
-                background: #CBE949; /* зелёный */
+            .org-btn:nth-child(even):not(.org-btn:nth-child(4n)) {
+                background: #CBE949;
             }
 
-            /* Белые кнопки — явно задаём #FFFFFF */
-            .org-btn:nth-child(4n+0) {
-                background: #FFFFFF; /* белый */
-                box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-                border: 1px solid #E0E0E0;
-            }
-
-        /* Пагинация */
         .pagination {
             display: flex;
             justify-content: space-between;
@@ -165,6 +165,8 @@
 </head>
 <body>
 
+    <div class="debug-info" id="debug-log">Логи: загрузка...</div>
+
     <div class="bg-gradient"></div>
 
     <div class="container">
@@ -173,10 +175,9 @@
         </div>
 
         <div class="org-list-container">
-            <div id="org-list"></div>
+            <div id="org-list">Загрузка...</div>
         </div>
 
-        <!-- Пагинация -->
         <div class="pagination">
             <button class="pag-btn" onclick="alert('Предыдущая страница')">←</button>
             <button class="pag-btn" onclick="alert('Следующая страница')">→</button>
@@ -188,65 +189,78 @@
     </div>
 
     <script>
+        function log(text) {
+            const debugEl = document.getElementById("debug-log");
+            const now = new Date().toISOString().slice(11, 23); // HH:mm:ss.SSS
+            debugEl.innerHTML += `[${now}] ${text}\n`;
+            debugEl.scrollTop = debugEl.scrollHeight;
+        }
+
+        log("✅ org_orgs.html загружен");
+
         const tg = Telegram.WebApp;
         tg.ready();
-        console.log("Telegram WebApp ready");
+        log("✅ Telegram WebApp ready");
 
         const user = tg.initDataUnsafe?.user;
-        console.log("User from Telegram:", user);
+        log("👤 User from Telegram: " + JSON.stringify(user));
+
         if (!user) {
+            log("❌ Не удалось определить пользователя из Telegram");
             document.getElementById("org-list").innerHTML =
                 '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя</div>';
             return;
         }
-        console.log("Sending request with user_id:", user.id);
-        // Запрос к твоему API
-        fetch(`/api/v1/org/organizations?user_id=${user.id}`)
+
+        const userId = user.id;
+        log("🆔 Отправляем user_id: " + userId);
+
+        fetch(`/api/v1/org/organizations?user_id=${userId}`)
             .then(res => {
-                console.log("Response status:", res.status);
+                log("📡 Ответ от API: статус " + res.status);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                
                 return res.json();
             })
             .then(data => {
-                console.log("Received data:", data);
+                log("📥 Получены данные: " + JSON.stringify(data));
                 const container = document.getElementById("org-list");
 
                 if (data.organizations.length === 0) {
+                    log("⚠️ У пользователя нет организаций");
                     container.innerHTML = `
-              <div style="
-                text-align: center;
-                padding: 40px 20px;
-                color: #555;
-                font-size: 16px;
-              ">
-                У вас нет организаций.<br>
-                <button onclick="alert('Создать новую организацию')"
-                        style="
-                          margin-top: 16px;
-                          padding: 12px 24px;
-                          background: #CBBAFD;
-                          border: none;
-                          border-radius: 20px;
-                          color: #000;
-                          font-family: 'Russo One', sans-serif;
-                          font-size: 16px;
-                          cursor: pointer;
-                        ">
-                  Создать новую
-                </button>
-              </div>
-            `;
+                <div style="
+                  text-align: center;
+                  padding: 40px 20px;
+                  color: #555;
+                  font-size: 16px;
+                ">
+                  У вас нет организаций.<br>
+                  <button onclick="alert('Создать новую организацию')"
+                          style="
+                            margin-top: 16px;
+                            padding: 12px 24px;
+                            background: #CBBAFD;
+                            border: none;
+                            border-radius: 20px;
+                            color: #000;
+                            font-family: 'Russo One', sans-serif;
+                            font-size: 16px;
+                            cursor: pointer;
+                          ">
+                    Создать новую
+                  </button>
+                </div>
+              `;
                     return;
                 }
 
-                // Рендерим кнопки
+                log("✅ Отображаем " + data.organizations.length + " организаций");
+
                 data.organizations.forEach((org, index) => {
                     const btn = document.createElement("button");
                     btn.className = "org-btn";
                     btn.textContent = org.name.toUpperCase();
 
-                    // Присваиваем цвет по индексу (как в дизайне)
                     if ((index + 1) % 4 === 0) {
                         btn.style.background = "#FFFFFF";
                         btn.style.border = "1px solid #E0E0E0";
@@ -257,23 +271,21 @@
                     }
 
                     btn.onclick = () => {
-                        // Сохраняем выбранную организацию
                         localStorage.setItem("selectedOrgId", org.id);
+                        log("✅ Выбрана организация: " + org.name + " (id: " + org.id + ")");
                         alert(`Выбрана: ${org.name}`);
-                        // Здесь можно перейти на следующую страницу:
-                        // window.location.href = `/dashboard?org_id=${org.id}`;
                     };
 
-                    document.getElementById("org-list").appendChild(btn);
+                    container.appendChild(btn);
                 });
             })
             .catch(err => {
-                console.error("Ошибка загрузки организаций:", err);
+                log("❌ Ошибка: " + err.message);
                 document.getElementById("org-list").innerHTML = `
-            <div style="text-align:center; padding:40px; color:#d32f2f;">
-              Ошибка загрузки<br><small>${err.message}</small>
-            </div>
-          `;
+              <div style="text-align:center; padding:40px; color:#d32f2f;">
+                Ошибка загрузки<br><small>${err.message}</small>
+              </div>
+            `;
             });
     </script>
 </body>
