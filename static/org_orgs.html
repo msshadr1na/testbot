@@ -20,6 +20,8 @@
             overflow-x: hidden;
             min-height: 100vh;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .bg-gradient {
@@ -39,11 +41,15 @@
             margin: 0 auto;
             position: relative;
             padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         .header {
             text-align: center;
             margin-bottom: 25px;
+            z-index: 1;
         }
 
         .header-title {
@@ -57,16 +63,19 @@
 
         .org-list-container {
             background: #EFEEFC;
-            border-radius: 20px 20px 0 0; /* 🔥 Так же, как на главной */
+            border-radius: 20px 20px 0 0;
             padding: 20px 0;
-            flex-grow: 1; /* 🔥 Растягивает на оставшееся место */
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
+            z-index: 1;
         }
 
         .org-list {
             flex-grow: 1;
             padding: 0 20px;
+            overflow-y: auto;
+            margin-bottom: auto;
         }
 
         .org-btn {
@@ -117,18 +126,50 @@
                 background: #CBE949;
             }
 
-        .pagination {
-            display: none; /* Скрыт по умолчанию */
-            justify-content: space-between;
-            width: 313px;
-            margin: 40px auto 0;
+        .actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 0 10px;
+            background: #EFEEFC;
+            z-index: 1;
         }
 
-            .pagination.visible {
-                display: flex;
+        .action-btn {
+            width: 313px;
+            height: 56px;
+            border: none;
+            border-radius: 20px;
+            font-family: 'Russo One', sans-serif;
+            font-size: 18px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #000000;
+            transition: all 0.2s;
+        }
+
+            .action-btn:hover {
+                transform: scale(1.02);
             }
 
-        .pag-btn {
+        .create-org-btn {
+            background: #CBBAFD;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        .nav-btn {
             width: 56px;
             height: 56px;
             border-radius: 28px;
@@ -143,20 +184,26 @@
             justify-content: center;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             transition: all 0.2s;
+            display: none; /* Скрыт по умолчанию */
         }
 
-            .pag-btn:hover {
+            .nav-btn.visible {
+                display: flex; /* Показывается при пагинации */
+            }
+
+            .nav-btn:hover {
                 background: #FFFFFF;
                 transform: scale(1.05);
             }
 
+        .menu-btn {
+            background: #CBE949;
+            width: 313px;
+            height: 56px;
+        }
+
         .footer {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            text-align: center;
-            font-size: 12px;
-            color: #777;
+            display: none;
         }
     </style>
 </head>
@@ -172,15 +219,21 @@
         <div class="org-list-container">
             <div class="org-list" id="org-list">Загрузка...</div>
 
-            <div class="pagination" id="pagination">
-                <button class="pag-btn" id="prev-page">←</button>
-                <button class="pag-btn" id="next-page">→</button>
+            <div class="actions">
+                <button class="action-btn create-org-btn" onclick="alert('Создать новую организацию')">
+                    Создать организацию
+                </button>
+            </div>
+
+            <div class="navigation">
+                <button class="nav-btn" id="prev-page-nav">←</button>
+                <button class="action-btn menu-btn" onclick="window.location.href = '/app'">
+                    Меню
+                </button>
+                <button class="nav-btn" id="next-page-nav">→</button>
             </div>
         </div>
 
-        <div class="footer">
-            © mmmBot 2026
-        </div>
     </div>
 
     <script>
@@ -201,7 +254,8 @@
                 })
                 .then(data => {
                     const container = document.getElementById("org-list");
-                    const pagination = document.getElementById("pagination");
+                    const prevBtn = document.getElementById("prev-page-nav");
+                    const nextBtn = document.getElementById("next-page-nav");
 
                     if (data.organizations.length === 0) {
                         container.innerHTML = `
@@ -211,32 +265,20 @@
                       color: #555;
                       font-size: 16px;
                     ">
-                      У вас нет организаций.<br>
-                      <button onclick="alert('Создать новую организацию')"
-                              style="
-                                margin-top: 16px;
-                                padding: 12px 24px;
-                                background: #CBBAFD;
-                                border: none;
-                                border-radius: 20px;
-                                color: #000;
-                                font-family: 'Russo One', sans-serif;
-                                font-size: 16px;
-                                cursor: pointer;
-                              ">
-                        Создать новую
-                      </button>
+                      У вас нет организаций.
                     </div>
                   `;
                         return;
                     }
 
+                    // Пагинация: показываем стрелки, если > 3 организаций
                     const totalOrgs = data.organizations.length;
-                    const perPage = 5;
+                    const perPage = 3;
                     let currentPage = 0;
 
                     if (totalOrgs > perPage) {
-                        pagination.classList.add('visible');
+                        prevBtn.classList.add('visible');
+                        nextBtn.classList.add('visible');
                     }
 
                     function renderPage(page) {
@@ -264,17 +306,21 @@
 
                             container.appendChild(btn);
                         });
+
+                        // Обновляем состояние кнопок пагинации
+                        prevBtn.disabled = (page <= 0);
+                        nextBtn.disabled = (page >= Math.ceil(totalOrgs / perPage) - 1);
                     }
 
                     // Обработчики пагинации
-                    document.getElementById("next-page").onclick = () => {
+                    nextBtn.onclick = () => {
                         if ((currentPage + 1) * perPage < totalOrgs) {
                             currentPage++;
                             renderPage(currentPage);
                         }
                     };
 
-                    document.getElementById("prev-page").onclick = () => {
+                    prevBtn.onclick = () => {
                         if (currentPage > 0) {
                             currentPage--;
                             renderPage(currentPage);
