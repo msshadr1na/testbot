@@ -170,7 +170,7 @@
             <div class="login-label-wrapper">
                 <div class="login-label">ВОЙТИ КАК</div>
             </div>
-            <button class="button btn-organizer" onclick="alert('Выбрано: Организатор')">
+            <button class="button btn-organizer" onclick="goToOrgs()">
                 ОРГАНИЗАТОР
             </button>
             <button class="button btn-worker" onclick="alert('Выбрано: Работник')">
@@ -191,6 +191,10 @@
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('username').textContent = `${user.first_name} ${user.last_name || ''}`;
+        }
+
+        function goToOrgs() {
+            window.location.href = '/orgs';
         }
     </script>
 

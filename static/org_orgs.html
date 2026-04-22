@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Выберите организацию</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Russo One', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
+            box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 375px;
+            margin: 0 auto;
+            position: relative;
+            padding-top: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            line-height: 26px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #000000;
+            font-weight: 400;
+        }
+
+        .org-list-container {
+            background: #EFEEFC;
+            border-radius: 20px 20px 20px 20px;
+            padding: 20px 0;
+        }
+
+        .org-btn {
+            width: 313px;
+            height: 70px;
+            margin: 0 auto;
+            border: none;
+            border-radius: 20px;
+            font-family: 'Russo One', sans-serif;
+            font-size: 20px;
+            line-height: 26px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #000000;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+            .org-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+            }
+
+            /* Для белых кнопок — добавляем тонкую границу при hover */
+            .org-btn:nth-child(4n) {
+                background: #FFFFFF;
+                border: 1px solid #E0E0E0;
+            }
+
+                .org-btn:nth-child(4n):hover {
+                    border-color: #C0C0C0;
+                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+                }
+
+            .org-btn:not(:last-child) {
+                margin-bottom: 0; /* 🔥 Соприкосновение — без отступа */
+            }
+
+            /* Цвета кнопок: чередование */
+            .org-btn:nth-child(1),
+            .org-btn:nth-child(3),
+            .org-btn:nth-child(5),
+            .org-btn:nth-child(7) {
+                background: #CBBAFD; /* фиолетовый */
+            }
+
+            .org-btn:nth-child(2),
+            .org-btn:nth-child(4),
+            .org-btn:nth-child(6),
+            .org-btn:nth-child(8) {
+                background: #CBE949; /* зелёный */
+            }
+
+            /* Белые кнопки — явно задаём #FFFFFF */
+            .org-btn:nth-child(4n+0) {
+                background: #FFFFFF; /* белый */
+                box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+                border: 1px solid #E0E0E0;
+            }
+
+        /* Пагинация */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            width: 313px;
+            margin: 40px auto 0;
+        }
+
+        .pag-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+            .pag-btn:hover {
+                background: #FFFFFF;
+                transform: scale(1.05);
+            }
+
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-title">ВЫБЕРИТЕ ОРГАНИЗАЦИЮ</div>
+        </div>
+
+        <div class="org-list-container">
+            <div id="org-list"></div>
+        </div>
+
+        <!-- Пагинация -->
+        <div class="pagination">
+            <button class="pag-btn" onclick="alert('Предыдущая страница')">←</button>
+            <button class="pag-btn" onclick="alert('Следующая страница')">→</button>
+        </div>
+
+        <div class="footer">
+            © mmmBot 2026
+        </div>
+    </div>
+
+    <script>
+        const tg = Telegram.WebApp;
+        tg.ready();
+
+        const user = tg.initDataUnsafe?.user;
+        if (!user) {
+            document.getElementById("org-list").innerHTML =
+                '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя</div>';
+            return;
+        }
+
+        // Запрос к твоему API
+        fetch(`/api/v1/org/organizations?user_id=${user.id}`)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                const container = document.getElementById("org-list");
+
+                if (data.organizations.length === 0) {
+                    container.innerHTML = `
+              <div style="
+                text-align: center;
+                padding: 40px 20px;
+                color: #555;
+                font-size: 16px;
+              ">
+                У вас нет организаций.<br>
+                <button onclick="alert('Создать новую организацию')"
+                        style="
+                          margin-top: 16px;
+                          padding: 12px 24px;
+                          background: #CBBAFD;
+                          border: none;
+                          border-radius: 20px;
+                          color: #000;
+                          font-family: 'Russo One', sans-serif;
+                          font-size: 16px;
+                          cursor: pointer;
+                        ">
+                  Создать новую
+                </button>
+              </div>
+            `;
+                    return;
+                }
+
+                // Рендерим кнопки
+                data.organizations.forEach((org, index) => {
+                    const btn = document.createElement("button");
+                    btn.className = "org-btn";
+                    btn.textContent = org.name.toUpperCase();
+
+                    // Присваиваем цвет по индексу (как в дизайне)
+                    if ((index + 1) % 4 === 0) {
+                        btn.style.background = "#FFFFFF";
+                        btn.style.border = "1px solid #E0E0E0";
+                    } else if (index % 2 === 0) {
+                        btn.style.background = "#CBBAFD";
+                    } else {
+                        btn.style.background = "#CBE949";
+                    }
+
+                    btn.onclick = () => {
+                        // Сохраняем выбранную организацию
+                        localStorage.setItem("selectedOrgId", org.id);
+                        alert(`Выбрана: ${org.name}`);
+                        // Здесь можно перейти на следующую страницу:
+                        // window.location.href = `/dashboard?org_id=${org.id}`;
+                    };
+
+                    document.getElementById("org-list").appendChild(btn);
+                });
+            })
+            .catch(err => {
+                console.error("Ошибка загрузки организаций:", err);
+                document.getElementById("org-list").innerHTML = `
+            <div style="text-align:center; padding:40px; color:#d32f2f;">
+              Ошибка загрузки<br><small>${err.message}</small>
+            </div>
+          `;
+            });
+    </script>
+
+    <script>
+        const tg = Telegram.WebApp;
+        tg.ready();
+    </script>
+</body>
+</html>

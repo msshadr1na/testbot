@@ -1,9 +1,9 @@
 # app/factory.py
 from infrastructure.repositories import (
     OrganizationRepository, OrganizationMemberRepository,
-    InviteRepository, GymRepository, TrainingRepository, UserRepository
+    InviteRepository, GymRepository, TrainingRepository, UserRepository,SettingsRepository
 )
-from app.services import OrganizationService
+from app.services import OrganizationService, UserService
 
 def create_organization_service(pool):
     return OrganizationService(
