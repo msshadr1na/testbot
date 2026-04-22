@@ -209,25 +209,23 @@
             log("❌ Не удалось определить пользователя из Telegram");
             document.getElementById("org-list").innerHTML =
                 '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя</div>';
-            return;
-        }
+        } else {
+            const userId = user.id;
+            log("🆔 Отправляем user_id: " + userId);
 
-        const userId = user.id;
-        log("🆔 Отправляем user_id: " + userId);
+            fetch(`/api/v1/org/organizations?user_id=${userId}`)
+                .then(res => {
+                    log("📡 Ответ от API: статус " + res.status);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    log("📥 Получены данные: " + JSON.stringify(data));
+                    const container = document.getElementById("org-list");
 
-        fetch(`/api/v1/org/organizations?user_id=${userId}`)
-            .then(res => {
-                log("📡 Ответ от API: статус " + res.status);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return res.json();
-            })
-            .then(data => {
-                log("📥 Получены данные: " + JSON.stringify(data));
-                const container = document.getElementById("org-list");
-
-                if (data.organizations.length === 0) {
-                    log("⚠️ У пользователя нет организаций");
-                    container.innerHTML = `
+                    if (data.organizations.length === 0) {
+                        log("⚠️ У пользователя нет организаций");
+                        container.innerHTML = `
                 <div style="
                   text-align: center;
                   padding: 40px 20px;
@@ -251,42 +249,43 @@
                   </button>
                 </div>
               `;
-                    return;
-                }
-
-                log("✅ Отображаем " + data.organizations.length + " организаций");
-
-                data.organizations.forEach((org, index) => {
-                    const btn = document.createElement("button");
-                    btn.className = "org-btn";
-                    btn.textContent = org.name.toUpperCase();
-
-                    if ((index + 1) % 4 === 0) {
-                        btn.style.background = "#FFFFFF";
-                        btn.style.border = "1px solid #E0E0E0";
-                    } else if (index % 2 === 0) {
-                        btn.style.background = "#CBBAFD";
-                    } else {
-                        btn.style.background = "#CBE949";
+                        return;
                     }
 
-                    btn.onclick = () => {
-                        localStorage.setItem("selectedOrgId", org.id);
-                        log("✅ Выбрана организация: " + org.name + " (id: " + org.id + ")");
-                        alert(`Выбрана: ${org.name}`);
-                    };
+                    log("✅ Отображаем " + data.organizations.length + " организаций");
 
-                    container.appendChild(btn);
-                });
-            })
-            .catch(err => {
-                log("❌ Ошибка: " + err.message);
-                document.getElementById("org-list").innerHTML = `
+                    data.organizations.forEach((org, index) => {
+                        const btn = document.createElement("button");
+                        btn.className = "org-btn";
+                        btn.textContent = org.name.toUpperCase();
+
+                        if ((index + 1) % 4 === 0) {
+                            btn.style.background = "#FFFFFF";
+                            btn.style.border = "1px solid #E0E0E0";
+                        } else if (index % 2 === 0) {
+                            btn.style.background = "#CBBAFD";
+                        } else {
+                            btn.style.background = "#CBE949";
+                        }
+
+                        btn.onclick = () => {
+                            localStorage.setItem("selectedOrgId", org.id);
+                            log("✅ Выбрана организация: " + org.name + " (id: " + org.id + ")");
+                            alert(`Выбрана: ${org.name}`);
+                        };
+
+                        container.appendChild(btn);
+                    });
+                })
+                .catch(err => {
+                    log("❌ Ошибка: " + err.message);
+                    document.getElementById("org-list").innerHTML = `
               <div style="text-align:center; padding:40px; color:#d32f2f;">
                 Ошибка загрузки<br><small>${err.message}</small>
               </div>
             `;
-            });
+                });
+        }
     </script>
 </body>
 </html>
