@@ -15,7 +15,7 @@ async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
     org_service = create_organization_service(db)
     user_service = create_user_service(db)
     user = await user_service.find_by_tgid(user_id)
-    org_ids,names = org_service.show_owned_orgs(user.id)
+    org_ids,names = await org_service.show_owned_orgs(user.id)
 
     organizations = []
     for id, n in zip(org_ids, names):
