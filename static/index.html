@@ -1,23 +1,162 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление организацией</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        button {
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+            button:hover {
+                background-color: #0077b3;
+            }
+
+        .section {
+            display: none;
+        }
+
+            .section.active {
+                display: block;
+            }
+
+        .error {
+            color: red;
+        }
+
+        .success {
+            color: green;
+        }
+    </style>
 </head>
 <body>
-    <h2>Web App готов</h2>
-    <div id="data"></div>
 
+    <div class="container">
+        <h1 id="welcome-text">Добро пожаловать!</h1>
+
+        <div id="loading-orgs">Загрузка организаций...</div>
+        <div id="org-list" style="display:none;">
+            <h2>Ваши организации:</h2>
+            <div id="org-buttons"></div>
+        </div>
+        <div id="error-orgs" class="error" style="display:none;"></div>
+
+        <!-- Навигация -->
+        <div id="navigation" style="display:none;">
+            <h2>Навигация</h2>
+            <button onclick="showSection('schedule')">📅 Расписание</button>
+            <button onclick="showSection('workers')">👥 Работники</button>
+            <button onclick="showSection('clients')">👤 Клиенты</button>
+            <button onclick="showSection('gyms')">🏋️ Залы</button>
+            <button onclick="Telegram.WebApp.close()">❌ Закрыть Web App</button>
+        </div>
+
+        <!-- Секции -->
+        <div id="schedule-section" class="section">
+            <h2>Расписание (заглушка)</h2>
+            <div id="schedule-content">Здесь будет отображаться расписание.</div>
+        </div>
+
+        <div id="workers-section" class="section">
+            <h2>Работники (заглушка)</h2>
+            <div id="workers-content">Здесь будет список работников.</div>
+        </div>
+
+        <div id="clients-section" class="section">
+            <h2>Клиенты (заглушка)</h2>
+            <div id="clients-content">Здесь будет список клиентов.</div>
+        </div>
+
+        <div id="gyms-section" class="section">
+            <h2>Залы (заглушка)</h2>
+            <div id="gyms-content">Здесь будет список залов.</div>
+        </div>
+
+    </div>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
-    const tg = Telegram.WebApp;
-    tg.ready();
+        // Инициализация WebApp
+        const tg = Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // Разворачивает Web App на весь экран (необязательно)
 
-    fetch('/api/v1/org/1/schedule')
-      .then(r => r.json())
-      .then(data => {
-        document.getElementById('data').innerText = JSON.stringify(data, null, 2);
-      });
+        // Получаем информацию о пользователе
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('welcome-text').textContent = `Привет, ${user.first_name}!`;
+        } else {
+            document.getElementById('welcome-text').textContent = 'Привет!';
+        }
+
+        // Функция для показа нужной секции
+        function showSection(sectionId) {
+            // Скрываем все секции
+            document.querySelectorAll('.section').forEach(el => {
+                el.classList.remove('active');
+            });
+            // Показываем выбранную
+            const section = document.getElementById(`${sectionId}-section`);
+            if (section) {
+                section.classList.add('active');
+            }
+        }
+
+        // Пример загрузки организаций (заглушка)
+        // Позже заменим на реальный вызов API
+        setTimeout(() => {
+            document.getElementById('loading-orgs').style.display = 'none';
+            document.getElementById('org-list').style.display = 'block';
+
+            // Заглушка: добавляем 2 организации
+            const orgButtonsDiv = document.getElementById('org-buttons');
+            orgButtonsDiv.innerHTML = '';
+            const orgs = [
+                { id: 1, name: "Фитнес-клуб 'Сила'" },
+                { id: 2, name: "Студия йоги 'Дыхание'" }
+            ];
+
+            orgs.forEach(org => {
+                const btn = document.createElement('button');
+                btn.textContent = org.name;
+                btn.onclick = () => {
+                    alert(`Выбрана организация: ${org.name}`);
+                    document.getElementById('navigation').style.display = 'block'; // Показываем навигацию
+                    showSection('schedule'); // Открываем первую вкладку
+                };
+                orgButtonsDiv.appendChild(btn);
+            });
+
+        }, 1000); // Имитация загрузки
+
     </script>
 </body>
 </html>
