@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Организации работника</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
+        .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
+        .container { width: 100%; max-width: 375px; margin: 0 auto; padding-top: 20px; min-height: 100vh; display: flex; flex-direction: column; }
+        .title { text-align: center; font-size: 24px; margin-bottom: 18px; text-transform: uppercase; }
+        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; flex: 1; padding: 20px 0; display: flex; flex-direction: column; align-items: center; }
+        .list { width: 313px; flex: 1; }
+        .item { width: 313px; height: 62px; margin-bottom: 10px; border: none; border-radius: 16px; font-family: inherit; background: #CBBAFD; cursor: pointer; }
+        .btn { width: 313px; height: 56px; border: none; border-radius: 16px; font-family: inherit; background: #FFFFFF; border: 1px solid #E0E0E0; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <div class="title">Я РАБОТНИК</div>
+        <div class="panel">
+            <div class="list" id="list">Загрузка...</div>
+            <button class="btn" onclick="window.location.href='/app'">Назад</button>
+        </div>
+    </div>
+    <script>
+        Telegram.WebApp.ready();
+        const tgId = Telegram.WebApp.initDataUnsafe?.user?.id;
+        async function load() {
+            const res = await fetch(`/api/v1/me/organizations?user_id=${tgId}&role_id=2`);
+            const data = await res.json();
+            const list = document.getElementById("list");
+            list.innerHTML = "";
+            if (!data.organizations.length) {
+                list.innerHTML = "Вы пока не состоите в организациях как работник";
+                return;
+            }
+            data.organizations.forEach((org, i) => {
+                const b = document.createElement("button");
+                b.className = "item";
+                b.style.background = i % 2 ? "#CBE949" : "#CBBAFD";
+                b.textContent = org.name;
+                b.onclick = () => window.location.href = `/app/worker_dashboard.html?org_id=${org.id}`;
+                list.appendChild(b);
+            });
+        }
+        load();
+    </script>
+</body>
+</html>

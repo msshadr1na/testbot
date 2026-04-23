@@ -173,10 +173,10 @@
             <button class="button btn-organizer" onclick="goToOrgs()">
                 ОРГАНИЗАТОР
             </button>
-            <button class="button btn-worker" onclick="alert('Выбрано: Работник')">
+            <button class="button btn-worker" onclick="goToWorkerOrgs()">
                 РАБОТНИК
             </button>
-            <button class="button btn-client" onclick="alert('Выбрано: Клиент')">
+            <button class="button btn-client" onclick="goToClientOrgs()">
                 КЛИЕНТ
             </button>
         </div>
@@ -195,6 +195,12 @@
 
         function goToOrgs() {
             window.location.href = '/orgs';
+        }
+        function goToWorkerOrgs() {
+            window.location.href = '/app/worker_orgs.html';
+        }
+        function goToClientOrgs() {
+            window.location.href = '/app/client_orgs.html';
         }
     </script>
 

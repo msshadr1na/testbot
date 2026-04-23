@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.factory import create_organization_service, create_user_service
 from app.webapp.deps import get_db
 from asyncpg import Pool
-from infrastructure.repositories import TrainingRepository
+from app.models import Training
+from infrastructure.repositories import BookingRepository, OrganizationMemberRepository, TrainingRepository
 
 router = APIRouter(prefix="/api/v1", tags=["Web App"])
 
@@ -19,6 +20,16 @@ async def _resolve_user_by_any_id(user_id: int, db: Pool):
     return user
 
 
+def _validate_org_name(name: str):
+    if not name or len(name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Organization name is too short")
+
+
+def _validate_place_name(name: str):
+    if not name or len(name.strip()) < 2:
+        raise HTTPException(status_code=400, detail="Place name is too short")
+
+
 @router.get("/org/organizations")
 async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
     org_service = create_organization_service(db)
@@ -29,6 +40,40 @@ async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
     org_ids, names = await org_service.show_owned_orgs(user.id)
     organizations = [{"id": org_id, "name": name} for org_id, name in zip(org_ids, names)]
     return {"organizations": organizations}
+
+
+@router.get("/me/organizations")
+async def get_my_organizations_by_role(user_id: int, role_id: int, db: Pool = Depends(get_db)):
+    if role_id not in (1, 2, 3):
+        raise HTTPException(status_code=400, detail="Invalid role_id")
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        return {"organizations": []}
+
+    member_repo = OrganizationMemberRepository(db)
+    org_service = create_organization_service(db)
+    org_ids = await member_repo.get_membered_orgs(user.id, role_id)
+    names = await org_service.organization_repository.get_names_by_ids(org_ids)
+    organizations = [{"id": org_id, "name": name} for org_id, name in zip(org_ids, names)]
+    return {"organizations": organizations}
+
+
+@router.post("/org")
+async def create_organization(name: str, first_place_name: str, user_id: int, db: Pool = Depends(get_db)):
+    _validate_org_name(name)
+    _validate_place_name(first_place_name)
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    org_service = create_organization_service(db)
+    existing = await org_service.find_by_name(name.strip())
+    if existing:
+        raise HTTPException(status_code=400, detail="Organization name already exists")
+
+    org = await org_service.create_organization(user, name.strip())
+    await org_service.create_place(org.id, first_place_name.strip())
+    return {"id": org.id, "name": org.name}
 
 
 @router.get("/org/{org_id}")
@@ -42,6 +87,7 @@ async def get_organization(org_id: int, db: Pool = Depends(get_db)):
 
 @router.put("/org/{org_id}")
 async def update_organization_name(org_id: int, name: str, db: Pool = Depends(get_db)):
+    _validate_org_name(name)
     org_service = create_organization_service(db)
     existing = await org_service.get_by_id(org_id)
     if existing is None:
@@ -82,6 +128,26 @@ async def get_worker(org_id: int, worker_id: int, db: Pool = Depends(get_db)):
         "organization_id": org_id,
         "full_name": full_name,
         "phone": worker.phone,
+    }
+
+
+@router.get("/org/{org_id}/workers/{worker_id}/schedule")
+async def get_worker_schedule(org_id: int, worker_id: int, days: int = 3, db: Pool = Depends(get_db)):
+    training_repo = TrainingRepository(db)
+    now = datetime.now()
+    horizon = now + timedelta(days=max(1, min(days, 14)))
+    rows = await training_repo.get_trainings_by_trainer_and_org_in_period(worker_id, org_id, now, horizon)
+    return {
+        "schedule": [
+            {
+                "training_id": row["id"],
+                "date_start": row["date_start"].isoformat(),
+                "date_end": row["date_end"].isoformat(),
+                "gym_name": row["gym_name"],
+                "type_name": row["type_name"],
+            }
+            for row in rows
+        ]
     }
 
 
@@ -158,19 +224,145 @@ async def get_places(org_id: int, db: Pool = Depends(get_db)):
     return {"places": [{"id": place_id, "name": name} for place_id, name in places]}
 
 
-@router.get("/org/{org_id}/events/summary")
-async def get_events_summary(org_id: int, db: Pool = Depends(get_db)):
+@router.get("/org/{org_id}/events/calendar")
+async def get_events_calendar(org_id: int, year: int, month: int, db: Pool = Depends(get_db)):
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="Invalid month")
+
     training_repo = TrainingRepository(db)
-    today = date.today()
-    upcoming_rows = await training_repo.get_trainings_by_org_and_date_range(
-        org_id, today, today + timedelta(days=30)
-    )
+    start_date = date(year, month, 1)
+    end_date = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
     by_day = await training_repo.get_trainings_counts_by_org_grouped_by_day(
-        org_id, today, today + timedelta(days=30)
+        org_id, start_date, end_date
     )
     return {
-        "upcoming_count": len(upcoming_rows),
-        "days_with_trainings": len(by_day),
+        "year": year,
+        "month": month,
         "days": [{"date": d.isoformat(), "count": c} for d, c in by_day],
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+    }
+
+
+@router.get("/org/{org_id}/events/day")
+async def get_events_day(org_id: int, day: str, db: Pool = Depends(get_db)):
+    try:
+        day_date = datetime.strptime(day, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid day format")
+    training_repo = TrainingRepository(db)
+    rows = await training_repo.get_trainings_by_org_and_date_range(org_id, day_date, day_date + timedelta(days=1))
+    return {
+        "trainings": [
+            {
+                "id": row.id,
+                "date_start": row.date_start.isoformat(),
+                "date_end": row.date_end.isoformat(),
+                "gym_id": row.gym_id,
+                "trainer_id": row.trainer_id,
+                "type_id": row.type_id,
+                "max_clients": row.max_clients,
+            }
+            for row in rows
+        ]
+    }
+
+
+@router.get("/org/{org_id}/events/options")
+async def get_event_options(org_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    training_repo = TrainingRepository(db)
+
+    places = await org_service.get_places_list(org_id)
+    workers = await org_service.get_workers_list(org_id)
+    types = await training_repo.get_training_types()
+    return {
+        "places": [{"id": place_id, "name": name} for place_id, name in places],
+        "workers": [{"id": worker_id, "name": name} for worker_id, name in workers],
+        "types": [{"id": type_id, "name": name} for type_id, name in types],
+    }
+
+
+@router.post("/org/{org_id}/events")
+async def create_event(
+    org_id: int,
+    day: str,
+    time_start: str,
+    time_end: str,
+    gym_id: int,
+    trainer_id: int,
+    type_id: int,
+    max_clients: int,
+    db: Pool = Depends(get_db),
+):
+    if max_clients < 1:
+        raise HTTPException(status_code=400, detail="max_clients must be > 0")
+    try:
+        date_start = datetime.strptime(f"{day} {time_start}", "%Y-%m-%d %H:%M")
+        date_end = datetime.strptime(f"{day} {time_end}", "%Y-%m-%d %H:%M")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date/time format")
+    if date_end <= date_start:
+        raise HTTPException(status_code=400, detail="End time must be after start time")
+
+    training_repo = TrainingRepository(db)
+    training = Training(
+        id=None,
+        organization_id=org_id,
+        gym_id=gym_id,
+        trainer_id=trainer_id,
+        date_start=date_start,
+        date_end=date_end,
+        type_id=type_id,
+        max_clients=max_clients,
+    )
+    created = await training_repo.create(training)
+    return {
+        "id": created.id,
+        "organization_id": created.organization_id,
+    }
+
+
+@router.get("/worker/{org_id}/schedule")
+async def get_my_worker_schedule(org_id: int, user_id: int, days: int = 3, db: Pool = Depends(get_db)):
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    training_repo = TrainingRepository(db)
+    now = datetime.now()
+    horizon = now + timedelta(days=max(1, min(days, 14)))
+    rows = await training_repo.get_trainings_by_trainer_and_org_in_period(user.id, org_id, now, horizon)
+    return {
+        "schedule": [
+            {
+                "training_id": row["id"],
+                "date_start": row["date_start"].isoformat(),
+                "date_end": row["date_end"].isoformat(),
+                "gym_name": row["gym_name"],
+                "type_name": row["type_name"],
+            }
+            for row in rows
+        ]
+    }
+
+
+@router.get("/client/{org_id}/bookings")
+async def get_my_client_bookings(org_id: int, user_id: int, days: int = 30, db: Pool = Depends(get_db)):
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    booking_repo = BookingRepository(db)
+    now = datetime.now()
+    horizon = now + timedelta(days=max(1, min(days, 60)))
+    rows = await booking_repo.get_user_bookings_in_period(user.id, org_id, now, horizon)
+    return {
+        "bookings": [
+            {
+                "booking_id": row["booking_id"],
+                "training_id": row["training_id"],
+                "date_start": row["date_start"].isoformat(),
+                "date_end": row["date_end"].isoformat(),
+                "gym_name": row["gym_name"],
+                "type_name": row["type_name"],
+            }
+            for row in rows
+        ]
     }

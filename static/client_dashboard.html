@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кабинет клиента</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
+        .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
+        .container { width: 100%; max-width: 375px; margin: 0 auto; padding-top: 20px; min-height: 100vh; display: flex; flex-direction: column; }
+        .title { text-align: center; font-size: 24px; margin-bottom: 18px; text-transform: uppercase; }
+        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; flex: 1; padding: 16px; }
+        .card { background:#fff; border-radius:16px; padding:12px; margin-bottom:10px; font-size:13px; }
+        .btn { width: 100%; height: 56px; border: none; border-radius: 16px; font-family: inherit; background: #FFFFFF; border: 1px solid #E0E0E0; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <div class="title">МОИ ЗАПИСИ</div>
+        <div class="panel">
+            <div class="card" id="bookings">Загрузка...</div>
+            <button class="btn" onclick="history.back()">Назад</button>
+        </div>
+    </div>
+    <script>
+        Telegram.WebApp.ready();
+        const tgId = Telegram.WebApp.initDataUnsafe?.user?.id;
+        const orgId = new URLSearchParams(window.location.search).get("org_id");
+        async function load() {
+            const res = await fetch(`/api/v1/client/${orgId}/bookings?user_id=${tgId}&days=30`);
+            const data = await res.json();
+            const el = document.getElementById("bookings");
+            if (!data.bookings || !data.bookings.length) {
+                el.textContent = "Предстоящих записей нет";
+                return;
+            }
+            el.innerHTML = data.bookings.map(item => {
+                const start = new Date(item.date_start).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+                const end = new Date(item.date_end).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+                return `${start}-${end} • ${item.type_name} • ${item.gym_name}`;
+            }).join("<br><br>");
+        }
+        load();
+    </script>
+</body>
+</html>

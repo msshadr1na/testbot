@@ -263,6 +263,24 @@ class TrainingRepository:
         """
         return await self.pool.fetch(sql, trainer_id, start_date, end_date)
 
+    async def get_trainings_by_trainer_and_org_in_period(self, trainer_id: int, org_id: int, start_date, end_date):
+        sql = """
+            SELECT t.*, g.name as gym_name, tt.name as type_name
+            FROM training t
+            JOIN gym g ON t.gym_id = g.id
+            JOIN training_type tt ON t.type_id = tt.id
+            WHERE t.trainer_id = $1
+              AND t.organization_id = $2
+              AND t.date_start >= $3 AND t.date_start < $4
+            ORDER BY t.date_start
+        """
+        return await self.pool.fetch(sql, trainer_id, org_id, start_date, end_date)
+
+    async def get_training_types(self):
+        sql = "select id, name from training_type order by id"
+        rows = await self.pool.fetch(sql)
+        return [(row["id"], row["name"]) for row in rows]
+
 class BookingRepository:
     def __init__(self,pool):
         self.pool = pool
@@ -278,6 +296,21 @@ class BookingRepository:
         sql = "delete from booking where training_id = $1"
         deleted = await self.pool.execute(sql, training_id)
         return deleted
+
+    async def get_user_bookings_in_period(self, user_id: int, org_id: int, start_date, end_date):
+        sql = """
+            SELECT b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
+                   g.name as gym_name, tt.name as type_name
+            FROM booking b
+            JOIN training t ON b.training_id = t.id
+            JOIN gym g ON t.gym_id = g.id
+            JOIN training_type tt ON t.type_id = tt.id
+            WHERE b.user_id = $1
+              AND t.organization_id = $2
+              AND t.date_start >= $3 AND t.date_start < $4
+            ORDER BY t.date_start
+        """
+        return await self.pool.fetch(sql, user_id, org_id, start_date, end_date)
 
 class ReviewRepository:
     def __init__(self,pool):

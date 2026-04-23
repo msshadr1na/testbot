@@ -11,10 +11,11 @@
         body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
         .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
         .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 20px 0; }
-        .panel { background: #EFEEFC; border-radius: 20px; padding: 24px; }
+        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; padding: 24px; min-height: calc(100vh - 90px); }
         .title { text-align: center; font-size: 24px; margin-bottom: 18px; }
         .card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
         .btn { width: 100%; height: 56px; border: none; border-radius: 16px; font-family: inherit; cursor: pointer; margin-top: 10px; }
+        .status { font-size: 13px; min-height: 18px; color: #5a5a5a; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -23,8 +24,10 @@
         <div class="title">РАБОТНИК</div>
         <div class="panel">
             <div class="card" id="card">Загрузка...</div>
+            <div class="card" id="schedule">Расписание на 3 дня: загрузка...</div>
             <button class="btn" style="background:#CBBAFD;" id="delete-btn">Удалить работника</button>
             <button class="btn" style="background:#FFFFFF;border:1px solid #E0E0E0;" id="back-btn">Назад</button>
+            <div id="status" class="status"></div>
         </div>
     </div>
     <script>
@@ -33,6 +36,13 @@
         const orgId = params.get("org_id");
         const workerId = params.get("worker_id");
         const card = document.getElementById("card");
+        const schedule = document.getElementById("schedule");
+        const statusEl = document.getElementById("status");
+
+        function setStatus(text, isError = false) {
+            statusEl.textContent = text || "";
+            statusEl.style.color = isError ? "#d32f2f" : "#5a5a5a";
+        }
 
         async function loadDetail() {
             const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}`);
@@ -40,13 +50,32 @@
             card.innerHTML = `Имя: ${data.full_name}<br><br>Телефон: ${data.phone || "не указан"}`;
         }
 
+        async function loadSchedule() {
+            const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}/schedule?days=3`);
+            const data = await res.json();
+            if (!data.schedule || !data.schedule.length) {
+                schedule.innerHTML = "Расписание на 3 дня: нет тренировок";
+                return;
+            }
+            schedule.innerHTML = "Расписание на 3 дня:<br><br>" + data.schedule.map(item => {
+                const start = new Date(item.date_start).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+                const end = new Date(item.date_end).toLocaleString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+                return `${start}-${end} • ${item.type_name} • ${item.gym_name}`;
+            }).join("<br>");
+        }
+
         document.getElementById("delete-btn").onclick = async () => {
             if (!confirm("Удалить работника из организации?")) return;
             const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}`, { method: "DELETE" });
-            if (res.ok) window.location.href = `/app/org_workers.html?org_id=${orgId}`;
+            if (res.ok) {
+                window.location.href = `/app/org_workers.html?org_id=${orgId}`;
+            } else {
+                setStatus("Не удалось удалить работника", true);
+            }
         };
         document.getElementById("back-btn").onclick = () => window.location.href = `/app/org_workers.html?org_id=${orgId}`;
         loadDetail();
+        loadSchedule();
     </script>
 </body>
 </html>

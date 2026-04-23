@@ -10,11 +10,26 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
         .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
-        .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 20px 0; }
+        .container { width: 100%; max-width: 375px; margin: 0 auto; padding-top: 20px; min-height: 100vh; display: flex; flex-direction: column; }
         .title { text-align: center; font-size: 24px; margin-bottom: 18px; text-transform: uppercase; }
-        .panel { background: #EFEEFC; border-radius: 20px; padding: 24px; }
+        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; flex: 1; padding: 16px; display: flex; flex-direction: column; align-items: center; }
         .card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 10px; }
-        .btn { width: 100%; height: 56px; border: none; border-radius: 16px; font-family: inherit; cursor: pointer; margin-top: 10px; background:#FFFFFF; border:1px solid #E0E0E0; }
+        .calendar { width: 313px; background: #fff; border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+        .month-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .month-nav button { width: 38px; height: 38px; border-radius: 19px; border: none; cursor: pointer; background: #EFEEFC; font-family: inherit; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .day { height: 36px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; font-size: 12px; }
+        .day.empty { visibility: hidden; }
+        .day-0 { background: #ffffff; border: 1px solid #ddd; }
+        .day-1 { background: #CBBAFD; }
+        .day-2 { background: #CBE949; }
+        .day-3 { background: #F8CECC; }
+        .form-card { width: 313px; background: #fff; border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        input, select { width: 100%; height: 42px; border: 1px solid #ddd; border-radius: 10px; padding: 0 10px; font-family: inherit; font-size: 12px; }
+        .btn { width: 313px; height: 56px; border: none; border-radius: 16px; font-family: inherit; cursor: pointer; margin-top: 8px; background:#FFFFFF; border:1px solid #E0E0E0; }
+        .status { width: 313px; font-size: 12px; min-height: 16px; color: #5a5a5a; }
+        .list { width: 313px; background:#fff; border-radius:16px; padding: 10px; font-size: 12px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -22,24 +37,149 @@
     <div class="container">
         <div class="title">МЕРОПРИЯТИЯ</div>
         <div class="panel">
-            <div class="card" id="summary">Загрузка...</div>
-            <div class="card" id="days"></div>
+            <div class="calendar">
+                <div class="month-nav">
+                    <button id="prev-month">◀</button>
+                    <div id="month-label"></div>
+                    <button id="next-month">▶</button>
+                </div>
+                <div class="grid" id="calendar-grid"></div>
+            </div>
+            <div class="list" id="day-list">Выберите день</div>
+            <div class="form-card">
+                <div style="font-size:12px;margin-bottom:8px;" id="selected-day">Дата: не выбрана</div>
+                <div class="row">
+                    <input id="time-start" placeholder="Начало HH:MM">
+                    <input id="time-end" placeholder="Конец HH:MM">
+                </div>
+                <div class="row">
+                    <select id="gym-select"></select>
+                    <select id="trainer-select"></select>
+                </div>
+                <div class="row">
+                    <select id="type-select"></select>
+                    <input id="max-clients" type="number" min="1" max="100" placeholder="Макс. клиентов">
+                </div>
+                <button class="btn" style="background:#CBBAFD;border:none;" id="create-btn">Создать тренировку</button>
+            </div>
+            <div class="status" id="status"></div>
             <button class="btn" id="back-btn">Назад</button>
         </div>
     </div>
     <script>
         Telegram.WebApp.ready();
         const orgId = new URLSearchParams(window.location.search).get("org_id");
-        async function loadSummary() {
-            const res = await fetch(`/api/v1/org/${orgId}/events/summary`);
-            const data = await res.json();
-            document.getElementById("summary").innerHTML =
-                `Тренировок на 30 дней: ${data.upcoming_count}<br><br>Активных дней: ${data.days_with_trainings}`;
-            const days = data.days.map(d => `${d.date}: ${d.count}`).join("<br>");
-            document.getElementById("days").innerHTML = days || "Ближайших тренировок нет";
+        const monthLabel = document.getElementById("month-label");
+        const grid = document.getElementById("calendar-grid");
+        const dayList = document.getElementById("day-list");
+        const statusEl = document.getElementById("status");
+        const selectedDayEl = document.getElementById("selected-day");
+        let current = new Date();
+        let selectedDay = null;
+        let countsByDay = {};
+
+        function setStatus(text, isError = false) {
+            statusEl.textContent = text || "";
+            statusEl.style.color = isError ? "#d32f2f" : "#5a5a5a";
         }
+
+        function clsByCount(c) {
+            if (c === 0) return "day-0";
+            if (c <= 2) return "day-1";
+            if (c <= 5) return "day-2";
+            return "day-3";
+        }
+
+        async function loadOptions() {
+            const res = await fetch(`/api/v1/org/${orgId}/events/options`);
+            const data = await res.json();
+            document.getElementById("gym-select").innerHTML = data.places.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
+            document.getElementById("trainer-select").innerHTML = data.workers.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
+            document.getElementById("type-select").innerHTML = data.types.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
+        }
+
+        async function loadCalendar() {
+            const y = current.getFullYear();
+            const m = current.getMonth() + 1;
+            monthLabel.textContent = `${String(m).padStart(2, "0")}.${y}`;
+            const res = await fetch(`/api/v1/org/${orgId}/events/calendar?year=${y}&month=${m}`);
+            const data = await res.json();
+            countsByDay = {};
+            data.days.forEach(d => { countsByDay[d.date] = d.count; });
+
+            grid.innerHTML = "";
+            const firstDay = new Date(y, m - 1, 1);
+            const firstWeekday = (firstDay.getDay() + 6) % 7;
+            const daysInMonth = new Date(y, m, 0).getDate();
+
+            for (let i = 0; i < firstWeekday; i++) {
+                const empty = document.createElement("div");
+                empty.className = "day empty";
+                grid.appendChild(empty);
+            }
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dayDate = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                const c = countsByDay[dayDate] || 0;
+                const btn = document.createElement("button");
+                btn.className = `day ${clsByCount(c)}`;
+                btn.textContent = d;
+                btn.onclick = () => selectDay(dayDate);
+                grid.appendChild(btn);
+            }
+        }
+
+        async function selectDay(dayDate) {
+            selectedDay = dayDate;
+            selectedDayEl.textContent = `Дата: ${dayDate}`;
+            const res = await fetch(`/api/v1/org/${orgId}/events/day?day=${dayDate}`);
+            const data = await res.json();
+            if (!data.trainings.length) {
+                dayList.innerHTML = "На этот день тренировок нет";
+                return;
+            }
+            dayList.innerHTML = data.trainings.map(t => {
+                const s = new Date(t.date_start).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+                const e = new Date(t.date_end).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+                return `${s}-${e} • тренер #${t.trainer_id} • зал #${t.gym_id}`;
+            }).join("<br>");
+        }
+
+        function isValidTime(s) {
+            return /^\d{2}:\d{2}$/.test(s);
+        }
+
+        document.getElementById("create-btn").onclick = async () => {
+            const timeStart = document.getElementById("time-start").value.trim();
+            const timeEnd = document.getElementById("time-end").value.trim();
+            const gymId = document.getElementById("gym-select").value;
+            const trainerId = document.getElementById("trainer-select").value;
+            const typeId = document.getElementById("type-select").value;
+            const maxClients = document.getElementById("max-clients").value;
+
+            if (!selectedDay) return setStatus("Сначала выберите день в календаре", true);
+            if (!isValidTime(timeStart) || !isValidTime(timeEnd)) return setStatus("Время в формате HH:MM", true);
+            if (!maxClients || Number(maxClients) < 1) return setStatus("Максимум клиентов должен быть больше 0", true);
+
+            const query = `day=${selectedDay}&time_start=${timeStart}&time_end=${timeEnd}&gym_id=${gymId}&trainer_id=${trainerId}&type_id=${typeId}&max_clients=${maxClients}`;
+            const res = await fetch(`/api/v1/org/${orgId}/events?${query}`, { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) return setStatus(data.detail || "Не удалось создать тренировку", true);
+            setStatus("Тренировка успешно создана");
+            await loadCalendar();
+            await selectDay(selectedDay);
+        };
+
+        document.getElementById("prev-month").onclick = async () => {
+            current = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+            await loadCalendar();
+        };
+        document.getElementById("next-month").onclick = async () => {
+            current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+            await loadCalendar();
+        };
         document.getElementById("back-btn").onclick = () => window.location.href = `/app/org_dashboard.html?org_id=${orgId}`;
-        loadSummary();
+        loadOptions();
+        loadCalendar();
     </script>
 </body>
 </html>
