@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Помещения</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
+        .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
+        .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 20px 0; }
+        .title { text-align: center; font-size: 24px; margin-bottom: 18px; text-transform: uppercase; }
+        .panel { background: #EFEEFC; border-radius: 20px; padding: 20px 0; min-height: 400px; }
+        .item { width: 313px; height: 62px; margin: 0 auto 10px; border: none; border-radius: 16px; font-family: inherit; font-size: 16px; background: #CBBAFD; }
+        .btn { width: 313px; height: 56px; margin: 10px auto 0; display: block; border: none; border-radius: 16px; font-family: inherit; cursor: pointer; background: #FFFFFF; border: 1px solid #E0E0E0; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <div class="title">ПОМЕЩЕНИЯ</div>
+        <div class="panel">
+            <div id="list" style="text-align:center;padding:30px 10px;">Загрузка...</div>
+            <button class="btn" id="back-btn">Назад</button>
+        </div>
+    </div>
+    <script>
+        Telegram.WebApp.ready();
+        const orgId = new URLSearchParams(window.location.search).get("org_id");
+        async function loadPlaces() {
+            const res = await fetch(`/api/v1/org/${orgId}/places`);
+            const data = await res.json();
+            const list = document.getElementById("list");
+            list.innerHTML = "";
+            if (!data.places.length) {
+                list.innerHTML = "Помещений пока нет";
+                return;
+            }
+            data.places.forEach((place, i) => {
+                const el = document.createElement("button");
+                el.className = "item";
+                el.style.background = i % 2 ? "#CBE949" : "#CBBAFD";
+                el.textContent = place.name;
+                list.appendChild(el);
+            });
+        }
+        document.getElementById("back-btn").onclick = () => window.location.href = `/app/org_dashboard.html?org_id=${orgId}`;
+        loadPlaces();
+    </script>
+</body>
+</html>

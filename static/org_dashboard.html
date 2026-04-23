@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Организация</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
+        .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
+        .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 20px 0; }
+        .header-title { text-align: center; font-size: 24px; line-height: 26px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; }
+        .panel { background: #EFEEFC; border-radius: 20px; padding: 20px 0; }
+        .menu-btn { width: 313px; height: 70px; margin: 0 auto 12px; border: none; border-radius: 20px; font-family: inherit; font-size: 20px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+        .menu-btn:nth-child(odd) { background: #CBBAFD; }
+        .menu-btn:nth-child(even) { background: #CBE949; }
+        .menu-btn.back { background: #FFFFFF; border: 1px solid #E0E0E0; margin-bottom: 0; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <div class="header-title" id="title">ОРГАНИЗАЦИЯ</div>
+        <div class="panel">
+            <button class="menu-btn" id="btn-edit">Настройки</button>
+            <button class="menu-btn" id="btn-places">Помещения</button>
+            <button class="menu-btn" id="btn-workers">Работники</button>
+            <button class="menu-btn" id="btn-clients">Клиенты</button>
+            <button class="menu-btn" id="btn-events">Мероприятия</button>
+            <button class="menu-btn back" onclick="window.location.href='/orgs'">Назад</button>
+        </div>
+    </div>
+    <script>
+        Telegram.WebApp.ready();
+        const params = new URLSearchParams(window.location.search);
+        const orgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
+        if (orgId) localStorage.setItem("selectedOrgId", orgId);
+
+        async function loadOrgName() {
+            if (!orgId) return;
+            const res = await fetch(`/api/v1/org/${orgId}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            document.getElementById("title").textContent = data.name.toUpperCase();
+        }
+
+        document.getElementById("btn-edit").onclick = () => window.location.href = `/app/org_edit.html?org_id=${orgId}`;
+        document.getElementById("btn-places").onclick = () => window.location.href = `/app/org_places.html?org_id=${orgId}`;
+        document.getElementById("btn-workers").onclick = () => window.location.href = `/app/org_workers.html?org_id=${orgId}`;
+        document.getElementById("btn-clients").onclick = () => window.location.href = `/app/org_clients.html?org_id=${orgId}`;
+        document.getElementById("btn-events").onclick = () => window.location.href = `/app/org_events.html?org_id=${orgId}`;
+
+        loadOrgName();
+    </script>
+</body>
+</html>

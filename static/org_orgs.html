@@ -301,7 +301,7 @@
 
                             btn.onclick = () => {
                                 localStorage.setItem("selectedOrgId", org.id);
-                                alert(`Выбрана: ${org.name}`);
+                                window.location.href = `/app/org_dashboard.html?org_id=${org.id}`;
                             };
 
                             container.appendChild(btn);
