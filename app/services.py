@@ -116,9 +116,7 @@ class OrganizationService:
         if not invite:
             raise ValueError("Приглашение не найдено")
 
-        role = await self.invite_repository.get_role(code)
-
-        existing = await self.organizationMember_repository.get_by_user_and_org(user_id, invite.organization_id,role)
+        existing = await self.organizationMember_repository.get_by_user_and_org(user_id, invite.organization_id,invite.role_id)
         if existing:
             raise ValueError("Вы уже состоите в этой организации")
 
