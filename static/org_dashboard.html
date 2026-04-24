@@ -8,50 +8,238 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; color: #1f1f35; }
         .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
-        .container { width: 100%; max-width: 375px; margin: 0 auto; padding-top: 20px; min-height: 100vh; display: flex; flex-direction: column; }
-        .header-title { text-align: center; font-size: 24px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; }
-        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; flex: 1; display: flex; flex-direction: column; align-items: center; padding: 24px 0; }
-        .menu-btn { width: 313px; height: 70px; margin-bottom: 12px; border: none; border-radius: 20px; font-family: inherit; font-size: 20px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
-        .menu-btn:nth-child(odd) { background: #CBBAFD; }
-        .menu-btn:nth-child(even) { background: #CBE949; }
-        .menu-btn.back { background: #FFFFFF; border: 1px solid #E0E0E0; margin-top: auto; margin-bottom: 0; }
+        .container {
+            width: 100%;
+            max-width: 375px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 18px 14px 112px;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .back-btn {
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            background: rgba(255, 255, 255, 0.7);
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 5px 10px rgba(32, 21, 70, 0.12);
+        }
+        .page-label { font-size: 13px; letter-spacing: 0.5px; opacity: 0.75; }
+        .org-card {
+            background: #efeefc;
+            border-radius: 22px;
+            border: 1px solid #ffffff;
+            box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16);
+            padding: 18px 16px;
+            margin-bottom: 12px;
+        }
+        .org-title {
+            font-size: 24px;
+            line-height: 1.1;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+        .org-subtitle {
+            font-size: 12px;
+            opacity: 0.72;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .stat-card {
+            background: #efeefc;
+            border-radius: 16px;
+            border: 1px solid #ffffff;
+            padding: 12px;
+            box-shadow: 0 9px 14px rgba(37, 27, 76, 0.12);
+        }
+        .stat-name { font-size: 11px; opacity: 0.72; margin-bottom: 6px; }
+        .stat-value { font-size: 28px; line-height: 1; }
+        .highlight-card {
+            background: linear-gradient(140deg, #cbbafd, #d8f07f);
+            border-radius: 16px;
+            padding: 13px;
+            box-shadow: 0 10px 16px rgba(37, 27, 76, 0.15);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .bottom-nav-wrap {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+            pointer-events: none;
+        }
+        .bottom-nav {
+            width: 100%;
+            max-width: 375px;
+            background: rgba(239, 238, 252, 0.95);
+            border: 1px solid #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 -8px 20px rgba(37, 27, 76, 0.2);
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            padding: 8px;
+            pointer-events: auto;
+            backdrop-filter: blur(3px);
+        }
+        .tab-btn {
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            min-height: 62px;
+            padding: 6px 4px;
+            color: #1f1f35;
+            font-family: inherit;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: transform .12s ease, background .12s ease;
+        }
+        .tab-btn .icon { font-size: 18px; line-height: 1; }
+        .tab-btn.active {
+            background: #cbbafd;
+            box-shadow: inset 0 -3px 0 rgba(53, 33, 102, 0.25);
+        }
+        .tab-btn:hover { background: #d9cef9; transform: translateY(-1px); }
     </style>
 </head>
 <body>
     <div class="bg-gradient"></div>
     <div class="container">
-        <div class="header-title" id="title">ОРГАНИЗАЦИЯ</div>
-        <div class="panel">
-            <button class="menu-btn" id="btn-edit">Настройки</button>
-            <button class="menu-btn" id="btn-places">Помещения</button>
-            <button class="menu-btn" id="btn-workers">Работники</button>
-            <button class="menu-btn" id="btn-clients">Клиенты</button>
-            <button class="menu-btn" id="btn-events">Мероприятия</button>
-            <button class="menu-btn back" onclick="window.location.href='/orgs'">Назад</button>
+        <div class="topbar">
+            <button class="back-btn" id="back-btn">←</button>
+            <div class="page-label">ГЛАВНЫЙ ЭКРАН ОРГАНИЗАТОРА</div>
+        </div>
+
+        <div class="org-card">
+            <div class="org-title" id="title">ОРГАНИЗАЦИЯ</div>
+            <div class="org-subtitle">Управляйте командой, клиентами и расписанием в одном месте.</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-name">Работники</div>
+                <div class="stat-value" id="stat-workers">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-name">Клиенты</div>
+                <div class="stat-value" id="stat-clients">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-name">Помещения</div>
+                <div class="stat-value" id="stat-places">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-name">ID организации</div>
+                <div class="stat-value" id="stat-org-id">-</div>
+            </div>
+        </div>
+
+        <div class="highlight-card">
+            Быстрый доступ внизу: переходите по разделам через нижнюю панель, как в приложении.
         </div>
     </div>
+
+    <div class="bottom-nav-wrap">
+        <div class="bottom-nav">
+            <button class="tab-btn active" id="tab-edit">
+                <span class="icon">⚙</span>
+                <span>Настройки</span>
+            </button>
+            <button class="tab-btn" id="tab-places">
+                <span class="icon">🏠</span>
+                <span>Помещения</span>
+            </button>
+            <button class="tab-btn" id="tab-workers">
+                <span class="icon">👥</span>
+                <span>Работники</span>
+            </button>
+            <button class="tab-btn" id="tab-clients">
+                <span class="icon">🧍</span>
+                <span>Клиенты</span>
+            </button>
+            <button class="tab-btn" id="tab-events">
+                <span class="icon">📅</span>
+                <span>События</span>
+            </button>
+        </div>
+    </div>
+
     <script>
         Telegram.WebApp.ready();
         const params = new URLSearchParams(window.location.search);
         const orgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
         if (orgId) localStorage.setItem("selectedOrgId", orgId);
 
-        async function loadOrgName() {
+        async function loadDashboardData() {
             if (!orgId) return;
-            const res = await fetch(`/api/v1/org/${orgId}`);
-            if (!res.ok) return;
-            const data = await res.json();
-            document.getElementById("title").textContent = data.name.toUpperCase();
+            document.getElementById("stat-org-id").textContent = String(orgId);
+            try {
+                const [orgRes, workersRes, clientsRes, placesRes] = await Promise.all([
+                    fetch(`/api/v1/org/${orgId}`),
+                    fetch(`/api/v1/org/${orgId}/workers`),
+                    fetch(`/api/v1/org/${orgId}/clients`),
+                    fetch(`/api/v1/org/${orgId}/places`)
+                ]);
+                if (orgRes.ok) {
+                    const orgData = await orgRes.json();
+                    document.getElementById("title").textContent = String(orgData.name || "ОРГАНИЗАЦИЯ").toUpperCase();
+                }
+                if (workersRes.ok) {
+                    const workersData = await workersRes.json();
+                    document.getElementById("stat-workers").textContent = workersData.workers.length;
+                }
+                if (clientsRes.ok) {
+                    const clientsData = await clientsRes.json();
+                    document.getElementById("stat-clients").textContent = clientsData.clients.length;
+                }
+                if (placesRes.ok) {
+                    const placesData = await placesRes.json();
+                    document.getElementById("stat-places").textContent = placesData.places.length;
+                }
+            } catch (error) {
+                // keep default values if some API is temporarily unavailable
+            }
         }
 
-        document.getElementById("btn-edit").onclick = () => window.location.href = `/app/org_edit.html?org_id=${orgId}`;
-        document.getElementById("btn-places").onclick = () => window.location.href = `/app/org_places.html?org_id=${orgId}`;
-        document.getElementById("btn-workers").onclick = () => window.location.href = `/app/org_workers.html?org_id=${orgId}`;
-        document.getElementById("btn-clients").onclick = () => window.location.href = `/app/org_clients.html?org_id=${orgId}`;
-        document.getElementById("btn-events").onclick = () => window.location.href = `/app/org_events.html?org_id=${orgId}`;
-        loadOrgName();
+        function goTo(path) {
+            if (!orgId) return;
+            window.location.href = `${path}?org_id=${orgId}`;
+        }
+
+        document.getElementById("back-btn").onclick = () => window.location.href = "/orgs";
+        document.getElementById("tab-edit").onclick = () => goTo("/app/org_edit.html");
+        document.getElementById("tab-places").onclick = () => goTo("/app/org_places.html");
+        document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");
+        document.getElementById("tab-clients").onclick = () => goTo("/app/org_clients.html");
+        document.getElementById("tab-events").onclick = () => goTo("/app/org_events.html");
+
+        loadDashboardData();
     </script>
 </body>
 </html>

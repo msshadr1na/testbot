@@ -10,19 +10,19 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Russo One', sans-serif; min-height: 100vh; color: #23233a; }
         .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
-        .container { width: 100%; max-width: 375px; margin: 0 auto; padding-top: 20px; min-height: 100vh; display: flex; flex-direction: column; }
+        .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 20px 14px 112px; min-height: 100vh; display: flex; flex-direction: column; }
         .header-title { text-align: center; font-size: 24px; margin-bottom: 18px; text-transform: uppercase; }
-        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; flex: 1; padding: 20px 0 18px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 -8px 18px rgba(46, 33, 88, 0.15); }
-        .list { width: 313px; flex: 1; overflow-y: auto; }
+        .panel { background: #EFEEFC; border-radius: 20px; flex: 1; padding: 20px 14px 18px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 12px 18px rgba(46, 33, 88, 0.15); border: 1px solid #fff; }
+        .list { width: 100%; flex: 1; overflow-y: auto; }
         .item {
-            width: 313px; height: 62px; margin: 0 auto 12px; border: 1px solid rgba(255, 255, 255, 0.5);
+            width: 100%; height: 62px; margin: 0 auto 12px; border: 1px solid rgba(255, 255, 255, 0.5);
             border-radius: 16px; font-family: inherit; font-size: 16px; cursor: pointer;
             box-shadow: 0 8px 0 rgba(57, 42, 103, 0.18), 0 14px 22px rgba(57, 42, 103, 0.14);
             transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
         }
         .item:hover { transform: translateY(-1px); filter: brightness(1.02); }
         .item:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57, 42, 103, 0.18), 0 8px 10px rgba(57, 42, 103, 0.12); }
-        .actions { width: 313px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+        .actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
         .small {
             height: 56px; border: 1px solid rgba(255, 255, 255, 0.55); border-radius: 16px; font-family: inherit;
             font-size: 12px; cursor: pointer; box-shadow: 0 7px 0 rgba(57, 42, 103, 0.18), 0 12px 20px rgba(57, 42, 103, 0.12);
@@ -32,10 +32,10 @@
         .small:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57, 42, 103, 0.18), 0 8px 10px rgba(57, 42, 103, 0.12); }
         .a1 { background: #CBE949; }
         .a2 { background: #FFFFFF; border: 1px solid #d8d8eb; grid-column: 1 / -1; }
-        #invite-btn:hover, #refresh-btn:hover, #back-btn:hover { filter: brightness(1.05); }
-        #invite-btn:active, #refresh-btn:active, #back-btn:active { transform: translateY(4px); }
+        #invite-btn:hover, #refresh-btn:hover { filter: brightness(1.05); }
+        #invite-btn:active, #refresh-btn:active { transform: translateY(4px); }
         .invite-card {
-            width: 313px; margin-top: 12px; padding: 12px; border-radius: 14px; background: #ffffff;
+            width: 100%; margin-top: 12px; padding: 12px; border-radius: 14px; background: #ffffff;
             border: 1px solid #e2e2f0; box-shadow: 0 10px 18px rgba(57, 42, 103, 0.12); display: none;
         }
         .invite-label { font-size: 12px; color: #5e5e72; margin-bottom: 6px; }
@@ -49,7 +49,12 @@
             font-size: 12px; cursor: pointer; background: #dff88a; box-shadow: 0 4px 0 rgba(57, 42, 103, 0.18);
         }
         .copy-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(57, 42, 103, 0.18); }
-        .status { width: 313px; font-size: 12px; margin-top: 8px; min-height: 16px; color: #5a5a5a; word-break: break-word; text-align: center; }
+        .status { width: 100%; font-size: 12px; margin-top: 8px; min-height: 16px; color: #5a5a5a; word-break: break-word; text-align: center; }
+        .bottom-nav-wrap { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); }
+        .bottom-nav { width: 100%; max-width: 375px; background: rgba(239,238,252,.95); border: 1px solid #fff; border-radius: 18px; box-shadow: 0 -8px 20px rgba(37,27,76,.2); display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; padding: 8px; }
+        .tab-btn { border: none; border-radius: 12px; background: transparent; min-height: 62px; font-family: inherit; font-size: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .tab-btn .icon { font-size: 18px; }
+        .tab-btn.active { background: #cbbafd; box-shadow: inset 0 -3px 0 rgba(53,33,102,.25); }
     </style>
 </head>
 <body>
@@ -61,7 +66,6 @@
             <div class="actions">
                 <button class="small a1" id="invite-btn">Ссылка приглашения</button>
                 <button class="small a1" id="refresh-btn">Обновить ссылку</button>
-                <button class="small a2" id="back-btn">Назад</button>
             </div>
             <div id="invite-card" class="invite-card">
                 <div class="invite-label">Ссылка приглашения</div>
@@ -69,6 +73,15 @@
                 <button id="copy-btn" class="copy-btn">Скопировать ссылку</button>
             </div>
             <div id="status" class="status"></div>
+        </div>
+    </div>
+    <div class="bottom-nav-wrap">
+        <div class="bottom-nav">
+            <button class="tab-btn" id="tab-edit"><span class="icon">⚙</span><span>Настройки</span></button>
+            <button class="tab-btn" id="tab-places"><span class="icon">🏠</span><span>Помещения</span></button>
+            <button class="tab-btn" id="tab-workers"><span class="icon">👥</span><span>Работники</span></button>
+            <button class="tab-btn active" id="tab-clients"><span class="icon">🧍</span><span>Клиенты</span></button>
+            <button class="tab-btn" id="tab-events"><span class="icon">📅</span><span>События</span></button>
         </div>
     </div>
     <script>
@@ -160,7 +173,12 @@
         };
         document.getElementById("invite-btn").onclick = () => loadInvite(false);
         document.getElementById("refresh-btn").onclick = () => loadInvite(true);
-        document.getElementById("back-btn").onclick = () => window.location.href = `/app/org_dashboard.html?org_id=${orgId}`;
+        function goTo(path) { window.location.href = `${path}?org_id=${orgId}`; }
+        document.getElementById("tab-edit").onclick = () => goTo("/app/org_edit.html");
+        document.getElementById("tab-places").onclick = () => goTo("/app/org_places.html");
+        document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");
+        document.getElementById("tab-clients").onclick = () => goTo("/app/org_clients.html");
+        document.getElementById("tab-events").onclick = () => goTo("/app/org_events.html");
         loadClients();
     </script>
 </body>
