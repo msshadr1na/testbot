@@ -31,6 +31,16 @@ async def get_orgs_page():
     with open("static/org_orgs.html", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
+@app.get("/worker", response_class=HTMLResponse)
+async def get_orgs_page():
+    with open("static/client_orgs.html", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
+@app.get("/client", response_class=HTMLResponse)
+async def get_orgs_page():
+    with open("static/worker_orgs.html", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
 @app.get("/test", response_class=HTMLResponse)
 async def test_page():
     with open("static/test.html", encoding="utf-8") as f:

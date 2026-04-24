@@ -396,3 +396,4 @@ async def get_my_client_bookings(org_id: int, user_id: int, days: int = 30, db: 
             for row in rows
         ]
     }
+

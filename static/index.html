@@ -31,7 +31,7 @@
             height: 100vh;
             background: linear-gradient(120.42deg, #CBBAFD 30.38%, #CBE949 55.67%);
             box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-            z-index: -1; /* чтобы был позади контента */
+            z-index: -1;
         }
 
         .container {
@@ -39,7 +39,7 @@
             max-width: 375px;
             margin: 0 auto;
             position: relative;
-            padding-top: 20px; /* отступ сверху */
+            padding-top: 20px;
         }
 
         .welcome-container {
@@ -156,10 +156,8 @@
 </head>
 <body>
 
-    <!-- 🔥 Фон — на весь экран -->
     <div class="bg-gradient"></div>
 
-    <!-- Контент — центрированный -->
     <div class="container">
         <div class="welcome-container">
             <div class="welcome-line-1">ДОБРО ПОЖАЛОВАТЬ,</div>
@@ -197,10 +195,10 @@
             window.location.href = '/orgs';
         }
         function goToWorkerOrgs() {
-            window.location.href = '/app/worker_orgs.html';
+            window.location.href = '/worker';
         }
         function goToClientOrgs() {
-            window.location.href = '/app/client_orgs.html';
+            window.location.href = '/client';
         }
     </script>
 
