@@ -114,6 +114,20 @@ async def get_workers(org_id: int, db: Pool = Depends(get_db)):
     return {"workers": [{"id": worker_id, "name": name} for worker_id, name in workers]}
 
 
+@router.get("/org/{org_id}/workers/invite")
+async def get_workers_invite(org_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    link = await org_service.get_or_create_invite(org_id, 2)
+    return {"link": link}
+
+
+@router.post("/org/{org_id}/workers/invite/refresh")
+async def refresh_workers_invite(org_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    link = await org_service.update_invite(org_id, 2)
+    return {"link": link}
+
+
 @router.get("/org/{org_id}/workers/{worker_id}")
 async def get_worker(org_id: int, worker_id: int, db: Pool = Depends(get_db)):
     user_service = create_user_service(db)
@@ -158,25 +172,25 @@ async def delete_worker(org_id: int, worker_id: int, db: Pool = Depends(get_db))
     return {"ok": True}
 
 
-@router.get("/org/{org_id}/workers/invite")
-async def get_workers_invite(org_id: int, db: Pool = Depends(get_db)):
-    org_service = create_organization_service(db)
-    link = await org_service.get_or_create_invite(org_id, 2)
-    return {"link": link}
-
-
-@router.post("/org/{org_id}/workers/invite/refresh")
-async def refresh_workers_invite(org_id: int, db: Pool = Depends(get_db)):
-    org_service = create_organization_service(db)
-    link = await org_service.update_invite(org_id, 2)
-    return {"link": link}
-
-
 @router.get("/org/{org_id}/clients")
 async def get_clients(org_id: int, db: Pool = Depends(get_db)):
     org_service = create_organization_service(db)
     clients = await org_service.get_clients_list(org_id)
     return {"clients": [{"id": client_id, "name": name} for client_id, name in clients]}
+
+
+@router.get("/org/{org_id}/clients/invite")
+async def get_clients_invite(org_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    link = await org_service.get_or_create_invite(org_id, 3)
+    return {"link": link}
+
+
+@router.post("/org/{org_id}/clients/invite/refresh")
+async def refresh_clients_invite(org_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    link = await org_service.update_invite(org_id, 3)
+    return {"link": link}
 
 
 @router.get("/org/{org_id}/clients/{client_id}")
@@ -201,20 +215,6 @@ async def delete_client(org_id: int, client_id: int, db: Pool = Depends(get_db))
     org_service = create_organization_service(db)
     await org_service.delete_client(org_id, client_id)
     return {"ok": True}
-
-
-@router.get("/org/{org_id}/clients/invite")
-async def get_clients_invite(org_id: int, db: Pool = Depends(get_db)):
-    org_service = create_organization_service(db)
-    link = await org_service.get_or_create_invite(org_id, 3)
-    return {"link": link}
-
-
-@router.post("/org/{org_id}/clients/invite/refresh")
-async def refresh_clients_invite(org_id: int, db: Pool = Depends(get_db)):
-    org_service = create_organization_service(db)
-    link = await org_service.update_invite(org_id, 3)
-    return {"link": link}
 
 
 @router.get("/org/{org_id}/places")

@@ -271,15 +271,10 @@
                         return;
                     }
 
-                    // Пагинация: показываем стрелки, если > 3 организаций
+                    // Пагинация: 5 организаций на страницу
                     const totalOrgs = data.organizations.length;
-                    const perPage = 3;
+                    const perPage = 5;
                     let currentPage = 0;
-
-                    if (totalOrgs > perPage) {
-                        prevBtn.classList.add('visible');
-                        nextBtn.classList.add('visible');
-                    }
 
                     function renderPage(page) {
                         container.innerHTML = '';
@@ -307,9 +302,12 @@
                             container.appendChild(btn);
                         });
 
-                        // Обновляем состояние кнопок пагинации
-                        prevBtn.disabled = (page <= 0);
-                        nextBtn.disabled = (page >= Math.ceil(totalOrgs / perPage) - 1);
+                        const hasPrev = page > 0;
+                        const hasNext = page < Math.ceil(totalOrgs / perPage) - 1;
+
+                        // Показываем стрелки только когда они реально нужны
+                        prevBtn.classList.toggle('visible', hasPrev);
+                        nextBtn.classList.toggle('visible', hasNext);
                     }
 
                     // Обработчики пагинации

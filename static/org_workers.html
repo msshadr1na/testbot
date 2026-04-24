@@ -32,6 +32,8 @@
         .small:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57, 42, 103, 0.18), 0 8px 10px rgba(57, 42, 103, 0.12); }
         .a1 { background: #CBE949; }
         .a2 { background: #FFFFFF; border: 1px solid #d8d8eb; grid-column: 1 / -1; }
+        #invite-btn:hover, #refresh-btn:hover, #back-btn:hover { filter: brightness(1.05); }
+        #invite-btn:active, #refresh-btn:active, #back-btn:active { transform: translateY(4px); }
         .invite-card {
             width: 313px; margin-top: 12px; padding: 12px; border-radius: 14px; background: #ffffff;
             border: 1px solid #e2e2f0; box-shadow: 0 10px 18px rgba(57, 42, 103, 0.12); display: none;
@@ -77,6 +79,17 @@
         const inviteCard = document.getElementById("invite-card");
         const inviteLinkEl = document.getElementById("invite-link");
         let currentInvite = "";
+
+        function extractErrorText(detail) {
+            if (!detail) return "Не удалось получить ссылку";
+            if (typeof detail === "string") return detail;
+            if (Array.isArray(detail)) {
+                return detail
+                    .map((item) => item?.msg || item?.message || JSON.stringify(item))
+                    .join("; ");
+            }
+            return detail.message || JSON.stringify(detail);
+        }
 
         function setStatus(text, isError = false) {
             statusEl.textContent = text || "";
@@ -126,7 +139,7 @@
                 const res = await fetch(url, { method });
                 const data = await res.json();
                 if (!res.ok) {
-                    setStatus(data.detail || "Не удалось получить ссылку", true);
+                    setStatus(extractErrorText(data.detail), true);
                     return;
                 }
                 showInvite(data.link || "");
