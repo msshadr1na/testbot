@@ -350,6 +350,11 @@ class InviteRepository:
             return Invite(**row)
         return None
 
+    async def get_role(self,code):
+        sql = """select role_id from invites where code = $1"""
+        row = await self.pool.fetchrow(sql, code)
+        return row["role"]
+
     #Удаление ссылки-приглашения для организации и роли
     async def delete_by_org_and_role(self, organization_id: int, role_id: int):
         sql = """delete from invites where organization_id = $1 and role_id = $2"""
