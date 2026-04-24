@@ -37,7 +37,7 @@
     </div>
     <div class="bottom-nav-wrap">
         <div class="bottom-nav">
-            <button class="tab-btn" id="tab-edit"><span class="icon">⚙</span><span>Настройки</span></button>
+            <button class="tab-btn" id="tab-dashboard"><span class="icon">🏢</span><span>Дашборд</span></button>
             <button class="tab-btn" id="tab-places"><span class="icon">🏠</span><span>Помещения</span></button>
             <button class="tab-btn active" id="tab-workers"><span class="icon">👥</span><span>Работники</span></button>
             <button class="tab-btn" id="tab-clients"><span class="icon">🧍</span><span>Клиенты</span></button>
@@ -82,13 +82,13 @@
             if (!confirm("Удалить работника из организации?")) return;
             const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}`, { method: "DELETE" });
             if (res.ok) {
-                window.location.href = `/app/org_workers.html?org_id=${orgId}`;
+                window.location.href = `/app/org_workers.html?org_id=${orgId}&v=2`;
             } else {
                 setStatus("Не удалось удалить работника", true);
             }
         };
         function goTo(path) { window.location.href = `${path}?org_id=${orgId}&v=2`; }
-        document.getElementById("tab-edit").onclick = () => goTo("/app/org_edit.html");
+        document.getElementById("tab-dashboard").onclick = () => goTo("/app/org_dashboard.html");
         document.getElementById("tab-places").onclick = () => goTo("/app/org_places.html");
         document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");
         document.getElementById("tab-clients").onclick = () => goTo("/app/org_clients.html");

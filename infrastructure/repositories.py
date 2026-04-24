@@ -151,6 +151,17 @@ class GymRepository:
         rows = await self.pool.fetch(sql,org_id)
         return [(row["id"], row["name"]) for row in rows]
 
+    async def update_name(self, gym_id: int, name: str):
+        sql = "update gym set name = $2 where id = $1 returning id, name, organization_id"
+        row = await self.pool.fetchrow(sql, gym_id, name)
+        if not row:
+            return None
+        return Gym(row["id"], row["name"], row["organization_id"])
+
+    async def delete_by_id(self, gym_id: int):
+        sql = "delete from gym where id = $1"
+        return await self.pool.execute(sql, gym_id)
+
 class OrganizationRepository:
     def __init__(self, pool):
         self.pool = pool

@@ -79,6 +79,19 @@
             font-size: 12px;
             line-height: 1.4;
         }
+        .settings-link {
+            margin-top: 10px;
+            width: 100%;
+            height: 48px;
+            border: none;
+            border-radius: 14px;
+            font-family: inherit;
+            font-size: 12px;
+            background: #efeefc;
+            box-shadow: 0 6px 0 rgba(57,42,103,.18), 0 10px 14px rgba(57,42,103,.12);
+            cursor: pointer;
+        }
+        .settings-link:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(57,42,103,.18), 0 7px 9px rgba(57,42,103,.12); }
         .bottom-nav-wrap {
             position: fixed;
             left: 0;
@@ -155,21 +168,22 @@
                 <div class="stat-value" id="stat-places">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-name">ID организации</div>
-                <div class="stat-value" id="stat-org-id">-</div>
+                <div class="stat-name">Тренировок в этом месяце</div>
+                <div class="stat-value" id="stat-trainings-month">0</div>
             </div>
         </div>
 
         <div class="highlight-card">
             Быстрый доступ внизу: переходите по разделам через нижнюю панель, как в приложении.
         </div>
+        <button class="settings-link" id="open-settings-btn">Открыть настройки организации</button>
     </div>
 
     <div class="bottom-nav-wrap">
         <div class="bottom-nav">
-            <button class="tab-btn active" id="tab-edit">
-                <span class="icon">⚙</span>
-                <span>Настройки</span>
+            <button class="tab-btn active" id="tab-dashboard">
+                <span class="icon">🏢</span>
+                <span>Дашборд</span>
             </button>
             <button class="tab-btn" id="tab-places">
                 <span class="icon">🏠</span>
@@ -198,13 +212,14 @@
 
         async function loadDashboardData() {
             if (!orgId) return;
-            document.getElementById("stat-org-id").textContent = String(orgId);
             try {
-                const [orgRes, workersRes, clientsRes, placesRes] = await Promise.all([
+                const now = new Date();
+                const [orgRes, workersRes, clientsRes, placesRes, eventsRes] = await Promise.all([
                     fetch(`/api/v1/org/${orgId}`),
                     fetch(`/api/v1/org/${orgId}/workers`),
                     fetch(`/api/v1/org/${orgId}/clients`),
-                    fetch(`/api/v1/org/${orgId}/places`)
+                    fetch(`/api/v1/org/${orgId}/places`),
+                    fetch(`/api/v1/org/${orgId}/events/calendar?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
                 ]);
                 if (orgRes.ok) {
                     const orgData = await orgRes.json();
@@ -222,6 +237,11 @@
                     const placesData = await placesRes.json();
                     document.getElementById("stat-places").textContent = placesData.places.length;
                 }
+                if (eventsRes.ok) {
+                    const eventsData = await eventsRes.json();
+                    const total = (eventsData.days || []).reduce((sum, d) => sum + (d.count || 0), 0);
+                    document.getElementById("stat-trainings-month").textContent = total;
+                }
             } catch (error) {
                 // keep default values if some API is temporarily unavailable
             }
@@ -233,7 +253,8 @@
         }
 
         document.getElementById("back-btn").onclick = () => window.location.href = "/orgs";
-        document.getElementById("tab-edit").onclick = () => goTo("/app/org_edit.html");
+        document.getElementById("open-settings-btn").onclick = () => goTo("/app/org_edit.html");
+        document.getElementById("tab-dashboard").onclick = () => goTo("/app/org_dashboard.html");
         document.getElementById("tab-places").onclick = () => goTo("/app/org_places.html");
         document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");
         document.getElementById("tab-clients").onclick = () => goTo("/app/org_clients.html");

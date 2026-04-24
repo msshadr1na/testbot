@@ -224,6 +224,36 @@ async def get_places(org_id: int, db: Pool = Depends(get_db)):
     return {"places": [{"id": place_id, "name": name} for place_id, name in places]}
 
 
+@router.get("/org/{org_id}/places/{place_id}")
+async def get_place(org_id: int, place_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    place = await org_service.get_place_by_id(place_id)
+    if place is None or place.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Place not found")
+    return {"id": place.id, "name": place.name, "organization_id": place.organization_id}
+
+
+@router.put("/org/{org_id}/places/{place_id}")
+async def update_place(org_id: int, place_id: int, name: str, db: Pool = Depends(get_db)):
+    _validate_place_name(name)
+    org_service = create_organization_service(db)
+    place = await org_service.get_place_by_id(place_id)
+    if place is None or place.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Place not found")
+    updated = await org_service.update_place_name(place_id, name.strip())
+    return {"id": updated.id, "name": updated.name, "organization_id": updated.organization_id}
+
+
+@router.delete("/org/{org_id}/places/{place_id}")
+async def delete_place(org_id: int, place_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    place = await org_service.get_place_by_id(place_id)
+    if place is None or place.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Place not found")
+    await org_service.delete_place(place_id)
+    return {"ok": True}
+
+
 @router.get("/org/{org_id}/events/calendar")
 async def get_events_calendar(org_id: int, year: int, month: int, db: Pool = Depends(get_db)):
     if month < 1 or month > 12:

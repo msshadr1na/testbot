@@ -184,4 +184,10 @@ class OrganizationService:
         gym = await self.gym_repository.create(name, org_id)
         return gym
 
+    async def update_place_name(self, place_id: int, name: str):
+        return await self.gym_repository.update_name(place_id, name)
+
+    async def delete_place(self, place_id: int):
+        return await self.gym_repository.delete_by_id(place_id)
+
 
