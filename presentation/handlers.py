@@ -211,8 +211,8 @@ async def handle_start(message: types.Message, command: Command, state: FSMConte
 
     user_service = UserService(userRepo, settingsRepos)
 
-    user_id = message.from_user.id
-    user = await user_service.find_by_tgid(user_id)
+    telegram_id = message.from_user.id
+    user = await user_service.find_by_tgid(telegram_id)
     
     if command.args and command.args.startswith("join_"):
         await state.update_data(start_args=command.args)
@@ -221,7 +221,7 @@ async def handle_start(message: types.Message, command: Command, state: FSMConte
         await message.answer("Для продолжения пройдите регистрацию\nВведите ваше имя:")
         await state.set_state(RegistrationState.first_name)
     else:
-        await check_invite(message, state, user_id, pool)       
+        await check_invite(message, state, user.id, pool)
 
 @router.message(RegistrationState.first_name, F.text)
 async def reg_first_name(message: Message, state: FSMContext):
@@ -819,7 +819,7 @@ async def check_invite(message: types.Message,state: FSMContext, user_id: int, p
             org_id = await org_service.get_org_id_from_invite(invite_code)
             org = await org_service.get_by_id(org_id)
             role_name = {2: "тренер", 3: "клиент"}.get(role_id, "участник")
-            await message.answer(f"Вы добавлены в организацию {org} как {role_name}!")
+            await message.answer(f"Вы добавлены в организацию {org.name} как {role_name}!")
         except ValueError as e:
             await message.answer(f"Ошибка: {e}")
         except Exception as e:

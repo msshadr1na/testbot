@@ -8,17 +8,46 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; color: #23233a; }
         .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
         .container { width: 100%; max-width: 375px; margin: 0 auto; padding-top: 20px; min-height: 100vh; display: flex; flex-direction: column; }
         .header-title { text-align: center; font-size: 24px; margin-bottom: 18px; text-transform: uppercase; }
-        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; flex: 1; padding: 20px 0; display: flex; flex-direction: column; align-items: center; }
+        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; flex: 1; padding: 20px 0 18px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 -8px 18px rgba(46, 33, 88, 0.15); }
         .list { width: 313px; flex: 1; overflow-y: auto; }
-        .item { width: 313px; height: 62px; margin: 0 auto 10px; border: none; border-radius: 16px; font-family: inherit; font-size: 16px; cursor: pointer; background: #CBBAFD; }
-        .actions { width: 313px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-        .small { height: 56px; border: none; border-radius: 16px; font-family: inherit; font-size: 12px; cursor: pointer; }
-        .a1 { background: #CBE949; } .a2 { background: #FFFFFF; border: 1px solid #E0E0E0; grid-column: 1 / -1; }
-        .status { width: 313px; font-size: 12px; margin-top: 8px; min-height: 16px; color: #5a5a5a; word-break: break-all; }
+        .item {
+            width: 313px; height: 62px; margin: 0 auto 12px; border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 16px; font-family: inherit; font-size: 16px; cursor: pointer;
+            box-shadow: 0 8px 0 rgba(57, 42, 103, 0.18), 0 14px 22px rgba(57, 42, 103, 0.14);
+            transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+        }
+        .item:hover { transform: translateY(-1px); filter: brightness(1.02); }
+        .item:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57, 42, 103, 0.18), 0 8px 10px rgba(57, 42, 103, 0.12); }
+        .actions { width: 313px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+        .small {
+            height: 56px; border: 1px solid rgba(255, 255, 255, 0.55); border-radius: 16px; font-family: inherit;
+            font-size: 12px; cursor: pointer; box-shadow: 0 7px 0 rgba(57, 42, 103, 0.18), 0 12px 20px rgba(57, 42, 103, 0.12);
+            transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+        }
+        .small:hover { transform: translateY(-1px); filter: brightness(1.02); }
+        .small:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57, 42, 103, 0.18), 0 8px 10px rgba(57, 42, 103, 0.12); }
+        .a1 { background: #CBE949; }
+        .a2 { background: #FFFFFF; border: 1px solid #d8d8eb; grid-column: 1 / -1; }
+        .invite-card {
+            width: 313px; margin-top: 12px; padding: 12px; border-radius: 14px; background: #ffffff;
+            border: 1px solid #e2e2f0; box-shadow: 0 10px 18px rgba(57, 42, 103, 0.12); display: none;
+        }
+        .invite-label { font-size: 12px; color: #5e5e72; margin-bottom: 6px; }
+        .invite-link {
+            display: block; font-size: 12px; color: #2f47d6; text-decoration: none;
+            background: #f4f6ff; border: 1px solid #dfe5ff; border-radius: 10px; padding: 10px; word-break: break-all;
+        }
+        .invite-link:hover { text-decoration: underline; }
+        .copy-btn {
+            margin-top: 8px; width: 100%; height: 40px; border: 0; border-radius: 10px; font-family: inherit;
+            font-size: 12px; cursor: pointer; background: #dff88a; box-shadow: 0 4px 0 rgba(57, 42, 103, 0.18);
+        }
+        .copy-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(57, 42, 103, 0.18); }
+        .status { width: 313px; font-size: 12px; margin-top: 8px; min-height: 16px; color: #5a5a5a; word-break: break-word; text-align: center; }
     </style>
 </head>
 <body>
@@ -32,6 +61,11 @@
                 <button class="small a1" id="refresh-btn">Обновить ссылку</button>
                 <button class="small a2" id="back-btn">Назад</button>
             </div>
+            <div id="invite-card" class="invite-card">
+                <div class="invite-label">Ссылка приглашения</div>
+                <a id="invite-link" class="invite-link" href="#" target="_blank" rel="noopener noreferrer"></a>
+                <button id="copy-btn" class="copy-btn">Скопировать ссылку</button>
+            </div>
             <div id="status" class="status"></div>
         </div>
     </div>
@@ -40,44 +74,77 @@
         const orgId = new URLSearchParams(window.location.search).get("org_id");
         const list = document.getElementById("list");
         const statusEl = document.getElementById("status");
+        const inviteCard = document.getElementById("invite-card");
+        const inviteLinkEl = document.getElementById("invite-link");
+        let currentInvite = "";
 
         function setStatus(text, isError = false) {
             statusEl.textContent = text || "";
             statusEl.style.color = isError ? "#d32f2f" : "#5a5a5a";
         }
 
-        async function loadClients() {
-            const res = await fetch(`/api/v1/org/${orgId}/clients`);
-            const data = await res.json();
-            list.innerHTML = "";
-            if (!data.clients.length) {
-                list.innerHTML = "Клиентов пока нет";
+        function showInvite(link) {
+            currentInvite = link || "";
+            if (!currentInvite) {
+                inviteCard.style.display = "none";
                 return;
             }
-            data.clients.forEach((client, i) => {
-                const btn = document.createElement("button");
-                btn.className = "item";
-                btn.style.background = i % 2 ? "#CBE949" : "#CBBAFD";
-                btn.textContent = client.name;
-                btn.onclick = () => window.location.href = `/app/org_client_detail.html?org_id=${orgId}&client_id=${client.id}`;
-                list.appendChild(btn);
-            });
+            inviteCard.style.display = "block";
+            inviteLinkEl.href = currentInvite;
+            inviteLinkEl.textContent = currentInvite;
+        }
+
+        async function loadClients() {
+            try {
+                const res = await fetch(`/api/v1/org/${orgId}/clients`);
+                const data = await res.json();
+                list.innerHTML = "";
+                if (!data.clients.length) {
+                    list.innerHTML = "Клиентов пока нет";
+                    return;
+                }
+                data.clients.forEach((client, i) => {
+                    const btn = document.createElement("button");
+                    btn.className = "item";
+                    btn.style.background = i % 2 ? "#d8f07f" : "#cdbfff";
+                    btn.textContent = client.name;
+                    btn.onclick = () => window.location.href = `/app/org_client_detail.html?org_id=${orgId}&client_id=${client.id}`;
+                    list.appendChild(btn);
+                });
+            } catch (error) {
+                list.innerHTML = "Не удалось загрузить клиентов";
+                setStatus("Ошибка загрузки списка", true);
+            }
         }
 
         async function loadInvite(refresh) {
-            const method = refresh ? "POST" : "GET";
-            const url = refresh
-                ? `/api/v1/org/${orgId}/clients/invite/refresh`
-                : `/api/v1/org/${orgId}/clients/invite`;
-            const res = await fetch(url, { method });
-            const data = await res.json();
-            if (!res.ok) {
-                setStatus(data.detail || "Не удалось получить ссылку", true);
-                return;
+            try {
+                const method = refresh ? "POST" : "GET";
+                const url = refresh
+                    ? `/api/v1/org/${orgId}/clients/invite/refresh`
+                    : `/api/v1/org/${orgId}/clients/invite`;
+                const res = await fetch(url, { method });
+                const data = await res.json();
+                if (!res.ok) {
+                    setStatus(data.detail || "Не удалось получить ссылку", true);
+                    return;
+                }
+                showInvite(data.link || "");
+                setStatus(refresh ? "Ссылка обновлена" : "Ссылка получена");
+            } catch (error) {
+                setStatus("Не удалось получить ссылку", true);
             }
-            setStatus(data.link || "");
         }
 
+        document.getElementById("copy-btn").onclick = async () => {
+            if (!currentInvite) return;
+            try {
+                await navigator.clipboard.writeText(currentInvite);
+                setStatus("Ссылка скопирована");
+            } catch (error) {
+                setStatus("Не удалось скопировать ссылку", true);
+            }
+        };
         document.getElementById("invite-btn").onclick = () => loadInvite(false);
         document.getElementById("refresh-btn").onclick = () => loadInvite(true);
         document.getElementById("back-btn").onclick = () => window.location.href = `/app/org_dashboard.html?org_id=${orgId}`;
