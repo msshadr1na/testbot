@@ -191,7 +191,7 @@
             current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
             await loadCalendar();
         };
-        function goTo(path) { window.location.href = `${path}?org_id=${orgId}`; }
+        function goTo(path) { window.location.href = `${path}?org_id=${orgId}&v=2`; }
         document.getElementById("tab-edit").onclick = () => goTo("/app/org_edit.html");
         document.getElementById("tab-places").onclick = () => goTo("/app/org_places.html");
         document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");

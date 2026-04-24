@@ -229,7 +229,7 @@
 
         function goTo(path) {
             if (!orgId) return;
-            window.location.href = `${path}?org_id=${orgId}`;
+            window.location.href = `${path}?org_id=${orgId}&v=2`;
         }
 
         document.getElementById("back-btn").onclick = () => window.location.href = "/orgs";

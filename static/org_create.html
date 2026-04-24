@@ -53,7 +53,7 @@
             if (!res.ok) return setStatus(data.detail || "Не удалось создать организацию", true);
             setStatus("Организация успешно создана");
             setTimeout(() => {
-                window.location.href = `/app/org_dashboard.html?org_id=${data.id}`;
+                window.location.href = `/app/org_dashboard.html?org_id=${data.id}&v=2`;
             }, 700);
         };
 

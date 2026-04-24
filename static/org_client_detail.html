@@ -8,14 +8,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; color: #1f1f35; }
         .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
-        .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 20px 0; }
-        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; padding: 24px; min-height: calc(100vh - 90px); }
+        .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 20px 14px 112px; min-height: 100vh; }
+        .panel { background: #EFEEFC; border-radius: 20px; padding: 18px; min-height: calc(100vh - 130px); border: 1px solid #fff; box-shadow: 0 12px 20px rgba(37,27,76,.15); }
         .title { text-align: center; font-size: 24px; margin-bottom: 18px; }
         .card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-        .btn { width: 100%; height: 56px; border: none; border-radius: 16px; font-family: inherit; cursor: pointer; margin-top: 10px; }
+        .btn { width: 100%; height: 56px; border: none; border-radius: 16px; font-family: inherit; cursor: pointer; margin-top: 10px; box-shadow: 0 7px 0 rgba(57,42,103,.18), 0 12px 18px rgba(57,42,103,.12); }
+        .btn:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57,42,103,.18), 0 8px 10px rgba(57,42,103,.12); }
         .status { font-size: 13px; min-height: 18px; color: #5a5a5a; margin-top: 8px; }
+        .bottom-nav-wrap { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); }
+        .bottom-nav { width: 100%; max-width: 375px; background: rgba(239,238,252,.95); border: 1px solid #fff; border-radius: 18px; box-shadow: 0 -8px 20px rgba(37,27,76,.2); display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; padding: 8px; }
+        .tab-btn { border: none; border-radius: 12px; background: transparent; min-height: 62px; font-family: inherit; font-size: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .tab-btn .icon { font-size: 18px; }
+        .tab-btn.active { background: #cbbafd; box-shadow: inset 0 -3px 0 rgba(53,33,102,.25); }
     </style>
 </head>
 <body>
@@ -25,8 +31,16 @@
         <div class="panel">
             <div class="card" id="card">Загрузка...</div>
             <button class="btn" style="background:#CBBAFD;" id="delete-btn">Удалить клиента</button>
-            <button class="btn" style="background:#FFFFFF;border:1px solid #E0E0E0;" id="back-btn">Назад</button>
             <div id="status" class="status"></div>
+        </div>
+    </div>
+    <div class="bottom-nav-wrap">
+        <div class="bottom-nav">
+            <button class="tab-btn" id="tab-edit"><span class="icon">⚙</span><span>Настройки</span></button>
+            <button class="tab-btn" id="tab-places"><span class="icon">🏠</span><span>Помещения</span></button>
+            <button class="tab-btn" id="tab-workers"><span class="icon">👥</span><span>Работники</span></button>
+            <button class="tab-btn active" id="tab-clients"><span class="icon">🧍</span><span>Клиенты</span></button>
+            <button class="tab-btn" id="tab-events"><span class="icon">📅</span><span>События</span></button>
         </div>
     </div>
     <script>
@@ -57,7 +71,12 @@
                 setStatus("Не удалось удалить клиента", true);
             }
         };
-        document.getElementById("back-btn").onclick = () => window.location.href = `/app/org_clients.html?org_id=${orgId}`;
+        function goTo(path) { window.location.href = `${path}?org_id=${orgId}&v=2`; }
+        document.getElementById("tab-edit").onclick = () => goTo("/app/org_edit.html");
+        document.getElementById("tab-places").onclick = () => goTo("/app/org_places.html");
+        document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");
+        document.getElementById("tab-clients").onclick = () => goTo("/app/org_clients.html");
+        document.getElementById("tab-events").onclick = () => goTo("/app/org_events.html");
         loadDetail();
     </script>
 </body>
