@@ -210,11 +210,15 @@
             justify-content: center;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             transition: all 0.2s;
-            display: none;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
         }
 
             .nav-btn.visible {
-                display: flex;
+                visibility: visible;
+                opacity: 1;
+                pointer-events: auto;
             }
 
             .nav-btn:hover {
@@ -240,7 +244,23 @@
             transform: translateY(0);
             box-shadow: 0 6px 0 #9EB82E;
         }
+        .loading-hidden
+        {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease;
+        }
 
+        .loading-visible
+        {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #org-list
+        {
+            transition: opacity 0.2s ease;
+        }
     </style>
 </head>
 <body>
@@ -254,7 +274,7 @@
 
         <div class="content">
             <div class="org-list-container">
-                <div class="org-list" id="org-list">Загрузка...</div>
+                <div class="org-list" id="org-list" style="opacity: 0;">Загрузка...</div>
 
                 <div class="actions">
                     <button class="action-btn create-org-btn" onclick="window.location.href='/app/org_create.html'">

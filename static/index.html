@@ -181,6 +181,23 @@
             transform: translateY(0);
             box-shadow: 0 6px 0 #9B7FCC;
         }
+        .loading-hidden
+        {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease;
+        }
+
+        .loading-visible
+        {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #username
+        {
+            transition: opacity 0.2s ease;
+        }
     </style>
 </head>
 <body>
@@ -190,7 +207,7 @@
     <div class="container">
         <div class="welcome-container">
             <div class="welcome-line-1">ДОБРО ПОЖАЛОВАТЬ,</div>
-            <div class="welcome-line-2" id="username">ИМЯ ФАМИЛИЯ</div>
+            <div class="welcome-line-2" id="username" style="opacity: 0;">ИМЯ ФАМИЛИЯ</div>
         </div>
 
         <div class="content">
@@ -221,6 +238,7 @@
             if (!user)
             {
                 usernameEl.textContent = "Гость";
+                usernameEl.style.opacity = '1';
                 return;
             }
 
@@ -229,6 +247,7 @@
             const userData = await response.json();
             const fullName = `${userData.first_name} ${userData.last_name || ''}`.trim();
             usernameEl.textContent = fullName || "Гость";
+            usernameEl.style.opacity = '1';
         }
         loadUserName();
 
