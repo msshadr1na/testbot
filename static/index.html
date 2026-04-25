@@ -191,24 +191,39 @@
         async function loadUserName() {
             const user = tg.initDataUnsafe?.user;
 
-            if (!user)
-            {
+            if (!user) {
+                console.log("⚠️ Нет данных пользователя от Telegram");
                 usernameEl.textContent = "Гость";
                 return;
             }
 
             const telegramId = user.id;
-            const response = await fetch(`/api/v1/get-user?telegram_id=${telegramId}`);
+            const url = `/api/v1/get-user?telegram_id=${telegramId}`;
 
-            if (!response.ok)
-            {
-                throw new Error("Ошибка сервера");
+            console.log("📡 Запрос к:", url);  // 👈 Смотри в консоль!
+
+            try {
+                const response = await fetch(url);
+
+                console.log("📥 Статус ответа:", response.status);  // 👈 Смотри в консоль!
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("❌ Ошибка сервера:", response.status, errorText);
+                    return;
+                }
+
+                const userData = await response.json();
+                console.log("✅ Данные с сервера:", userData);  // 👈 ГЛАВНЫЙ ЛОГ!
+
+                const fullName = `${userData.first_name} ${userData.last_name || ''}`.trim();
+                usernameEl.textContent = fullName || "Гость";
+
+            } catch (error) {
+                console.error("💥 Ошибка при загрузке:", error);
+                // Фоллбек на имя из Telegram
+                usernameEl.textContent = `${user.first_name} ${user.last_name || ''}`;
             }
-
-            const userData = await response.json();
-
-            const fullName = `${userData.first_name} ${userData.last_name || ''}`.trim();
-            usernameEl.textContent = fullName || "Гость";
         }
         loadUserName();
 
