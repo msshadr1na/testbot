@@ -83,6 +83,7 @@
         .org-list {
             flex-grow: 1;
             padding: 0 20px;
+            padding-bottom: 100px;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: #CBBAFD #EFEEFC;
@@ -291,6 +292,7 @@
                 })
                 .then(data => {
                     const container = document.getElementById("org-list");
+                    container.style.opacity = '0';
                     const prevBtn = document.getElementById("prev-page-nav");
                     const nextBtn = document.getElementById("next-page-nav");
 
@@ -356,12 +358,14 @@
 
                     // Рендерим первую страницу
                     renderPage(currentPage);
+                    container.style.opacity = '1';
                 })
                 .catch(err => {
                     document.getElementById("org-list").innerHTML = `
                   <div style="text-align:center; padding:40px; color:#d32f2f;">
                     Ошибка загрузки<br><small>${err.message}</small>
                   </div>
+                  container.style.opacity = '1';
                 `;
                 });
         }
