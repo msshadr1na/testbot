@@ -33,17 +33,11 @@ def _validate_place_name(name: str):
 
 @router.get("/get-user", response_model=UserName)
 async def get_user(telegram_id: int = Query(...), db: Pool = Depends(get_db)):
-    print(f"🔍 Запрос пользователя с telegram_id: {telegram_id}")
     user_service = create_user_service(db)
     user_db = await user_service.find_by_tgid(telegram_id)
 
-    print(f"📦 Найдено в БД: {user_db}")  # Для отладки
-
     if not user_db:
-        print("❌ Пользователь не найден, возвращаем Гость")
         return {"first_name": "Гость", "last_name": None}
-
-    print(f"✅ Возвращаем: {user_db.first_name} {user_db.last_name}")
 
     return UserName(first_name=user_db.first_name, last_name=user_db.last_name)
 
