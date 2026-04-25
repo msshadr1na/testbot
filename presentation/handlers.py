@@ -798,7 +798,7 @@ async def handle_create_first_place(message: types.Message, state: FSMContext):
 
     
 
-#Проверка наличия приглашения при входе и его обработка
+#Проверка наличия приглашения при входе, и его обработка
 async def check_invite(message: types.Message,state: FSMContext, user_id: int, pool):
     data = await state.get_data()
     args = data.get("start_args")

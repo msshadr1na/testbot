@@ -34,7 +34,7 @@ def _validate_place_name(name: str):
 @router.get("/get-user", response_model=UserName)
 async def get_user(telegram_id, db: Pool = Depends(get_db)):
     user_service = create_user_service(db)
-    user_db = await user_service.find_by_tg_id(telegram_id)
+    user_db = await user_service.find_by_tgid(telegram_id)
 
     if not user_db:
         return {"first_name": "Гость", "last_name": None}
