@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.webapp.api import router
 from fastapi.responses import HTMLResponse
+import uvicorn
 
 app = FastAPI(
     title="Fitness Bot Web App",
@@ -41,14 +42,8 @@ async def get_orgs_page():
     with open("static/client_orgs.html", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
-@app.get("/test", response_class=HTMLResponse)
-async def test_page():
-    with open("static/test.html", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
-
 app.include_router(router)
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run("webapp_api:app", host="0.0.0.0", port=8000, reload=True)
 

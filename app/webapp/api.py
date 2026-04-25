@@ -5,6 +5,7 @@ from app.webapp.deps import get_db
 from asyncpg import Pool
 from app.models import Training
 from infrastructure.repositories import BookingRepository, OrganizationMemberRepository, TrainingRepository
+from schemas import UserName
 
 router = APIRouter(prefix="/api/v1", tags=["Web App"])
 
@@ -28,6 +29,17 @@ def _validate_org_name(name: str):
 def _validate_place_name(name: str):
     if not name or len(name.strip()) < 2:
         raise HTTPException(status_code=400, detail="Place name is too short")
+
+
+@router.get("/get-user", response_model=UserName)
+async def get_user(telegram_id, db: Pool = Depends(get_db)):
+    user_service = create_user_service(db)
+    user_db = await user_service.find_by_tg_id(telegram_id)
+
+    if not user_db:
+        return {"first_name": "Гость", "last_name": None}
+
+    return UserName(first_name=user_db.first_name, last_name=user_db.last_name)
 
 
 @router.get("/org/organizations")

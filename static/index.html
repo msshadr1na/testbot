@@ -186,10 +186,31 @@
         const tg = Telegram.WebApp;
         tg.ready();
 
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('username').textContent = `${user.first_name} ${user.last_name || ''}`;
+        const usernameEl = document.getElementById('username');
+
+        async function loadUserName() {
+            const user = tg.initDataUnsafe?.user;
+
+            if (!user)
+            {
+                usernameEl.textContent = "Гость";
+                return;
+            }
+
+            const telegramId = user.id;
+            const response = await fetch(`/api/v1/get-user?telegram_id=${telegramId}`);
+
+            if (!response.ok)
+            {
+                throw new Error("Ошибка сервера");
+            }
+
+            const userData = await response.json();
+
+            const fullName = `${userData.first_name} ${userData.last_name || ''}`.trim();
+            usernameEl.textContent = fullName || "Гость";
         }
+        loadUserName();
 
         function goToOrgs() {
             window.location.href = '/orgs';
