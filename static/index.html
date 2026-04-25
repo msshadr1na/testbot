@@ -22,8 +22,8 @@
             position: relative;
         }
 
-        /* 🔥 Градиентный фон — на весь экран */
-        .bg-gradient {
+        .bg-gradient
+        {
             position: fixed;
             top: 0;
             left: 0;
@@ -34,7 +34,8 @@
             z-index: -1;
         }
 
-        .container {
+        .container
+        {
             width: 100%;
             max-width: 375px;
             margin: 0 auto;
@@ -73,11 +74,10 @@
             height: 685px;
             top: 60px;
             background: #FFFFFF;
-            border-radius: 20px 20px 0 0;
+            border-radius: 20px 20px 20px 20px;
             padding-top: 50px;
         }
 
-        /* 🔥 Обновлённый стиль для "ВОЙТИ КАК" — градиентная рамка с закруглёнными углами */
         .login-label-wrapper {
             position: absolute;
             width: 166px;
@@ -129,28 +129,57 @@
             color: #000000;
         }
 
-        .btn-organizer {
+        .btn-organizator {
             top: 111px;
             background: #CBBAFD;
+            box-shadow: 0 6px 0 #9B7FCC;
         }
+        .btn-organizator:hover
+        {
+            transform: scale(1.02);
+            box-shadow: 0 6px 0 #9B7FCC,
+            0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+        .btn-organizator:active
+        {
+            transform: translateY(0);
+            box-shadow: 0 6px 0 #9B7FCC;
+        }
+
 
         .btn-worker {
             top: 201px;
             background: #CBE949;
+            box-shadow: 0 6px 0 #9EB82E;
+        }
+        .btn-worker:hover
+        {
+            transform: scale(1.02);
+            box-shadow: 0 6px 0 #9EB82E,
+            0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+        .btn-worker:active
+        {
+            transform: translateY(0);
+            box-shadow: 0 6px 0 #9EB82E;
         }
 
-        .btn-client {
+        .btn-client
+        {
             top: 291px;
             background: #CBBAFD;
+            box-shadow: 0 6px 0 #9B7FCC;
         }
-
-        .footer {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            text-align: center;
-            font-size: 12px;
-            color: #777;
+        .btn-client:hover
+        {
+            transform: scale(1.02);
+            box-shadow: 0 6px 0 #9B7FCC,
+            0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+        .btn-client:active
+        {
+            transform: translateY(0);
+            box-shadow: 0 6px 0 #9B7FCC;
         }
     </style>
 </head>
@@ -168,7 +197,7 @@
             <div class="login-label-wrapper">
                 <div class="login-label">ВОЙТИ КАК</div>
             </div>
-            <button class="button btn-organizer" onclick="goToOrgs()">
+            <button class="button btn-organizator" onclick="goToOrgs()">
                 ОРГАНИЗАТОР
             </button>
             <button class="button btn-worker" onclick="goToWorkerOrgs()">
@@ -178,8 +207,6 @@
                 КЛИЕНТ
             </button>
         </div>
-
-        <div class="footer">© mmmBot 2026</div>
     </div>
 
     <script>
@@ -199,14 +226,7 @@
 
             const telegramId = user.id;
             const response = await fetch(`/api/v1/get-user?telegram_id=${telegramId}`);
-
-            if (!response.ok)
-            {
-                throw new Error("Ошибка сервера");
-            }
-
             const userData = await response.json();
-
             const fullName = `${userData.first_name} ${userData.last_name || ''}`.trim();
             usernameEl.textContent = fullName || "Гость";
         }

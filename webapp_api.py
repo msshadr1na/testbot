@@ -29,7 +29,7 @@ app.mount("/app", StaticFiles(directory="static", html=True), name="static")
 
 @app.get("/orgs", response_class=HTMLResponse)
 async def get_orgs_page():
-    with open("static/org_orgs.html", encoding="utf-8") as f:
+    with open("static/org_menu.html", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
 @app.get("/worker", response_class=HTMLResponse)
