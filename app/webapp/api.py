@@ -5,7 +5,7 @@ from app.webapp.deps import get_db
 from asyncpg import Pool
 from app.models import Training
 from infrastructure.repositories import BookingRepository, OrganizationMemberRepository, TrainingRepository
-from schemas import UserName
+from app.webapp.schemas import UserName
 
 router = APIRouter(prefix="/api/v1", tags=["Web App"])
 
