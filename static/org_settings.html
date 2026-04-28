@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки организации</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body
+        {
+            font-family: 'Russo One', sans-serif;
+            min-height: 100vh; color: #1f1f35;
+        }
+         .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
+            box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+            z-index: -1;
+        }
+
+        .content {
+            position: relative;
+            width: 100%;
+            height: 685px;
+            top: 16px;
+            background: #FFFFFF;
+            border-radius: 20px 20px 20px 20px;
+            padding-top: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .container
+        {
+            width: 100%;
+            max-width: 375px;
+            margin: 0 auto;
+            position: relative;
+            padding-top: 18px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .back-btn {
+            border: none;
+            background: #CBE949;
+            width: 50px;
+            height: 50px;
+            border-radius: 18px;
+            font-size: 30px;
+            font-family: inherit;
+            cursor: pointer;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18), 0 15px 6px rgba(26, 15, 52, 0.22);
+        }
+        .back-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 4px 0 rgba(64, 52, 96, 0.22), 0 7px 12px rgba(26, 15, 52, 0.15);
+        }
+        .page-label {
+            font-size: 16px;
+            letter-spacing: 0.6px;
+            opacity: 0.75;
+            line-height: 1.05;
+            text-align: right;
+            flex: 1;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        input
+        {
+            width: calc(100% - 36px);
+            height: 76px;
+            font-size: 14px;
+            border-radius: 16px;
+            border: 2px solid #A3A3A3;
+            padding: 0 12px;
+            font-family: inherit;
+            margin-bottom: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+        }
+        input:focus
+        {
+            border-color: #9B7FCC;
+            color: #41404E;
+            box-shadow: 0 0 0 4px rgba(155, 127, 204, 0.25);
+        }
+
+        input::placeholder
+        {
+            color: #A3A3A3;
+            font-size: 12px;
+            opacity: 1;
+        }
+
+        .btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: fit-content;
+            height: 56px;
+            padding: 15px 27px;
+            border: none;
+            border-radius: 20px;
+            font-family: 'Russo One', sans-serif;
+            font-size: 18px;
+            line-height: 26px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #000000;
+            cursor: pointer;
+            margin-top: 8px;
+            box-sizing: border-box;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .btn--purple
+        {
+            background: #CBBAFD;
+            box-shadow: 0px 6px 0px #9B7FCC;
+        }
+        .btn--red
+        {
+            background: #F8CECC;
+            box-shadow: 0px 6px 0px #C5928F;
+        }
+        .btn--purple:hover {
+            transform: scale(1.02);
+            box-shadow: 0px 6px 0px #9B7FCC, 0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn--red:hover {
+            transform: scale(1.02);
+            box-shadow: 0px 6px 0px #C5928F, 0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+        .btn:active
+        {
+            transform: translateY(4px);
+        }
+
+        .btn--purple:active
+        {
+            box-shadow: 0px 2px 0px #9B7FCC;
+        }
+
+
+        .btn--red:active
+        {
+            box-shadow: 0px 2px 0px #C5928F;
+        }
+
+        .status
+        {
+            width: 100%;
+            min-height: 20px;
+            font-size: 13px;
+            margin-top: 10px;
+            margin-left: 30px;
+            justify-content: center;
+            align-items: center;
+            color: #41404E;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none; /* Скрыто по умолчанию */
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Показываем оверлей */
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Модальное окно */
+        .modal {
+            position: relative;
+            width: 388px;
+            max-width: 90%;
+            min-height: 275px;
+            background: #D9D9D9;
+            border-radius: 20px;
+            padding: 40px 20px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        /* Заголовок модального окна */
+        .modal-title {
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #1f1f35;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        /* Контейнер кнопок */
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        /* Кнопки в модальном окне */
+        .modal-btn {
+            width: 240px;
+            height: 56px;
+            border: none;
+            border-radius: 20px;
+            font-family: 'Russo One', sans-serif;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Красная кнопка "Удалить" */
+        .modal-btn--delete {
+            background: #F8CECC;
+            box-shadow: 0px 6px 0px #C5928F;
+            color: #000000;
+        }
+
+        .modal-btn--delete:hover {
+            transform: scale(1.02);
+            box-shadow: 0px 6px 0px #C5928F, 0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-btn--delete:active {
+            transform: translateY(4px);
+            box-shadow: 0px 2px 0px #C5928F;
+        }
+
+        /* Зеленая кнопка "Отмена" */
+        .modal-btn--cancel {
+            background: #CBE949;
+            box-shadow: 0px 6px 0px #A3B83A;
+            color: #000000;
+        }
+
+        .modal-btn--cancel:hover {
+            transform: scale(1.02);
+            box-shadow: 0px 6px 0px #A3B83A, 0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-btn--cancel:active {
+            transform: translateY(4px);
+            box-shadow: 0px 2px 0px #A3B83A;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <div class="topbar">
+            <button class="back-btn" id="back-btn">←</button>
+            <div class="page-label">НАСТРОЙКИ ОРГАНИЗАЦИИ</div>
+        </div>
+        <div class="content">
+            <input id="name-input" maxlength="100" placeholder="Новое название организации">
+            <button class="btn btn--purple" style="background:#CBBAFD;" id="save-btn">Сохранить название</button>
+            <button class="btn btn--red" style="background:#F8CECC; margin-top: 14px;" id="delete-btn">Удалить организацию</button>
+            <div id="status" class="status"></div>
+        </div>
+    </div>
+    <script>
+        Telegram.WebApp.ready();
+        const params = new URLSearchParams(window.location.search);
+        const orgId = params.get("org_id");
+        const tgId = Telegram.WebApp.initDataUnsafe?.user?.id;
+        const input = document.getElementById("name-input");
+        const statusEl = document.getElementById("status");
+
+        function setStatus(text, isError = false) {
+            statusEl.textContent = text || "";
+            statusEl.style.color = isError ? "#d32f2f" : "#5a5a5a";
+        }
+
+        async function loadOrg() {
+            const res = await fetch(`/api/v1/org/${orgId}`);
+            const data = await res.json();
+            input.value = data.name || "";
+        }
+
+        document.getElementById("save-btn").onclick = async () => {
+            const name = input.value.trim();
+            if (name.length < 2) {
+                setStatus("Название должно быть не короче 2 символов", true);
+                return;
+            }
+            const res = await fetch(`/api/v1/org/${orgId}?name=${encodeURIComponent(name)}`, { method: "PUT" });
+            const data = await res.json();
+            if (res.ok) {
+                setStatus("Название успешно изменено");
+            }
+            else if (res.status === 409)
+            {
+                setStatus(data.detail || "Организация с таким названием уже существует", true);
+            }
+            else
+            {
+                setStatus(data.detail || "Не удалось изменить название организации", true);
+            }
+        };
+
+        document.getElementById("delete-btn").onclick = async () => {
+            const deleteModal = document.getElementById("delete-modal");
+            const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+            const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
+
+            document.getElementById("delete-btn").onclick = () => {
+                deleteModal.classList.add("active");
+            };
+
+            function closeDeleteModal() {
+                deleteModal.classList.remove("active");
+            }
+
+            cancelDeleteBtn.onclick = closeDeleteModal;
+
+            deleteModal.onclick = (e) => {
+                if (e.target === deleteModal) {
+                    closeDeleteModal();
+                }
+            };
+
+            confirmDeleteBtn.onclick = async () => {
+                closeDeleteModal();
+                const res = await fetch(`/api/v1/org/${orgId}?user_id=${tgId}`, { method: "DELETE" });
+                if (res.ok) {
+                    window.location.href = "/orgs";
+                } else {
+                    const data = await res.json();
+                    setStatus(data.detail || "Не удалось удалить организацию", true);
+                }
+            };
+        };
+        function goTo(path)
+        {
+            if (!orgId) return;
+            window.location.href = `${path}?org_id=${orgId}&v=2`;
+        }
+
+        document.getElementById("back-btn").onclick = () => goTo("/app/org_main.html");
+        document.getElementById("open-settings-btn").onclick = () => goTo("/app/org_settings.html");
+        document.getElementById("tab-dashboard").onclick = () => goTo("/app/org_main.html");
+        document.getElementById("tab-places").onclick = () => goTo("/app/org_places.html");
+        document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");
+        document.getElementById("tab-clients").onclick = () => goTo("/app/org_clients.html");
+        document.getElementById("tab-events").onclick = () => goTo("/app/org_events.html");
+        loadOrg();
+    </script>
+    <div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+        <div class="modal-title">ПОДТВЕРДИТЕ УДАЛЕНИЕ</div>
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn--delete" id="confirm-delete-btn">УДАЛИТЬ</button>
+            <button class="modal-btn modal-btn--cancel" id="cancel-delete-btn">ОТМЕНА</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -54,12 +54,6 @@ class OrganizationService:
         future = now + timedelta(days=days_ahead)
         rows = await self.training_repository.get_trainings_by_trainer_in_period(worker_id, now, future)
         return rows
-
-
-
-
-
-
 # Поиск организации по названию
     async def find_by_name(self, name):
         return await self.organization_repository.find_by_name(name)

@@ -21,11 +21,6 @@ async def _resolve_user_by_any_id(user_id: int, db: Pool):
     return user
 
 
-def _validate_org_name(name: str):
-    if not name or len(name.strip()) < 2:
-        raise HTTPException(status_code=400, detail="Organization name is too short")
-
-
 def _validate_place_name(name: str):
     if not name or len(name.strip()) < 2:
         raise HTTPException(status_code=400, detail="Place name is too short")
@@ -52,23 +47,6 @@ async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
     org_ids, names = await org_service.show_owned_orgs(user.id)
     organizations = [{"id": org_id, "name": name} for org_id, name in zip(org_ids, names)]
     return {"organizations": organizations}
-
-
-@router.get("/me/organizations")
-async def get_my_organizations_by_role(user_id: int, role_id: int, db: Pool = Depends(get_db)):
-    if role_id not in (1, 2, 3):
-        raise HTTPException(status_code=400, detail="Invalid role_id")
-    user = await _resolve_user_by_any_id(user_id, db)
-    if user is None:
-        return {"organizations": []}
-
-    member_repo = OrganizationMemberRepository(db)
-    org_service = create_organization_service(db)
-    org_ids = await member_repo.get_membered_orgs(user.id, role_id)
-    names = await org_service.organization_repository.get_names_by_ids(org_ids)
-    organizations = [{"id": org_id, "name": name} for org_id, name in zip(org_ids, names)]
-    return {"organizations": organizations}
-
 
 @router.post("/org")
 async def create_organization(name: str, first_place_name: str, user_id: int, db: Pool = Depends(get_db)):
@@ -99,11 +77,13 @@ async def get_organization(org_id: int, db: Pool = Depends(get_db)):
 
 @router.put("/org/{org_id}")
 async def update_organization_name(org_id: int, name: str, db: Pool = Depends(get_db)):
-    _validate_org_name(name)
     org_service = create_organization_service(db)
     existing = await org_service.get_by_id(org_id)
     if existing is None:
         raise HTTPException(status_code=404, detail="Organization not found")
+    existing = await org_service.find_by_name(name.strip())
+    if existing:
+        raise HTTPException(status_code=409, detail="Organization name already exists")
     updated = await org_service.update_name(org_id, name.strip())
     return {"id": updated.id, "name": updated.name}
 

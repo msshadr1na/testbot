@@ -245,8 +245,8 @@
             const telegramId = user.id;
             const response = await fetch(`/api/v1/get-user?telegram_id=${telegramId}`);
             const userData = await response.json();
-            const fullName = `${userData.first_name} ${userData.last_name || ''}`.trim();
-            usernameEl.textContent = fullName || "Гость";
+            const name = `${userData.first_name}`.trim();
+            usernameEl.textContent = name || "Гость";
             usernameEl.style.opacity = '1';
         }
         loadUserName();

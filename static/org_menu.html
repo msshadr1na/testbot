@@ -70,7 +70,8 @@
             font-weight: 400;
         }
 
-        .org-list-container {
+        .org-list-container
+        {
             background: #EFEEFC;
             border-radius: 20px 20px 0 0;
             padding: 20px 0;
@@ -80,13 +81,15 @@
             z-index: 1;
         }
 
-        .org-list {
+        .org-list
+        {
             flex-grow: 1;
             padding: 0 20px;
-            padding-bottom: 100px;
+            padding-bottom: 70px;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: #CBBAFD #EFEEFC;
+            min-height: 326px;
         }
 
         .org-btn {
@@ -277,7 +280,7 @@
                 <div class="org-list" id="org-list" style="opacity: 0;">Загрузка...</div>
 
                 <div class="actions">
-                    <button class="action-btn create-org-btn" onclick="window.location.href='/app/org_create.html'">
+                    <button class="action-btn create-org-btn" onclick="window.location.href='org_create.html'">
                         Создать организацию
                     </button>
                 </div>
@@ -307,7 +310,6 @@
 
             fetch(`/api/v1/org/organizations?user_id=${userId}`)
                 .then(res => {
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     return res.json();
                 })
                 .then(data => {
@@ -322,11 +324,9 @@
                       text-align: center;
                       padding: 40px 20px;
                       color: #555;
-                      font-size: 16px;
-                    ">
+                      font-size: 16px;">
                       У вас нет организаций.
-                    </div>
-                  `;
+                    </div>`;
                         return;
                     }
                     const totalOrgs = data.organizations.length;
@@ -335,7 +335,6 @@
 
                     function renderPage(page) {
                         container.innerHTML = '';
-
                         const start = page * perPage;
                         const end = Math.min(start + perPage, totalOrgs);
                         const pageOrgs = data.organizations.slice(start, end);
@@ -348,7 +347,7 @@
 
                             btn.onclick = () => {
                                 localStorage.setItem("selectedOrgId", org.id);
-                                window.location.href = `/app/org_dashboard.html?org_id=${org.id}&v=2`;
+                                window.location.href = `org_main.html`;
                             };
 
                             container.appendChild(btn);
@@ -361,14 +360,12 @@
                         nextBtn.classList.toggle('visible', hasNext);
                     }
 
-                    // Обработчики пагинации
                     nextBtn.onclick = () => {
                         if ((currentPage + 1) * perPage < totalOrgs) {
                             currentPage++;
                             renderPage(currentPage);
                         }
                     };
-
                     prevBtn.onclick = () => {
                         if (currentPage > 0) {
                             currentPage--;
@@ -376,7 +373,6 @@
                         }
                     };
 
-                    // Рендерим первую страницу
                     renderPage(currentPage);
                     container.style.opacity = '1';
                 })
