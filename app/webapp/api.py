@@ -7,7 +7,8 @@ from app.models import Training
 from infrastructure.repositories import BookingRepository, OrganizationMemberRepository, TrainingRepository
 from app.webapp.schemas import UserName
 from config import bot_token
-import aiohttp
+import json
+from urllib.request import Request, urlopen
 
 router = APIRouter(prefix="/api/v1", tags=["Web App"])
 
@@ -16,11 +17,18 @@ async def _send_telegram_message(telegram_id: int, text: str):
     if not telegram_id:
         return
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    async with aiohttp.ClientSession() as session:
-        try:
-            await session.post(url, json={"chat_id": telegram_id, "text": text})
-        except Exception:
+    payload = json.dumps({"chat_id": telegram_id, "text": text}).encode("utf-8")
+
+    def _post():
+        req = Request(url, data=payload, headers={"Content-Type": "application/json"}, method="POST")
+        with urlopen(req, timeout=5):
             return
+
+    try:
+        import asyncio
+        await asyncio.to_thread(_post)
+    except Exception:
+        return
 
 
 async def _broadcast_telegram_messages(telegram_ids: list[int], text: str):
