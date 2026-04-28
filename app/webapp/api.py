@@ -50,7 +50,6 @@ async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
 
 @router.post("/org")
 async def create_organization(name: str, first_place_name: str, user_id: int, db: Pool = Depends(get_db)):
-    _validate_org_name(name)
     _validate_place_name(first_place_name)
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
