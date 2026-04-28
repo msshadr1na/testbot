@@ -280,7 +280,7 @@
                 <div class="org-list" id="org-list" style="opacity: 0;">Загрузка...</div>
 
                 <div class="actions">
-                    <button class="action-btn create-org-btn" onclick="window.location.href='org_create.html'">
+                    <button class="action-btn create-org-btn" onclick="window.location.href='/app/org_create.html?v=2'">
                         Создать организацию
                     </button>
                 </div>
@@ -347,7 +347,7 @@
 
                             btn.onclick = () => {
                                 localStorage.setItem("selectedOrgId", org.id);
-                                window.location.href = `org_main.html?org_id=${org.id}`;
+                                window.location.href = `/app/org_main.html?org_id=${org.id}&v=2`;
                             };
 
                             container.appendChild(btn);
