@@ -232,6 +232,13 @@
             background: #BBAAEF;
         }
 
+        /* Desktop webview can render this layout slightly oversized; match one-step browser zoom-out feel. */
+        @media (min-width: 431px) and (pointer: fine) {
+            body {
+                zoom: 0.92;
+            }
+        }
+
         @media (max-width: 430px) {
             .container
             {
