@@ -214,14 +214,17 @@ async def handle_start(message: types.Message, command: Command, state: FSMConte
     telegram_id = message.from_user.id
     user = await user_service.find_by_tgid(telegram_id)
     
-    if command.args and command.args.startswith("join_"):
-        await state.update_data(start_args=command.args)
+    start_args = getattr(command, "args", None)
+    if not start_args and message.text and message.text.startswith("/start "):
+        start_args = message.text.split(" ", 1)[1].strip()
+    if start_args and start_args.startswith("join_"):
+        await state.update_data(start_args=start_args)
 
     if user is None:
         await message.answer("Для продолжения пройдите регистрацию\nВведите ваше имя:")
         await state.set_state(RegistrationState.first_name)
     else:
-        await check_invite(message, state, user.id, pool)
+        await check_invite(message, state, user.id, pool, start_args)
 
 @router.message(RegistrationState.first_name, F.text)
 async def reg_first_name(message: Message, state: FSMContext):
@@ -799,15 +802,15 @@ async def handle_create_first_place(message: types.Message, state: FSMContext):
     
 
 #Проверка наличия приглашения при входе, и его обработка
-async def check_invite(message: types.Message,state: FSMContext, user_id: int, pool):
+async def check_invite(message: types.Message,state: FSMContext, user_id: int, pool, direct_args=None):
     data = await state.get_data()
-    args = data.get("start_args")
+    args = (direct_args or data.get("start_args") or "").strip()
 
-    if not args or not args.startswith("join_"):
+    if not args.startswith("join_"):
         keyboard = presentation.keyboards.build_start_keyboard()
         await message.answer("Войти как:", reply_markup=keyboard)
     else:
-        invite_code = args[5:]
+        invite_code = args[5:].strip()
 
         org_repo = OrganizationRepository(pool)
         org_member_repo = OrganizationMemberRepository(pool)
