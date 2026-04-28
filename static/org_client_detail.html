@@ -41,6 +41,42 @@
         .btn { width: 100%; height: 56px; border: none; border-radius: 16px; font-family: inherit; cursor: pointer; margin-top: 10px; box-shadow: 0 7px 0 rgba(57,42,103,.18), 0 12px 18px rgba(57,42,103,.12); }
         .btn:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57,42,103,.18), 0 8px 10px rgba(57,42,103,.12); }
         .status { font-size: 13px; min-height: 18px; color: #5a5a5a; margin-top: 8px; }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal {
+            width: 90%;
+            max-width: 360px;
+            background: #D9D9D9;
+            border-radius: 20px;
+            padding: 28px 18px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .modal-title { font-size: 18px; text-transform: uppercase; text-align: center; }
+        .modal-btn {
+            width: 220px;
+            height: 48px;
+            border: none;
+            border-radius: 18px;
+            font-family: inherit;
+            font-size: 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .modal-btn--delete { background: #F8CECC; box-shadow: 0 6px 0 #C5928F; }
+        .modal-btn--cancel { background: #CBE949; box-shadow: 0 6px 0 #A3B83A; }
     </style>
 </head>
 <body>
@@ -56,6 +92,13 @@
             <div id="status" class="status"></div>
         </div>
     </div>
+    <div class="modal-overlay" id="delete-modal">
+        <div class="modal">
+            <div class="modal-title">Подтвердите удаление</div>
+            <button class="modal-btn modal-btn--delete" id="confirm-delete-btn">Удалить</button>
+            <button class="modal-btn modal-btn--cancel" id="cancel-delete-btn">Отмена</button>
+        </div>
+    </div>
     <script>
         Telegram.WebApp.ready();
         const params = new URLSearchParams(window.location.search);
@@ -63,6 +106,7 @@
         const clientId = params.get("client_id");
         const card = document.getElementById("card");
         const statusEl = document.getElementById("status");
+        const deleteModal = document.getElementById("delete-modal");
 
         function setStatus(text, isError = false) {
             statusEl.textContent = text || "";
@@ -75,8 +119,19 @@
             card.innerHTML = `Имя: ${data.full_name}<br><br>Телефон: ${data.phone || "не указан"}`;
         }
 
-        document.getElementById("delete-btn").onclick = async () => {
-            if (!confirm("Удалить клиента из организации?")) return;
+        document.getElementById("delete-btn").onclick = () => {
+            deleteModal.classList.add("active");
+        };
+        document.getElementById("cancel-delete-btn").onclick = () => {
+            deleteModal.classList.remove("active");
+        };
+        deleteModal.onclick = (e) => {
+            if (e.target === deleteModal) {
+                deleteModal.classList.remove("active");
+            }
+        };
+        document.getElementById("confirm-delete-btn").onclick = async () => {
+            deleteModal.classList.remove("active");
             const res = await fetch(`/api/v1/org/${orgId}/clients/${clientId}`, { method: "DELETE" });
             if (res.ok) {
                 window.location.href = `/app/org_clients.html?org_id=${orgId}&v=2`;

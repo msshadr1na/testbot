@@ -304,6 +304,15 @@
             <div id="status" class="status"></div>
         </div>
     </div>
+    <div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+        <div class="modal-title">ПОДТВЕРДИТЕ УДАЛЕНИЕ</div>
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn--delete" id="confirm-delete-btn">УДАЛИТЬ</button>
+            <button class="modal-btn modal-btn--cancel" id="cancel-delete-btn">ОТМЕНА</button>
+        </div>
+    </div>
+</div>
     <script>
         Telegram.WebApp.ready();
         const params = new URLSearchParams(window.location.search);
@@ -383,14 +392,5 @@
         document.getElementById("back-btn").onclick = () => goTo("/app/org_main.html");
         loadOrg();
     </script>
-    <div class="modal-overlay" id="delete-modal">
-    <div class="modal">
-        <div class="modal-title">ПОДТВЕРДИТЕ УДАЛЕНИЕ</div>
-        <div class="modal-buttons">
-            <button class="modal-btn modal-btn--delete" id="confirm-delete-btn">УДАЛИТЬ</button>
-            <button class="modal-btn modal-btn--cancel" id="cancel-delete-btn">ОТМЕНА</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>

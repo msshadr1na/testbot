@@ -52,8 +52,16 @@
             const data = await res.json();
             if (!res.ok) return setStatus(data.detail || "Не удалось создать организацию", true);
             setStatus("Организация успешно создана");
+            const createdOrgId = data?.id;
+            if (createdOrgId) {
+                localStorage.setItem("selectedOrgId", String(createdOrgId));
+            }
             setTimeout(() => {
-                window.location.href = `org_main.html`;
+                if (createdOrgId) {
+                    window.location.href = `/app/org_main.html?org_id=${createdOrgId}&v=2`;
+                    return;
+                }
+                window.location.href = "/orgs";
             }, 700);
         };
 

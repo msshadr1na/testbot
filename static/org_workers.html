@@ -70,21 +70,38 @@
         }
         #invite-btn:hover, #refresh-btn:hover { filter: brightness(1.03); }
         #invite-btn:active, #refresh-btn:active { transform: translateY(2px); }
-        .invite-card {
-            width: 100%; margin-top: 12px; padding: 12px; border-radius: 14px; background: #ffffff;
-            border: 1px solid #e2e2f0; box-shadow: 0 10px 18px rgba(57, 42, 103, 0.12); display: none;
+        .invite-inline {
+            width: 100%;
+            margin-top: 10px;
+            display: none;
+            align-items: center;
+            gap: 8px;
         }
-        .invite-label { font-size: 12px; color: #5e5e72; margin-bottom: 6px; }
-        .invite-link {
-            display: block; font-size: 12px; color: #2f47d6; text-decoration: none;
-            background: #f4f6ff; border: 1px solid #dfe5ff; border-radius: 10px; padding: 10px; word-break: break-all;
+        .invite-link-pill {
+            flex: 1;
+            min-height: 34px;
+            border-radius: 14px;
+            border: 1px solid #d6d6e7;
+            background: #ffffff;
+            font-size: 11px;
+            line-height: 1.2;
+            padding: 8px 10px;
+            overflow-wrap: anywhere;
+            box-shadow: 0 2px 4px rgba(57, 42, 103, 0.15);
         }
-        .invite-link:hover { text-decoration: underline; }
-        .copy-btn {
-            margin-top: 8px; width: 100%; height: 40px; border: 0; border-radius: 10px; font-family: inherit;
-            font-size: 12px; cursor: pointer; background: #dff88a; box-shadow: 0 4px 0 rgba(57, 42, 103, 0.18);
+        .invite-icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 17px;
+            border: 1px solid #d6d6e7;
+            background: #ffffff;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            line-height: 1;
+            box-shadow: 0 2px 4px rgba(57, 42, 103, 0.15);
         }
-        .copy-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(57, 42, 103, 0.18); }
+        .invite-icon-btn:active { transform: translateY(1px); }
         .status { width: 100%; font-size: 12px; margin-top: 8px; min-height: 16px; color: #5a5a5a; word-break: break-word; text-align: center; }
         .bottom-nav-wrap {
             position: fixed;
@@ -217,7 +234,7 @@
 <body>
     <div class="bg-gradient"></div>
     <div class="container">
-        <div class="header-title">РАБОТНИКИ</div>
+        <div class="header-title">СПИСОК РАБОТНИКОВ</div>
         <div class="panel">
             <div id="list" class="list" style="text-align:center;padding:30px 10px;">Загрузка...</div>
             <div class="actions">
@@ -225,10 +242,10 @@
                 <button class="small a1" id="invite-btn">ПРИГЛАСИТЬ</button>
                 <button class="small nav-small page-nav" id="next-page-btn">→</button>
             </div>
-            <div id="invite-card" class="invite-card">
-                <div class="invite-label">Ссылка приглашения</div>
-                <a id="invite-link" class="invite-link" href="#" target="_blank" rel="noopener noreferrer"></a>
-                <button id="copy-link-btn" class="copy-btn">Скопировать ссылку</button>
+            <div id="invite-inline" class="invite-inline">
+                <div id="invite-link-pill" class="invite-link-pill"></div>
+                <button id="copy-link-btn" class="invite-icon-btn" title="Скопировать">⧉</button>
+                <button id="refresh-link-btn" class="invite-icon-btn" title="Обновить">↻</button>
             </div>
             <div id="status" class="status"></div>
         </div>
@@ -272,8 +289,8 @@
         const orgId = new URLSearchParams(window.location.search).get("org_id");
         const list = document.getElementById("list");
         const statusEl = document.getElementById("status");
-        const inviteCard = document.getElementById("invite-card");
-        const inviteLinkEl = document.getElementById("invite-link");
+        const inviteInline = document.getElementById("invite-inline");
+        const inviteLinkPill = document.getElementById("invite-link-pill");
         const prevPageBtn = document.getElementById("prev-page-btn");
         const nextPageBtn = document.getElementById("next-page-btn");
         let currentInvite = "";
@@ -300,12 +317,11 @@
         function showInvite(link) {
             currentInvite = link || "";
             if (!currentInvite) {
-                inviteCard.style.display = "none";
+                inviteInline.style.display = "none";
                 return;
             }
-            inviteCard.style.display = "block";
-            inviteLinkEl.href = currentInvite;
-            inviteLinkEl.textContent = currentInvite;
+            inviteInline.style.display = "flex";
+            inviteLinkPill.textContent = currentInvite;
         }
 
         function renderPage(page) {
@@ -378,9 +394,9 @@
         };
         document.getElementById("invite-btn").onclick = async () => {
             await loadInvite(false);
-            if (currentInvite) {
-                inviteCard.style.display = inviteCard.style.display === "block" ? "none" : "block";
-            }
+        };
+        document.getElementById("refresh-link-btn").onclick = async () => {
+            await loadInvite(true);
         };
         prevPageBtn.onclick = () => {
             if (currentPage > 0) {
