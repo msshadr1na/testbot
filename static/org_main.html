@@ -417,23 +417,23 @@
                 if (workersRes.ok)
                 {
                     const workersData = await workersRes.json();
-                    document.getElementById("stat-workers").textContent = workersData.workers.length || 5;
+                    document.getElementById("stat-workers").textContent = workersData.workers?.length ?? 0;
                 }
                 if (clientsRes.ok)
                 {
                     const clientsData = await clientsRes.json();
-                    document.getElementById("stat-clients").textContent = clientsData.clients.length || 5;
+                    document.getElementById("stat-clients").textContent = clientsData.clients?.length ?? 0;
                 }
                 if (placesRes.ok)
                 {
                     const placesData = await placesRes.json();
-                    document.getElementById("stat-places").textContent = placesData.places.length || 5;
+                    document.getElementById("stat-places").textContent = placesData.places?.length ?? 0;
                 }
                 if (eventsRes.ok)
                 {
                     const eventsData = await eventsRes.json();
                     const total = (eventsData.days || []).reduce((sum, d) => sum + (d.count || 0), 0);
-                    document.getElementById("stat-trainings-month").textContent = total || 5;
+                    document.getElementById("stat-trainings-month").textContent = total;
                 }
             } catch (error) {}
         }

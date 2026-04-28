@@ -12,35 +12,160 @@
         .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
         .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 18px 14px 112px; min-height: 100vh; }
         .title { text-align: center; font-size: 24px; margin-bottom: 14px; text-transform: uppercase; }
-        .panel { background: #EFEEFC; border-radius: 20px; border: 1px solid #fff; box-shadow: 0 12px 20px rgba(37,27,76,.15); padding: 16px; min-height: 420px; }
-        .item { width: 100%; height: 62px; margin: 0 auto 12px; border: 1px solid rgba(255,255,255,.55); border-radius: 16px; font-family: inherit; font-size: 16px; box-shadow: 0 7px 0 rgba(57,42,103,.18), 0 12px 18px rgba(57,42,103,.12); }
+        .panel { background: #EFEEFC; border-radius: 20px; border: 1px solid #fff; box-shadow: 0 12px 20px rgba(37,27,76,.15); padding: 16px; min-height: 420px; display: flex; flex-direction: column; }
+        #list { flex: 1; }
+        .item { width: 100%; height: 62px; margin: 0 auto 12px; border: 3px solid #9EB82E; border-radius: 16px; font-family: inherit; font-size: 16px; box-shadow: 0 7px 0 rgba(57,42,103,.18), 0 12px 18px rgba(57,42,103,.12); cursor: pointer; }
         .item:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57,42,103,.18), 0 8px 10px rgba(57,42,103,.12); }
-        .bottom-nav-wrap
-        {
+        .places-nav { display: grid; grid-template-columns: 40px 1fr 40px; gap: 10px; margin-top: 8px; align-items: center; }
+        .places-nav-center { height: 40px; }
+        .places-nav-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            border: 1px solid #d6d6e7;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(57, 42, 103, 0.15);
+            font-family: inherit;
+            font-size: 20px;
+            line-height: 1;
+        }
+        .places-nav-btn {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .places-nav-btn.visible {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .bottom-nav-wrap {
             position: fixed;
             left: 0;
             right: 0;
             bottom: 0;
             display: flex;
-            justify-content: center; /*это отвечает за центр на экране*/
-            padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+            justify-content: center;
+            padding: 10px 24px calc(14px + env(safe-area-inset-bottom));
+            pointer-events: none;
+            z-index: 100;
         }
-        .bottom-nav
-        {
+        .bottom-nav {
             width: 100%;
-            max-width: 375px;
-            background: rgba(239,238,252,.95);
-            border: 1px solid #fff;
-            border-radius: 18px;
-            box-shadow: 0 -8px 20px rgba(37,27,76,.2);
+            max-width: 382px;
+            background: rgba(239, 238, 252, 0.98);
+            border: 1px solid #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 -7px 18px rgba(37, 27, 76, 0.19);
             display: grid;
-            grid-template-columns: repeat(5,1fr);
-            gap: 6px;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
             padding: 8px;
+            pointer-events: auto;
+            backdrop-filter: blur(3px);
         }
-        .tab-btn { border: none; border-radius: 12px; background: transparent; min-height: 62px; font-family: inherit; font-size: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-        .tab-btn .icon { font-size: 18px; }
-        .tab-btn.active { background: #cbbafd; box-shadow: inset 0 -3px 0 rgba(53,33,102,.25); }
+        .tab-btn {
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            min-height: 72px;
+            padding: 6px 4px 4px;
+            color: #231F20;
+            font-family: inherit;
+            font-size: 9px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background .12s ease, transform .12s ease;
+            text-transform: uppercase;
+            box-sizing: border-box;
+            flex: 1;
+        }
+        .tab-btn .icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .tab-btn .icon img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            object-position: center;
+            display: block;
+        }
+        .tab-btn span:last-child {
+            color: #231F20;
+            transition: color .12s ease;
+            font-size: 9px;
+            line-height: 1.1;
+            text-align: center;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .tab-btn:not(.active):hover {
+            background: #CBBAFD;
+            transform: translateY(-1px);
+        }
+        .tab-btn.active {
+            background: #CBBAFD;
+        }
+        .tab-btn.active .icon img {
+            filter: brightness(0) saturate(100%) invert(27%) sepia(87%) saturate(1797%) hue-rotate(253deg) brightness(84%) contrast(93%);
+        }
+        .tab-btn.active span:last-child {
+            color: #7A23B8;
+        }
+        .tab-btn.active:hover
+        {
+            background: #BBAAEF;
+        }
+
+        @media (max-width: 430px) {
+            .bottom-nav-wrap
+            {
+                padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+            }
+            .bottom-nav
+            {
+                max-width: 347px;
+                background: rgba(239,238,252,.95);
+                border: 1px solid #fff;
+                border-radius: 18px;
+                box-shadow: 0 -8px 20px rgba(37,27,76,.2);
+                gap: 2px;
+                padding: 6px;
+            }
+            .tab-btn
+            {
+                min-height: 68px;
+                padding: 4px 2px 3px;
+                gap: 4px;
+                font-size: 8px;
+            }
+            .tab-btn .icon
+            {
+                width: 32px;
+                height: 32px;
+            }
+            .tab-btn .icon img
+            {
+                width: 32px;
+                height: 32px;
+            }
+            .tab-btn span:last-child
+            {
+                font-size: 8px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -49,40 +174,108 @@
         <div class="title">ПОМЕЩЕНИЯ</div>
         <div class="panel">
             <div id="list" style="text-align:center;padding:30px 10px;">Загрузка...</div>
+            <div class="places-nav">
+                <button class="places-nav-btn" id="prev-page-btn">←</button>
+                <div class="places-nav-center"></div>
+                <button class="places-nav-btn" id="next-page-btn">→</button>
+            </div>
         </div>
     </div>
     <div class="bottom-nav-wrap">
         <div class="bottom-nav">
-            <button class="tab-btn" id="tab-dashboard"><span class="icon">🏢</span><span>Дашборд</span></button>
-            <button class="tab-btn active" id="tab-places"><span class="icon">🏠</span><span>Помещения</span></button>
-            <button class="tab-btn" id="tab-workers"><span class="icon">👥</span><span>Работники</span></button>
-            <button class="tab-btn" id="tab-clients"><span class="icon">🧍</span><span>Клиенты</span></button>
-            <button class="tab-btn" id="tab-events"><span class="icon">📅</span><span>События</span></button>
+            <button class="tab-btn" id="tab-dashboard">
+                <span class="icon">
+                    <img src="/app/icons/main.svg?v=2" alt="">
+                </span>
+                <span>ГЛАВНАЯ</span>
+            </button>
+            <button class="tab-btn active" id="tab-places">
+                <span class="icon">
+                    <img src="/app/icons/gyms.svg?v=2" alt="">
+                </span>
+                <span>ПОМЕЩЕНИЯ</span>
+            </button>
+            <button class="tab-btn" id="tab-workers">
+                <span class="icon">
+                    <img src="/app/icons/workers.svg?v=2" alt="">
+                </span>
+                <span>РАБОТНИКИ</span>
+            </button>
+            <button class="tab-btn" id="tab-clients">
+                <span class="icon">
+                    <img src="/app/icons/clients.svg?v=2" alt="">
+                </span>
+                <span>КЛИЕНТЫ</span>
+            </button>
+            <button class="tab-btn" id="tab-events">
+                <span class="icon">
+                    <img src="/app/icons/events.svg?v=2" alt="">
+                </span>
+                <span>СОБЫТИЯ</span>
+            </button>
         </div>
     </div>
     <script>
         Telegram.WebApp.ready();
         const orgId = new URLSearchParams(window.location.search).get("org_id");
-        async function loadPlaces() {
-            const res = await fetch(`/api/v1/org/${orgId}/places`);
-            const data = await res.json();
-            const list = document.getElementById("list");
+        const prevPageBtn = document.getElementById("prev-page-btn");
+        const nextPageBtn = document.getElementById("next-page-btn");
+        const list = document.getElementById("list");
+        let placesData = [];
+        let currentPage = 0;
+        const perPage = 5;
+
+        function renderPlacesPage(page) {
             list.innerHTML = "";
-            if (!data.places.length) {
+            if (!placesData.length) {
                 list.innerHTML = "Помещений пока нет";
+                prevPageBtn.classList.remove("visible");
+                nextPageBtn.classList.remove("visible");
                 return;
             }
-            data.places.forEach((place, i) => {
+
+            const start = page * perPage;
+            const end = Math.min(start + perPage, placesData.length);
+            const pageItems = placesData.slice(start, end);
+
+            pageItems.forEach((place, i) => {
                 const el = document.createElement("button");
                 el.className = "item";
-                el.style.background = i % 2 ? "#CBE949" : "#CBBAFD";
+                const isPurple = i % 2 === 1;
+                el.style.background = isPurple ? "#CBBAFD" : "#CBE949";
+                el.style.borderColor = isPurple ? "#9B7FCC" : "#9EB82E";
                 el.textContent = place.name;
                 el.onclick = () => window.location.href = `/app/org_place_detail.html?org_id=${orgId}&place_id=${place.id}&v=2`;
                 list.appendChild(el);
             });
+
+            prevPageBtn.classList.toggle("visible", page > 0);
+            nextPageBtn.classList.toggle("visible", end < placesData.length);
         }
+
+        async function loadPlaces() {
+            const res = await fetch(`/api/v1/org/${orgId}/places`);
+            const data = await res.json();
+            placesData = data.places || [];
+            currentPage = 0;
+            renderPlacesPage(currentPage);
+        }
+
+        prevPageBtn.onclick = () => {
+            if (currentPage > 0) {
+                currentPage -= 1;
+                renderPlacesPage(currentPage);
+            }
+        };
+        nextPageBtn.onclick = () => {
+            const maxPage = Math.ceil(placesData.length / perPage) - 1;
+            if (currentPage < maxPage) {
+                currentPage += 1;
+                renderPlacesPage(currentPage);
+            }
+        };
         function goTo(path) { window.location.href = `${path}?org_id=${orgId}&v=2`; }
-        document.getElementById("tab-dashboard").onclick = () => goTo("/app/org_dashboard.html");
+        document.getElementById("tab-dashboard").onclick = () => goTo("/app/org_main.html");
         document.getElementById("tab-places").onclick = () => goTo("/app/org_places.html");
         document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");
         document.getElementById("tab-clients").onclick = () => goTo("/app/org_clients.html");
