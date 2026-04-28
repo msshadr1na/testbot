@@ -347,7 +347,7 @@
 
                             btn.onclick = () => {
                                 localStorage.setItem("selectedOrgId", org.id);
-                                window.location.href = `org_main.html`;
+                                window.location.href = `/org/${org.id}`;
                             };
 
                             container.appendChild(btn);
