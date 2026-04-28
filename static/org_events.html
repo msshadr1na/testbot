@@ -31,6 +31,29 @@
         .btn:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57,42,103,.18), 0 8px 10px rgba(57,42,103,.12); }
         .status { width: 100%; font-size: 12px; min-height: 16px; color: #5a5a5a; }
         .list { width: 100%; background:#fff; border-radius:16px; padding: 10px; font-size: 12px; margin-bottom: 10px; }
+        .training-item {
+            width: 100%;
+            border: 1px solid #d7d7e8;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            text-align: left;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+        }
+        .training-item:last-child { margin-bottom: 0; }
+        .training-item.active { border-color: #9B7FCC; background: #f4eeff; }
+        .small-btn {
+            height: 38px;
+            border-radius: 10px;
+            border: 1px solid #d7d7e8;
+            background: #fff;
+            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+        }
         .bottom-nav-wrap {
             position: fixed;
             left: 0;
@@ -187,7 +210,13 @@
                     <select id="type-select"></select>
                     <input id="max-clients" type="number" min="1" max="100" placeholder="Макс. клиентов">
                 </div>
+                <div class="row">
+                    <input id="new-type-name" placeholder="Новый тип тренировки">
+                    <button class="small-btn" id="add-type-btn">Добавить тип</button>
+                </div>
                 <button class="btn" style="background:#CBBAFD;border:none;" id="create-btn">Создать тренировку</button>
+                <button class="btn" style="background:#FFFFFF;" id="update-btn">Сохранить изменения</button>
+                <button class="btn" style="background:#F8CECC;" id="delete-btn">Отменить тренировку</button>
             </div>
             <div class="status" id="status"></div>
         </div>
@@ -234,8 +263,15 @@
         const dayList = document.getElementById("day-list");
         const statusEl = document.getElementById("status");
         const selectedDayEl = document.getElementById("selected-day");
+        const createBtn = document.getElementById("create-btn");
+        const updateBtn = document.getElementById("update-btn");
+        const deleteBtn = document.getElementById("delete-btn");
+        const addTypeBtn = document.getElementById("add-type-btn");
+        const typeSelect = document.getElementById("type-select");
+        const newTypeInput = document.getElementById("new-type-name");
         let current = new Date();
         let selectedDay = null;
+        let selectedTrainingId = null;
         let countsByDay = {};
 
         function setStatus(text, isError = false) {
@@ -255,7 +291,25 @@
             const data = await res.json();
             document.getElementById("gym-select").innerHTML = data.places.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
             document.getElementById("trainer-select").innerHTML = data.workers.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
-            document.getElementById("type-select").innerHTML = data.types.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
+            typeSelect.innerHTML = data.types.map(x => `<option value="${x.id}">${x.name}</option>`).join("");
+        }
+
+        function setEditMode(enabled) {
+            selectedTrainingId = enabled ? selectedTrainingId : null;
+            createBtn.style.display = enabled ? "none" : "block";
+            updateBtn.style.display = enabled ? "block" : "none";
+            deleteBtn.style.display = enabled ? "block" : "none";
+        }
+
+        function fillFormFromTraining(training) {
+            const start = new Date(training.date_start);
+            const end = new Date(training.date_end);
+            document.getElementById("time-start").value = `${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`;
+            document.getElementById("time-end").value = `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`;
+            document.getElementById("gym-select").value = String(training.gym_id);
+            document.getElementById("trainer-select").value = String(training.trainer_id);
+            typeSelect.value = String(training.type_id);
+            document.getElementById("max-clients").value = String(training.max_clients);
         }
 
         async function loadCalendar() {
@@ -290,6 +344,8 @@
 
         async function selectDay(dayDate) {
             selectedDay = dayDate;
+            selectedTrainingId = null;
+            setEditMode(false);
             selectedDayEl.textContent = `Дата: ${dayDate}`;
             const res = await fetch(`/api/v1/org/${orgId}/events/day?day=${dayDate}`);
             const data = await res.json();
@@ -297,18 +353,29 @@
                 dayList.innerHTML = "На этот день тренировок нет";
                 return;
             }
-            dayList.innerHTML = data.trainings.map(t => {
+            dayList.innerHTML = "";
+            data.trainings.forEach((t) => {
                 const s = new Date(t.date_start).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
                 const e = new Date(t.date_end).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-                return `${s}-${e} • тренер #${t.trainer_id} • зал #${t.gym_id}`;
-            }).join("<br>");
+                const btn = document.createElement("button");
+                btn.className = "training-item";
+                btn.innerHTML = `${s}-${e} • ${t.type_name}<br>${t.trainer_name} • ${t.gym_name}`;
+                btn.onclick = () => {
+                    selectedTrainingId = t.id;
+                    document.querySelectorAll(".training-item").forEach((el) => el.classList.remove("active"));
+                    btn.classList.add("active");
+                    fillFormFromTraining(t);
+                    setEditMode(true);
+                };
+                dayList.appendChild(btn);
+            });
         }
 
         function isValidTime(s) {
             return /^\d{2}:\d{2}$/.test(s);
         }
 
-        document.getElementById("create-btn").onclick = async () => {
+        createBtn.onclick = async () => {
             const timeStart = document.getElementById("time-start").value.trim();
             const timeEnd = document.getElementById("time-end").value.trim();
             const gymId = document.getElementById("gym-select").value;
@@ -329,6 +396,48 @@
             await selectDay(selectedDay);
         };
 
+        updateBtn.onclick = async () => {
+            if (!selectedTrainingId) return setStatus("Сначала выберите тренировку из списка", true);
+            const timeStart = document.getElementById("time-start").value.trim();
+            const timeEnd = document.getElementById("time-end").value.trim();
+            const gymId = document.getElementById("gym-select").value;
+            const trainerId = document.getElementById("trainer-select").value;
+            const typeId = typeSelect.value;
+            const maxClients = document.getElementById("max-clients").value;
+
+            const query = `day=${selectedDay}&time_start=${timeStart}&time_end=${timeEnd}&gym_id=${gymId}&trainer_id=${trainerId}&type_id=${typeId}&max_clients=${maxClients}`;
+            const res = await fetch(`/api/v1/org/${orgId}/events/${selectedTrainingId}?${query}`, { method: "PUT" });
+            const data = await res.json();
+            if (!res.ok) return setStatus(data.detail || "Не удалось обновить тренировку", true);
+            setStatus("Тренировка обновлена");
+            await loadCalendar();
+            await selectDay(selectedDay);
+        };
+
+        deleteBtn.onclick = async () => {
+            if (!selectedTrainingId) return setStatus("Сначала выберите тренировку из списка", true);
+            const res = await fetch(`/api/v1/org/${orgId}/events/${selectedTrainingId}`, { method: "DELETE" });
+            const data = await res.json();
+            if (!res.ok) return setStatus(data.detail || "Не удалось отменить тренировку", true);
+            setStatus("Тренировка отменена");
+            selectedTrainingId = null;
+            setEditMode(false);
+            await loadCalendar();
+            await selectDay(selectedDay);
+        };
+
+        addTypeBtn.onclick = async () => {
+            const typeName = newTypeInput.value.trim();
+            if (typeName.length < 2) return setStatus("Название типа минимум 2 символа", true);
+            const res = await fetch(`/api/v1/org/${orgId}/events/types?name=${encodeURIComponent(typeName)}`, { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) return setStatus(data.detail || "Не удалось добавить тип", true);
+            await loadOptions();
+            typeSelect.value = String(data.id);
+            newTypeInput.value = "";
+            setStatus("Тип добавлен");
+        };
+
         document.getElementById("prev-month").onclick = async () => {
             current = new Date(current.getFullYear(), current.getMonth() - 1, 1);
             await loadCalendar();
@@ -343,6 +452,7 @@
         document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");
         document.getElementById("tab-clients").onclick = () => goTo("/app/org_clients.html");
         document.getElementById("tab-events").onclick = () => goTo("/app/org_events.html");
+        setEditMode(false);
         loadOptions();
         loadCalendar();
     </script>

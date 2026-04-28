@@ -251,6 +251,23 @@ class TrainingRepository:
             trainings.append(training)
         return trainings
 
+    async def get_trainings_with_details_by_org_and_date_range(self, org_id: int, start_date, end_date):
+        sql = """
+            SELECT t.id, t.organization_id, t.gym_id, t.trainer_id, t.date_start, t.date_end, t.type_id, t.max_clients,
+                   g.name AS gym_name,
+                   tt.name AS type_name,
+                   concat_ws(' ', u.last_name, u.first_name, coalesce(u.middle_name, '')) AS trainer_name
+            FROM training t
+            JOIN gym g ON t.gym_id = g.id
+            JOIN training_type tt ON t.type_id = tt.id
+            JOIN users u ON t.trainer_id = u.id
+            WHERE t.organization_id = $1
+              AND date(t.date_start) >= $2
+              AND date(t.date_start) < $3
+            ORDER BY t.date_start
+        """
+        return await self.pool.fetch(sql, org_id, start_date, end_date)
+
     async def get_trainings_counts_by_org_grouped_by_day(self, org_id: int, start_date, end_date):
         """Получить количество тренировок в день (дата, количество)"""
 
@@ -292,6 +309,60 @@ class TrainingRepository:
         rows = await self.pool.fetch(sql)
         return [(row["id"], row["name"]) for row in rows]
 
+    async def find_training_type_by_name(self, name: str):
+        sql = "select id, name from training_type where lower(name) = lower($1)"
+        return await self.pool.fetchrow(sql, name)
+
+    async def create_training_type(self, name: str):
+        sql = "insert into training_type (name) values ($1) returning id, name"
+        return await self.pool.fetchrow(sql, name)
+
+    async def get_by_id(self, training_id: int):
+        sql = "select * from training where id = $1"
+        row = await self.pool.fetchrow(sql, training_id)
+        if not row:
+            return None
+        return Training(
+            id=row["id"],
+            organization_id=row["organization_id"],
+            gym_id=row["gym_id"],
+            trainer_id=row["trainer_id"],
+            date_start=row["date_start"],
+            date_end=row["date_end"],
+            type_id=row["type_id"],
+            max_clients=row["max_clients"],
+        )
+
+    async def update(self, training_id: int, gym_id: int, trainer_id: int, date_start, date_end, type_id: int, max_clients: int):
+        sql = """
+            update training
+            set gym_id = $2,
+                trainer_id = $3,
+                date_start = $4,
+                date_end = $5,
+                type_id = $6,
+                max_clients = $7
+            where id = $1
+            returning id, organization_id, gym_id, trainer_id, date_start, date_end, type_id, max_clients
+        """
+        row = await self.pool.fetchrow(sql, training_id, gym_id, trainer_id, date_start, date_end, type_id, max_clients)
+        if not row:
+            return None
+        return Training(
+            id=row["id"],
+            organization_id=row["organization_id"],
+            gym_id=row["gym_id"],
+            trainer_id=row["trainer_id"],
+            date_start=row["date_start"],
+            date_end=row["date_end"],
+            type_id=row["type_id"],
+            max_clients=row["max_clients"],
+        )
+
+    async def delete_by_id(self, training_id: int):
+        sql = "delete from training where id = $1"
+        return await self.pool.execute(sql, training_id)
+
 class BookingRepository:
     def __init__(self,pool):
         self.pool = pool
@@ -322,6 +393,11 @@ class BookingRepository:
             ORDER BY t.date_start
         """
         return await self.pool.fetch(sql, user_id, org_id, start_date, end_date)
+
+    async def get_user_ids_by_training_id(self, training_id: int):
+        sql = "select user_id from booking where training_id = $1"
+        rows = await self.pool.fetch(sql, training_id)
+        return [row["user_id"] for row in rows]
 
 class ReviewRepository:
     def __init__(self,pool):
