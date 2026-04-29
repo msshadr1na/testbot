@@ -184,4 +184,14 @@ class OrganizationService:
     async def delete_place(self, place_id: int):
         return await self.gym_repository.delete_by_id(place_id)
 
+    async def show_client_orgs(self, user_id):
+        org_ids = await self.organizationMember_repository.get_membered_orgs(user_id, 3)
+
+        if not org_ids:
+            return [], []
+
+        names = await self.organization_repository.get_names_by_ids(org_ids)
+
+        return org_ids, names
+
 

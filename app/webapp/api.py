@@ -527,3 +527,14 @@ async def get_my_client_bookings(org_id: int, user_id: int, days: int = 30, db: 
         ]
     }
 
+@router.get("/client/organizations")
+async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        return {"organizations": []}
+
+    org_ids, names = await org_service.show_client_orgs(user.id)
+    organizations = [{"id": org_id, "name": name} for org_id, name in zip(org_ids, names)]
+    return {"organizations": organizations}
+

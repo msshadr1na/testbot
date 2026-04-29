@@ -215,8 +215,10 @@ async def handle_start(message: types.Message, command: Command, state: FSMConte
     user = await user_service.find_by_tgid(telegram_id)
     
     start_args = getattr(command, "args", None)
-    if not start_args and message.text and message.text.startswith("/start "):
-        start_args = message.text.split(" ", 1)[1].strip()
+    if not start_args and message.text and message.text.startswith("/start"):
+        parts = message.text.split(maxsplit=1)
+        if len(parts) > 1:
+            start_args = parts[1].strip()
     if start_args and start_args.startswith("join_"):
         await state.update_data(start_args=start_args)
 
@@ -224,7 +226,11 @@ async def handle_start(message: types.Message, command: Command, state: FSMConte
         await message.answer("Для продолжения пройдите регистрацию\nВведите ваше имя:")
         await state.set_state(RegistrationState.first_name)
     else:
-        await check_invite(message, state, user.id, pool, start_args)
+        try:
+            await check_invite(message, state, user.id, pool, start_args)
+        except Exception:
+            keyboard = presentation.keyboards.build_start_keyboard()
+            await message.answer("Не удалось обработать стартовую ссылку. Попробуйте еще раз.", reply_markup=keyboard)
 
 @router.message(RegistrationState.first_name, F.text)
 async def reg_first_name(message: Message, state: FSMContext):

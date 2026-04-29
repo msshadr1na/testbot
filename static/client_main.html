@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кабинет клиента</title>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+    body {
+        font-family: 'Russo One', sans-serif;
+        min-height: 100vh;
+        background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
+        color: #1f1f35;
+        padding: 18px 14px 0;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 430px;
+        margin: 0 auto;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 24px 24px 0;
+    }
+
+    .topbar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+    }
+
+    .back-btn {
+        border: none;
+        background: #CBE949;
+        width: 50px;
+        height: 50px;
+        border-radius: 18px;
+        font-size: 30px;
+        font-family: inherit;
+        cursor: pointer;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18), 0 15px 6px rgba(26, 15, 52, 0.22);
+    }
+    .back-btn:active {
+        transform: translateY(1px);
+        box-shadow: 0 4px 0 rgba(64, 52, 96, 0.22), 0 7px 12px rgba(26, 15, 52, 0.15);
+    }
+    .page-title {
+        font-size: 16px;
+        letter-spacing: 0.6px;
+        opacity: 0.75;
+        line-height: 1.05;
+        text-align: right;
+        flex: 1;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .name-card {
+        background: #EFEEFC;
+        border-radius: 20px;
+        box-shadow: 0 12px 20px rgba(38, 30, 67, 0.13);
+        padding: 22px 18px 20px;
+        margin-bottom: 18px;
+    }
+
+    .name-title {
+        font-size: 27px;
+        line-height: 1.1;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+        word-break: break-word;
+        color: #0b0b11;
+    }
+
+    .name-desc {
+        font-size: 12px;
+        opacity: 0.72;
+        line-height: 1.4;
+    }
+
+    .title-container {
+        background: #efeefc;
+        border-radius: 20px 20px 0 0;
+        border: 1px solid #ffffff;
+        box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16);
+        padding: 18px 16px;
+        justify-content: center;
+        display: flex;
+    }
+
+    .title {
+        font-size: 18px;
+        text-transform: uppercase;
+        line-height: 0.1;
+        color: #41404E;
+
+    }
+
+    .bookings-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #D9D9D9;
+        border-radius: 0 0 20px 20px;
+        border: 1px solid #ffffff;
+        box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16);
+        padding: 18px 16px;
+    }
+
+
+    .booking-item {
+        background: #ffffff;
+        width: 340px;
+        border-radius: 20px;
+        padding: 20px;
+        flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 9px;
+    }
+
+    .booking-card-header{
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    .time-info{
+        display: flex;
+        align-items: baseline;
+        gap:5px;
+    }
+    .time{
+        font-size: 14px;
+        color: #000000;
+    }
+    .duration{
+        font-size: 14px;
+        color: #9B7FCC;
+    }
+    .place-name{
+        font-size: 14px;
+        color: #9B7FCC;
+    }
+    .card-body{
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .event-type{
+        display: flex;
+        margin-top: 13px;
+        font-size: 16px;
+        text-transform: uppercase;
+        color: #000000;
+    }
+    .worker-name{
+        margin: 0;
+        font-size: 13px;
+        color: #000000;
+    }
+    .card-footer{
+        margin-top: 5px;
+        display: flex;
+        justify-content: center;
+    }
+    .cancel-btn{
+        width: 166px;
+        font-family: inherit;
+        font-size: 8px;
+        padding: 12px 0;
+        background-color: #F8CECC;
+        box-shadow: 0px 6px 0px #C5928F;
+        border: none;
+        border-radius: 20px;
+        color: #000000;
+        text-transform: uppercase;
+        transition: box-shadow 0.2s ease;
+    }
+    .cancel-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 0 #C5928F,
+            0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+    .cancel-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 6px 0 #C5928F;
+    }
+
+
+    .leave-btn {
+        width: 100%;
+        max-width: 382px;
+        height: 57px;
+        border: none;
+        border-radius: 20px;
+        background: #F8CECC;
+        color: #000000;
+        font-family: inherit;
+        font-size: 18px;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: 0px 6px 0px #C5928F;
+        margin:0 auto;
+    }
+
+    .leave-btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 0 #C5928F,
+        0 15px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .leave-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 6px 0 #C5928F;
+    }
+
+    .bottom-nav-wrap {
+        padding: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .bottom-nav {
+        width: 100%;
+        max-width: 382px;
+        margin: 0 auto;
+        background: rgba(239, 238, 252, 0.98);
+        border: 1px solid #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 -7px 18px rgba(37, 27, 76, 0.19);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        padding: 8px;
+        pointer-events: auto;
+        backdrop-filter: blur(3px);
+    }
+
+    .tab-btn {
+        border: none;
+        border-radius: 12px;
+        background: transparent;
+        min-height: 72px;
+        padding: 6px 4px 4px;
+        color: #231F20;
+        font-family: inherit;
+        font-size: 9px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: background .12s ease, transform .12s ease;
+        text-transform: uppercase;
+        box-sizing: border-box;
+        width: 100%;
+    }
+    .tab-btn .icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .tab-btn .icon img {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        object-position: center;
+        display: block;
+    }
+    .tab-btn span:last-child {
+        color: #231F20;
+        transition: color .12s ease;
+        font-size: 9px;
+        line-height: 1.1;
+        text-align: center;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .tab-btn:not(.active):hover {
+        background: #CBBAFD;
+        transform: translateY(-1px);
+    }
+    .tab-btn.active {
+        background: #CBBAFD;
+    }
+    .tab-btn.active .icon img {
+        filter: brightness(0) saturate(100%) invert(27%) sepia(87%) saturate(1797%) hue-rotate(253deg) brightness(84%) contrast(93%);
+    }
+    .tab-btn.active span:last-child {
+        color: #7A23B8;
+    }
+    .tab-btn.active:hover
+    {
+        background: #BBAAEF;
+    }
+    .bottom-fixed-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 0 14px calc(10px + env(safe-area-inset-bottom));
+        z-index: 100;
+    }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <!-- Верхняя панель -->
+    <div class="topbar">
+        <button class="back-btn" id="backBtn">←</button>
+        <div class="page-title">КАБИНЕТ КЛИЕНТА</div>
+    </div>
+
+    <div class="name-card">
+        <div class="name-title" id="orgName">НАЗВАНИЕ</div>
+        <div class="name-desc">
+            Регистрируйтесь на события, следите за обновлениями и оставляйте отзывы в одном месте.
+        </div>
+    </div>
+
+    <div class="title-container">
+        <div class="title" id="title">МОИ ЗАПИСИ</div>
+    </div>
+
+    <div class="bookings-section">
+        <div id="bookingsList">
+            <div class="booking-item">
+                <div class="booking-card-header">
+                    <div class="time-info">
+                        <span class="time">12:00</span>
+                        <span class="duration">30 мин</span>
+                    </div>
+                    <div class="place-name">Основной зал</div>
+                </div>
+                <div class="card-body">
+                    <h3 class="event-type">ТИП ТРЕНИРОВКИ</h3>
+                    <p class="worker-name">Марина Шадрина</p>
+                </div>
+                <div class="card-footer">
+                    <button class="cancel-btn">ОТМЕНИТЬ ЗАПИСЬ</button>
+                </div>
+            </div>
+            <div class="booking-item">
+                <div class="booking-card-header">
+                    <div class="time-info">
+                        <span class="time">12:00</span>
+                        <span class="duration">30 мин</span>
+                    </div>
+                    <div class="place-name">Основной зал</div>
+                </div>
+                <div class="card-body">
+                    <h3 class="event-type">ТИП ТРЕНИРОВКИ</h3>
+                    <p class="worker-name">Марина Шадрина</p>
+                </div>
+                <div class="card-footer">
+                    <button class="cancel-btn">ОТМЕНИТЬ ЗАПИСЬ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="bottom-fixed-container">
+    <button class="leave-btn" id="leaveBtn">Покинуть организацию</button>
+    <div class="bottom-nav-wrap">
+        <div class="bottom-nav">
+            <button class="tab-btn active" id="tab-main">
+                <span class="icon">
+                    <img src="/app/icons/main.svg?v=2" alt="">
+                </span>
+                <span>ГЛАВНАЯ</span>
+            </button>
+            <button class="tab-btn" id="tab-history">
+                <span class="icon">
+                    <img src="/app/icons/gyms.svg?v=2" alt="">
+                </span>
+                <span>ПРОШЕДШИЕ СОБЫТИЯ</span>
+            </button>
+            <button class="tab-btn" id="tab-schedule">
+                <span class="icon">
+                    <img src="/app/icons/events.svg?v=2" alt="">
+                </span>
+                <span>РАСПИСАНИЕ</span>
+            </button>
+        </div>
+    </div>
+</div>
+<script>
+    Telegram.WebApp.ready()
+    const params = new URLSearchParams(window.location.search);
+    const orgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
+    if (orgId) localStorage.setItem("selectedOrgId", orgId);
+
+    async function LoadActiveBookings()
+    {
+        const now = new Date();
+        fetch(`/api/v1/client/${orgId}?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.trainings.length === 0) {
+                        container.innerHTML = `
+                    <div style="
+                      text-align: center;
+                      padding: 40px 20px;
+                      color: #555;
+                      font-size: 16px;">
+                      Вы не записаны ни на одну тренировку.
+                    </div>`;
+                        return;
+                    }
+            })
+    }
+    document.getElementById("tab-main").onclick = () => goTo("/app/client_main.html");
+    document.getElementById("tab-history").onclick = () => goTo("/app/client_history.html");
+    document.getElementById("tab-schedule").onclick = () => goTo("/app/client_schedule.html");
+    LoadActiveBookings();
+</script>
+</body>
+</html>
