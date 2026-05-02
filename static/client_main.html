@@ -7,340 +7,381 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-    body {
-        font-family: 'Russo One', sans-serif;
-        min-height: 100vh;
-        background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
-        color: #1f1f35;
-        padding: 18px 14px 0;
-    }
-
-    .container {
-        width: 100%;
-        max-width: 430px;
-        margin: 0 auto;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        padding: 24px 24px 0;
-    }
-
-    .topbar {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 16px;
-    }
-
-    .back-btn {
-        border: none;
-        background: #CBE949;
-        width: 50px;
-        height: 50px;
-        border-radius: 18px;
-        font-size: 30px;
-        font-family: inherit;
-        cursor: pointer;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .back-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18), 0 15px 6px rgba(26, 15, 52, 0.22);
-    }
-    .back-btn:active {
-        transform: translateY(1px);
-        box-shadow: 0 4px 0 rgba(64, 52, 96, 0.22), 0 7px 12px rgba(26, 15, 52, 0.15);
-    }
-    .page-title {
-        font-size: 16px;
-        letter-spacing: 0.6px;
-        opacity: 0.75;
-        line-height: 1.05;
-        text-align: right;
-        flex: 1;
-        text-transform: uppercase;
-        white-space: nowrap;
-    }
-
-    .name-card {
-        background: #EFEEFC;
-        border-radius: 20px;
-        box-shadow: 0 12px 20px rgba(38, 30, 67, 0.13);
-        padding: 22px 18px 20px;
-        margin-bottom: 18px;
-    }
-
-    .name-title {
-        font-size: 27px;
-        line-height: 1.1;
-        text-transform: uppercase;
-        margin-bottom: 10px;
-        word-break: break-word;
-        color: #0b0b11;
-    }
-
-    .name-desc {
-        font-size: 12px;
-        opacity: 0.72;
-        line-height: 1.4;
-    }
-
-    .title-container {
-        background: #efeefc;
-        border-radius: 20px 20px 0 0;
-        border: 1px solid #ffffff;
-        box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16);
-        padding: 18px 16px;
-        justify-content: center;
-        display: flex;
-    }
-
-    .title {
-        font-size: 18px;
-        text-transform: uppercase;
-        line-height: 0.1;
-        color: #41404E;
-
-    }
-
-    #bookingsList {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        width: 100%;
-    }
-
-    .bookings-section {
-        width: 100%;
-        background: #D9D9D9;
-        border-radius: 0 0 20px 20px;
-        border: 1px solid #ffffff;
-        box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16);
-        padding: 10px 20px;
-    }
-
-
-    .booking-item {
-        background: #ffffff;
-        border-radius: 20px;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        width: 100%;
-    }
-
-    .booking-card-header{
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        width: 100%;
-        gap: 100px;
-    }
-    .time-info{
-        display: flex;
-        align-items: baseline;
-        gap:5px;
-        width: 100%;
-    }
-    .time{
-        font-size: 14px;
-        color: #000000;
-    }
-    .duration{
-        font-size: 14px;
-        color: #9B7FCC;
-    }
-    .place-name{
-        font-size: 14px;
-        color: #9B7FCC;
-        width: 100%;
-    }
-    .card-body{
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-    .event-type{
-        display: flex;
-        margin-top: 13px;
-        font-size: 16px;
-        text-transform: uppercase;
-        color: #000000;
-    }
-    .worker-name{
-        margin: 0;
-        font-size: 13px;
-        color: #000000;
-    }
-    .card-footer{
-        margin-top: 5px;
-        display: flex;
-        justify-content: center;
-    }
-    .cancel-btn{
-        width: 166px;
-        font-family: inherit;
-        font-size: 8px;
-        padding: 12px 0;
-        background-color: #F8CECC;
-        box-shadow: 0px 6px 0px #C5928F;
-        border: none;
-        border-radius: 20px;
-        color: #000000;
-        text-transform: uppercase;
-        transition: box-shadow 0.2s ease;
-    }
-    .cancel-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 6px 0 #C5928F,
-            0 15px 6px rgba(0, 0, 0, 0.3);
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    .cancel-btn:active {
-        transform: translateY(0);
-        box-shadow: 0 6px 0 #C5928F;
-    }
 
+        body {
+            font-family: 'Russo One', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
+            color: #1f1f35;
+            padding: 18px 14px 0;
+            display: flex;
+            justify-content: center;
+        }
 
-    .leave-btn {
-        width: 100%;
-        max-width: 382px;
-        height: 57px;
-        border: none;
-        border-radius: 20px;
-        background: #F8CECC;
-        color: #000000;
-        font-family: inherit;
-        font-size: 18px;
-        text-transform: uppercase;
-        cursor: pointer;
-        box-shadow: 0px 6px 0px #C5928F;
-        margin:0 auto;
-    }
+        .container {
+            width: 100%;
+            max-width: 430px;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 20px 220px;
+            position: relative;
+        }
 
-    .leave-btn:hover {
-        transform: scale(1.02);
-        box-shadow: 0 6px 0 #C5928F,
-        0 15px 6px rgba(0, 0, 0, 0.3);
-    }
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
 
-    .leave-btn:active {
-        transform: translateY(0);
-        box-shadow: 0 6px 0 #C5928F;
-    }
+        .back-btn {
+            border: none;
+            background: #CBE949;
+            width: 50px;
+            height: 50px;
+            border-radius: 18px;
+            font-size: 30px;
+            font-family: inherit;
+            cursor: pointer;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            flex-shrink: 0;
+        }
 
-    .bottom-nav-wrap {
-        padding: 0;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18), 0 15px 6px rgba(26, 15, 52, 0.22);
+        }
 
-    .bottom-nav {
-        width: 100%;
-        max-width: 382px;
-        margin: 0 auto;
-        background: rgba(239, 238, 252, 0.98);
-        border: 1px solid #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 -7px 18px rgba(37, 27, 76, 0.19);
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 4px;
-        padding: 8px;
-        pointer-events: auto;
-        backdrop-filter: blur(3px);
-    }
+        .back-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 4px 0 rgba(64, 52, 96, 0.22), 0 7px 12px rgba(26, 15, 52, 0.15);
+        }
 
-    .tab-btn {
-        border: none;
-        border-radius: 12px;
-        background: transparent;
-        min-height: 72px;
-        padding: 6px 4px 4px;
-        color: #231F20;
-        font-family: inherit;
-        font-size: 9px;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        transition: background .12s ease, transform .12s ease;
-        text-transform: uppercase;
-        box-sizing: border-box;
-        width: 100%;
-    }
-    .tab-btn .icon {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    .tab-btn .icon img {
-        width: 32px;
-        height: 32px;
-        object-fit: contain;
-        object-position: center;
-        display: block;
-    }
-    .tab-btn span:last-child {
-        color: #231F20;
-        transition: color .12s ease;
-        font-size: 9px;
-        line-height: 1.1;
-        text-align: center;
-        width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .tab-btn:not(.active):hover {
-        background: #CBBAFD;
-        transform: translateY(-1px);
-    }
-    .tab-btn.active {
-        background: #CBBAFD;
-    }
-    .tab-btn.active .icon img {
-        filter: brightness(0) saturate(100%) invert(27%) sepia(87%) saturate(1797%) hue-rotate(253deg) brightness(84%) contrast(93%);
-    }
-    .tab-btn.active span:last-child {
-        color: #7A23B8;
-    }
-    .tab-btn.active:hover
-    {
-        background: #BBAAEF;
-    }
-    .bottom-fixed-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        padding: 0 14px calc(10px + env(safe-area-inset-bottom));
-        z-index: 100;
-    }
+        .page-title {
+            font-size: 16px;
+            letter-spacing: 0.6px;
+            opacity: 0.75;
+            line-height: 1.05;
+            text-align: right;
+            flex: 1;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .name-card {
+            background: #EFEEFC;
+            border-radius: 20px;
+            box-shadow: 0 12px 20px rgba(38, 30, 67, 0.13);
+            padding: 22px 18px 20px;
+            margin-bottom: 18px;
+        }
+
+        .name-title {
+            font-size: 27px;
+            line-height: 1.1;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            word-break: break-word;
+            color: #0b0b11;
+        }
+
+        .name-desc {
+            font-size: 12px;
+            opacity: 0.72;
+            line-height: 1.4;
+        }
+
+        .title-container {
+            background: #efeefc;
+            border-radius: 20px 20px 0 0;
+            border: 1px solid #ffffff;
+            box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16);
+            padding: 18px 16px;
+            justify-content: center;
+            display: flex;
+        }
+
+        .title {
+            font-size: 18px;
+            text-transform: uppercase;
+            line-height: 1;
+            color: #41404E;
+        }
+
+        .bookings-section {
+            width: 100%;
+            background: #D9D9D9;
+            border-radius: 0 0 20px 20px;
+            border: 1px solid #ffffff;
+            box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16);
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #bookingsList {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .booking-item {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            min-width: 300px;
+        }
+
+        .booking-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .time-info {
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .time {
+            font-size: 16px;
+            color: #000000;
+            font-weight: bold;
+        }
+
+        .duration {
+            font-size: 13px;
+            color: #9B7FCC;
+        }
+
+        .place-name {
+            font-size: 13px;
+            color: #9B7FCC;
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 50%;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .event-type {
+            font-size: 16px;
+            text-transform: uppercase;
+            color: #000000;
+            line-height: 1.2;
+        }
+
+        .worker-name {
+            margin: 0;
+            font-size: 13px;
+            color: #000000;
+            opacity: 0.8;
+        }
+
+        .card-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .cancel-btn {
+            width: 100%;
+            max-width: 200px;
+            font-family: inherit;
+            font-size: 10px;
+            padding: 12px 0;
+            background-color: #F8CECC;
+            box-shadow: 0px 6px 0px #C5928F;
+            border: none;
+            border-radius: 20px;
+            color: #000000;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .cancel-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #C5928F, 0 15px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .cancel-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #C5928F;
+        }
+
+        .leave-btn {
+            width: 100%;
+            max-width: 380px;
+            height: 57px;
+            border: none;
+            border-radius: 20px;
+            background: #F8CECC;
+            color: #000000;
+            font-family: inherit;
+            font-size: 18px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0px 6px 0px #C5928F;
+            margin: 0 auto;
+            transition: all 0.2s ease;
+        }
+
+        .leave-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #C5928F, 0 15px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .leave-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #C5928F;
+        }
+
+        .bottom-nav-wrap {
+            padding: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .bottom-nav {
+            width: 100%;
+            max-width: 380px;
+            margin: 0 auto;
+            background: rgba(239, 238, 252, 0.98);
+            border: 1px solid #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 -7px 18px rgba(37, 27, 76, 0.19);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            padding: 8px;
+            pointer-events: auto;
+            backdrop-filter: blur(3px);
+        }
+
+        .tab-btn {
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            min-height: 64px;
+            padding: 6px 4px 4px;
+            color: #231F20;
+            font-family: inherit;
+            font-size: 9px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: background .12s ease, transform .12s ease;
+            text-transform: uppercase;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .tab-btn .icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tab-btn .icon img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            object-position: center;
+            display: block;
+        }
+
+        .tab-btn span:last-child {
+            color: #231F20;
+            transition: color .12s ease;
+            font-size: 8px;
+            line-height: 1.1;
+            text-align: center;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tab-btn:not(.active):hover {
+            background: #CBBAFD;
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            background: #CBBAFD;
+        }
+
+        .tab-btn.active .icon img {
+            filter: brightness(0) saturate(100%) invert(27%) sepia(87%) saturate(1797%) hue-rotate(253deg) brightness(84%) contrast(93%);
+        }
+
+        .tab-btn.active span:last-child {
+            color: #7A23B8;
+        }
+
+        .tab-btn.active:hover {
+            background: #BBAAEF;
+        }
+
+        .bottom-fixed-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 0 14px calc(10px + env(safe-area-inset-bottom));
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .bottom-fixed-container > * {
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Верхняя панель -->
         <div class="topbar">
             <button class="back-btn" id="backBtn">←</button>
             <div class="page-title">КАБИНЕТ КЛИЕНТА</div>
@@ -394,122 +435,91 @@
             </div>
         </div>
     </div>
-<div class="bottom-fixed-container">
-    <button class="leave-btn" id="leaveBtn">Покинуть организацию</button>
-    <div class="bottom-nav-wrap">
-        <div class="bottom-nav">
-            <button class="tab-btn active" id="tab-main">
-                <span class="icon">
-                    <img src="/app/icons/main.svg?v=2" alt="">
-                </span>
-                <span>ГЛАВНАЯ</span>
-            </button>
-            <button class="tab-btn" id="tab-history">
-                <span class="icon">
-                    <img src="/app/icons/gyms.svg?v=2" alt="">
-                </span>
-                <span>ПРОШЕДШИЕ СОБЫТИЯ</span>
-            </button>
-            <button class="tab-btn" id="tab-schedule">
-                <span class="icon">
-                    <img src="/app/icons/events.svg?v=2" alt="">
-                </span>
-                <span>РАСПИСАНИЕ</span>
-            </button>
+    <div class="bottom-fixed-container">
+        <button class="leave-btn" id="leaveBtn">Покинуть организацию</button>
+        <div class="bottom-nav-wrap">
+            <div class="bottom-nav">
+                <button class="tab-btn active" id="tab-main">
+                    <span class="icon">
+                        <img src="/app/icons/main.svg?v=2" alt="">
+                    </span>
+                    <span>ГЛАВНАЯ</span>
+                </button>
+                <button class="tab-btn" id="tab-history">
+                    <span class="icon">
+                        <img src="/app/icons/gyms.svg?v=2" alt="">
+                    </span>
+                    <span>ПРОШЕДШИЕ СОБЫТИЯ</span>
+                </button>
+                <button class="tab-btn" id="tab-schedule">
+                    <span class="icon">
+                        <img src="/app/icons/events.svg?v=2" alt="">
+                    </span>
+                    <span>РАСПИСАНИЕ</span>
+                </button>
+            </div>
         </div>
     </div>
-</div>
-<script>
-    // 1. Инициализация Telegram WebApp
-    if (window.Telegram && window.Telegram.WebApp) {
+    <script>
         Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-    }
 
-    // 2. Получение orgId
-    const params = new URLSearchParams(window.location.search);
-    let currentOrgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
+        const params = new URLSearchParams(window.location.search);
+        let currentOrgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
+        if (currentOrgId) localStorage.setItem("selectedOrgId", currentOrgId);
 
-    // Сохраняем orgId, если его получили из URL
-    if (currentOrgId) {
-        localStorage.setItem("selectedOrgId", currentOrgId);
-    } else {
-        console.warn("org_id не найден ни в URL, ни в localStorage");
-    }
-
-    // 3. Функция перехода
-    function goTo(path) {
-        if (!currentOrgId) {
-            alert("Ошибка: ID организации не определен");
-            return;
-        }
-        // Добавляем параметр версии для сброса кэша браузера
-        const separator = path.includes('?') ? '&' : '?';
-        window.location.href = `${path}${separator}org_id=${currentOrgId}&v=2`;
-    }
-
-    // 4. Основная логика запускается только после полной загрузки страницы
-    document.addEventListener('DOMContentLoaded', () => {
-
-        // Навешиваем обработчики на кнопки
-        const backBtn = document.getElementById("backBtn");
-        const tabMain = document.getElementById("tab-main");
-        const tabHistory = document.getElementById("tab-history");
-        const tabSchedule = document.getElementById("tab-schedule");
-        const leaveBtn = document.getElementById("leaveBtn");
-
-        if (backBtn) backBtn.onclick = () => goTo("/app/client_orgs.html");
-        if (tabMain) tabMain.onclick = () => goTo("/app/client_main.html");
-        if (tabHistory) tabHistory.onclick = () => goTo("/app/client_history.html");
-        if (tabSchedule) tabSchedule.onclick = () => goTo("/app/client_events.html");
-
-        if (leaveBtn) {
-            leaveBtn.onclick = () => {
-                if(confirm("Вы точно хотите покинуть организацию?")) {
-                    localStorage.removeItem("selectedOrgId");
-                    goTo("/app/client_orgs.html");
-                }
-            };
+        function goTo(path) {
+            if (!currentOrgId) return;
+            const separator = path.includes('?') ? '&' : '?';
+            window.location.href = `${path}${separator}org_id=${currentOrgId}&v=2`;
         }
 
-        // Загрузка данных
-        LoadActiveBookings();
-    });
+        document.addEventListener('DOMContentLoaded', () => {
+            const backBtn = document.getElementById("backBtn");
+            const tabMain = document.getElementById("tab-main");
+            const tabHistory = document.getElementById("tab-history");
+            const tabSchedule = document.getElementById("tab-schedule");
+            const leaveBtn = document.getElementById("leaveBtn");
 
-    async function LoadActiveBookings() {
-        if (!currentOrgId) {
-            console.error("Нет orgId для загрузки данных");
-            return;
-        }
+            if (backBtn) backBtn.onclick = () => goTo("/app/client_orgs.html");
+            if (tabMain) tabMain.onclick = () => goTo("/app/client_main.html");
+            if (tabHistory) tabHistory.onclick = () => goTo("/app/client_history.html");
+            if (tabSchedule) tabSchedule.onclick = () => goTo("/app/client_events.html");
 
-        const now = new Date();
-        try {
-            const response = await fetch(`/api/v1/client/${currentOrgId}?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
-
-            if (!response.ok) throw new Error('Ошибка сети');
-
-            const data = await response.json();
-
-            // ИСПРАВЛЕНИЕ: Находим контейнер правильно по ID
-            const bookingsList = document.getElementById('bookingsList');
-
-            if (!bookingsList) return;
-
-            if (!data.trainings || data.trainings.length === 0) {
-                bookingsList.innerHTML = `
-                    <div style="
-                      text-align: center;
-                      padding: 40px 20px;
-                      color: #555;
-                      font-size: 16px;">
-                      Вы не записаны ни на одну тренировку.
-                    </div>`;
-                return;
+            if (leaveBtn) {
+                leaveBtn.onclick = () => {
+                    if(confirm("Вы точно хотите покинуть организацию?")) {
+                        localStorage.removeItem("selectedOrgId");
+                        goTo("/app/client_orgs.html");
+                    }
+                };
             }
-        } catch (error) {
-            console.error("Ошибка загрузки расписания:", error);
+
+            LoadActiveBookings();
+        });
+
+        async function LoadActiveBookings() {
+            if (!currentOrgId) return;
+
+            const now = new Date();
+            try {
+                const response = await fetch(`/api/v1/client/${currentOrgId}?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+                if (!response.ok) throw new Error('Ошибка сети');
+
+                const data = await response.json();
+                const bookingsList = document.getElementById('bookingsList');
+                if (!bookingsList) return;
+
+                if (!data.trainings || data.trainings.length === 0) {
+                    bookingsList.innerHTML = `
+                        <div style="text-align: center; padding: 40px 20px; color: #555; font-size: 16px;">
+                            Вы не записаны ни на одну тренировку.
+                        </div>`;
+                    return;
+                }
+            } catch (error) {
+                console.error("Ошибка загрузки расписания:", error);
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
