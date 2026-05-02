@@ -218,19 +218,19 @@ class OrganizationRepository:
         return organization
 
     async def get_client_schedule(self,user_id, org_id, start_date, end_date):
-        sql = """select t.id id, to_char(t.date_start , 'HH:MI') time, extract(epoch from (t.date_end - t.date_start)) / 60 as duration,
-         g.name place, tt.name type, concat(u.first_name,' ',u.last_name) trainer,
-         t.max_clients-count(b.id) as available_spots,t.max_clients total_spots,(count(*) filter (where b.user_id = $1) > 0) as is_booked
+        sql = """select t.id id, to_char(t.date_start , 'HH24:MI') time, extract(epoch from (t.date_end - t.date_start)) / 60 as duration,
+         g.name place, tt.name type, concat_ws(' ',u.first_name,u.last_name) trainer,
+         (t.max_clients-count(b.id))::int as available_spots,t.max_clients total_spots,(count(*) filter (where b.user_id = $1) > 0) as is_booked
          from training t
          join gym g on t.gym_id=g.id
          join training_type tt on t.type_id =tt.id
          join users u on t.trainer_id = u.id
-         join booking b on t.id = b.training_id
-         where t.organization_id = $2 and t.date_start >= $3::date and t.date_end <= $4::date
+         left join booking b on t.id = b.training_id
+         where t.organization_id = $2 and t.date_start >= $3::date and t.date_start < ($4::date + interval '1 day')
          group by t.id, g.name, tt.name, u.first_name, u.last_name
-         order by t.date_start asc, time asc;"""
+         order by t.date_start asc;"""
 
-        rows = await self.pool.fetchrow(sql, user_id, org_id, start_date, end_date)
+        rows = await self.pool.fetch(sql, user_id, org_id, start_date, end_date)
         return [dict(row) for row in rows]
 
 class TrainingRepository:
@@ -403,11 +403,13 @@ class BookingRepository:
     async def get_user_bookings_in_period(self, user_id: int, org_id: int, start_date, end_date):
         sql = """
             SELECT b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
-                   g.name as gym_name, tt.name as type_name
+                   g.name as gym_name, tt.name as type_name,
+                   concat_ws(' ', u.first_name, u.last_name) as trainer_name
             FROM booking b
             JOIN training t ON b.training_id = t.id
             JOIN gym g ON t.gym_id = g.id
             JOIN training_type tt ON t.type_id = tt.id
+            JOIN users u ON t.trainer_id = u.id
             WHERE b.user_id = $1
               AND t.organization_id = $2
               AND t.date_start >= $3 AND t.date_start < $4

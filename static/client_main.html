@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Кабинет клиента</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         * {
@@ -15,20 +16,25 @@
         body {
             font-family: 'Russo One', sans-serif;
             min-height: 100vh;
-            background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
             color: #1f1f35;
-            padding: 18px 14px 0;
-            display: flex;
-            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
+            z-index: -1;
         }
 
         .container {
             width: 100%;
             max-width: 430px;
+            margin: 0 auto;
             height: auto;
             display: flex;
             flex-direction: column;
-            padding: 24px 20px 220px;
+            padding: 24px 24px 220px;
             position: relative;
         }
 
@@ -378,9 +384,28 @@
         .bottom-fixed-container > * {
             pointer-events: auto;
         }
+
+        @media (max-width: 430px) {
+            .container {
+                max-width: 375px;
+                padding: 18px 14px 220px;
+            }
+
+            .bottom-fixed-container {
+                padding: 0 14px calc(10px + env(safe-area-inset-bottom));
+            }
+
+            .bottom-nav {
+                max-width: 347px;
+                border-radius: 18px;
+                gap: 2px;
+                padding: 6px;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="bg-gradient"></div>
     <div class="container">
         <div class="topbar">
             <button class="back-btn" id="backBtn">←</button>
@@ -461,16 +486,28 @@
         </div>
     </div>
     <script>
-        Telegram.WebApp.ready();
+        if (window.Telegram && window.Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+        }
 
         const params = new URLSearchParams(window.location.search);
         let currentOrgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
         if (currentOrgId) localStorage.setItem("selectedOrgId", currentOrgId);
 
-        function goTo(path) {
+        function getUserId() {
+            return Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        }
+
+        function goTo(path, extraParams = {}) {
             if (!currentOrgId) return;
-            const separator = path.includes('?') ? '&' : '?';
-            window.location.href = `${path}${separator}org_id=${currentOrgId}&v=2`;
+            const url = new URL(path, window.location.origin);
+            url.searchParams.set("org_id", currentOrgId);
+            url.searchParams.set("v", "2");
+            Object.entries(extraParams).forEach(([key, value]) => {
+                url.searchParams.set(key, value);
+            });
+            window.location.href = `${url.pathname}${url.search}`;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -482,14 +519,14 @@
 
             if (backBtn) backBtn.onclick = () => goTo("/app/client_orgs.html");
             if (tabMain) tabMain.onclick = () => goTo("/app/client_main.html");
-            if (tabHistory) tabHistory.onclick = () => goTo("/app/client_history.html");
-            if (tabSchedule) tabSchedule.onclick = () => goTo("/app/client_events.html");
+            if (tabHistory) tabHistory.onclick = () => goTo("/app/client_events.html", { view: "history" });
+            if (tabSchedule) tabSchedule.onclick = () => goTo("/app/client_events.html", { view: "schedule" });
 
             if (leaveBtn) {
                 leaveBtn.onclick = () => {
                     if(confirm("Вы точно хотите покинуть организацию?")) {
                         localStorage.removeItem("selectedOrgId");
-                        goTo("/app/client_orgs.html");
+                        window.location.href = "/app/client_orgs.html?v=2";
                     }
                 };
             }
@@ -499,10 +536,12 @@
 
         async function LoadActiveBookings() {
             if (!currentOrgId) return;
+            const userId = getUserId();
+            if (!userId) return;
 
             const now = new Date();
             try {
-                const response = await fetch(`/api/v1/client/${currentOrgId}?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+                const response = await fetch(`/api/v1/client/${currentOrgId}?year=${now.getFullYear()}&month=${now.getMonth() + 1}&user_id=${userId}`);
                 if (!response.ok) throw new Error('Ошибка сети');
                 
                 const data = await response.json();
@@ -516,6 +555,45 @@
                         </div>`;
                     return;
                 }
+
+                bookingsList.innerHTML = "";
+                data.trainings.forEach((training) => {
+                    const card = document.createElement("div");
+                    card.className = "booking-item";
+                    card.innerHTML = `
+                        <div class="booking-card-header">
+                            <div class="time-info">
+                                <span class="time">${training.time}</span>
+                                <span class="duration">${training.duration} мин</span>
+                            </div>
+                            <div class="place-name">${training.place}</div>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="event-type">${training.type}</h3>
+                            <p class="worker-name">${training.trainer}</p>
+                        </div>
+                        <div class="card-footer">
+                            <button class="cancel-btn" data-id="${training.id}">ОТМЕНИТЬ ЗАПИСЬ</button>
+                        </div>
+                    `;
+                    const btn = card.querySelector(".cancel-btn");
+                    if (btn) {
+                        btn.onclick = async () => {
+                            const trainingId = btn.dataset.id;
+                            btn.disabled = true;
+                            btn.textContent = "ЖДИТЕ...";
+                            const cancelRes = await fetch(`/api/v1/client/${currentOrgId}/book/${trainingId}?user_id=${userId}`, { method: "DELETE" });
+                            if (cancelRes.ok) {
+                                await LoadActiveBookings();
+                            } else {
+                                btn.disabled = false;
+                                btn.textContent = "ОТМЕНИТЬ ЗАПИСЬ";
+                                alert("Не удалось отменить запись");
+                            }
+                        };
+                    }
+                    bookingsList.appendChild(card);
+                });
             } catch (error) {
                 console.error("Ошибка загрузки расписания:", error);
             }

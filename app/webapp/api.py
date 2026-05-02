@@ -1,9 +1,9 @@
 from datetime import date, datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from app.factory import create_organization_service, create_user_service
 from app.webapp.deps import get_db
 from asyncpg import Pool
-from app.models import Training
+from app.models import Booking, Training
 from infrastructure.repositories import BookingRepository, OrganizationMemberRepository, TrainingRepository
 from app.webapp.schemas import UserName, ScheduleResponse
 from config import bot_token
@@ -522,10 +522,91 @@ async def get_my_client_bookings(org_id: int, user_id: int, days: int = 30, db: 
                 "date_end": row["date_end"].isoformat(),
                 "gym_name": row["gym_name"],
                 "type_name": row["type_name"],
+                "trainer_name": row["trainer_name"],
             }
             for row in rows
         ]
     }
+
+@router.get("/client/{org_id}")
+async def get_client_dashboard_bookings(org_id: int, year: int, month: int, user_id: int, db: Pool = Depends(get_db)):
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="Invalid month")
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    booking_repo = BookingRepository(db)
+    start = datetime(year, month, 1)
+    end = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+    rows = await booking_repo.get_user_bookings_in_period(user.id, org_id, start, end)
+    trainings = []
+    for row in rows:
+        duration = max(1, int((row["date_end"] - row["date_start"]).total_seconds() // 60))
+        trainings.append({
+            "id": row["training_id"],
+            "time": row["date_start"].strftime("%H:%M"),
+            "duration": duration,
+            "place": row["gym_name"],
+            "type": row["type_name"],
+            "trainer": row["trainer_name"] or "Тренер",
+        })
+    return {"trainings": trainings}
+
+@router.post("/client/{org_id}/book")
+async def book_client_training(
+    org_id: int,
+    trainingId: int = Body(..., embed=True),
+    user_id: int = Query(...),
+    db: Pool = Depends(get_db),
+):
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    row = await db.fetchrow(
+        """
+        select t.id, t.max_clients,
+            (select count(*) from booking b where b.training_id = t.id) as booked_count,
+            exists(select 1 from booking b where b.training_id = t.id and b.user_id = $1) as is_booked
+        from training t
+        where t.id = $2 and t.organization_id = $3
+        """,
+        user.id, trainingId, org_id
+    )
+    if row is None:
+        raise HTTPException(status_code=404, detail="Training not found")
+    if row["is_booked"]:
+        raise HTTPException(status_code=409, detail="Already booked")
+    if row["booked_count"] >= row["max_clients"]:
+        raise HTTPException(status_code=409, detail="No free spots")
+
+    booking_repo = BookingRepository(db)
+    booking = Booking(None, user.id, trainingId, datetime.now())
+    created = await booking_repo.create(booking)
+    return {"id": created.id, "training_id": trainingId}
+
+@router.delete("/client/{org_id}/book/{training_id}")
+async def unbook_client_training(org_id: int, training_id: int, user_id: int = Query(...), db: Pool = Depends(get_db)):
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    training_exists = await db.fetchval(
+        "select id from training where id = $1 and organization_id = $2",
+        training_id, org_id
+    )
+    if training_exists is None:
+        raise HTTPException(status_code=404, detail="Training not found")
+
+    deleted_id = await db.fetchval(
+        "delete from booking where user_id = $1 and training_id = $2 returning id",
+        user.id, training_id
+    )
+    if deleted_id is None:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    return {"ok": True}
 
 @router.get("/client/organizations")
 async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
@@ -538,7 +619,7 @@ async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
     organizations = [{"id": org_id, "name": name} for org_id, name in zip(org_ids, names)]
     return {"organizations": organizations}
 
-@router.get("/api/v1/client/{orgId}/schedule", response_model=ScheduleResponse)
+@router.get("/client/{orgId}/schedule", response_model=ScheduleResponse)
 async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...), db: Pool = Depends(get_db)):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
