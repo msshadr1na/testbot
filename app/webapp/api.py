@@ -1029,8 +1029,9 @@ async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...),
 async def get_worker_organizations(
     user_id: int = Query(...),
     role_id: int = Query(None),
-    organization_service: OrganizationService = Depends()
+    db: Pool = Depends(get_db)
 ):
+    organization_service = create_organization_service(db)
     if role_id is None:
         org_ids, names = await organization_service.show_owned_orgs(user_id)
     else:
