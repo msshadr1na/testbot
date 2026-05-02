@@ -758,5 +758,18 @@ async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...),
         raise HTTPException(status_code=404, detail="User not found")
     org_service = create_organization_service(db)
     end_date = date + timedelta(days=6)
-    result = await org_service.get_schedule(user.id, orgId, date, end_date)
-    return result
+    rows = await org_service.get_schedule(user.id, orgId, date, end_date)
+    trainings = []
+    for row in rows:
+        trainings.append({
+            "id": int(row["id"]),
+            "time": str(row["time"]),
+            "duration": int(row["duration"]),
+            "place": str(row["place"]),
+            "type": str(row["type"]),
+            "trainer": str(row["trainer"] or "Тренер"),
+            "available_spots": int(row["available_spots"]),
+            "total_spots": int(row["total_spots"]),
+            "is_booked": bool(row["is_booked"]),
+        })
+    return {"trainings": trainings}

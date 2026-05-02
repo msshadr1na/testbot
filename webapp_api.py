@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.webapp.api import router
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pathlib import Path
 import uvicorn
 
@@ -49,15 +49,15 @@ async def get_orgs_page():
 
 @app.get("/client/history", response_class=HTMLResponse)
 async def get_client_history_page():
-    return HTMLResponse(content=_read_static("client_history.html"))
+    return RedirectResponse(url="/app/client_history.html", status_code=307)
 
 @app.get("/client/schedule", response_class=HTMLResponse)
 async def get_client_schedule_page():
-    return HTMLResponse(content=_read_static("client_events.html"))
+    return RedirectResponse(url="/app/client_events.html", status_code=307)
 
 @app.get("/client/html", response_class=HTMLResponse)
 async def get_client_html_compat_page():
-    return HTMLResponse(content=_read_static("client_html.html"))
+    return RedirectResponse(url="/app/client_history.html", status_code=307)
 
 app.include_router(router)
 
