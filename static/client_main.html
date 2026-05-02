@@ -384,6 +384,46 @@
         .bottom-fixed-container > * {
             pointer-events: auto;
         }
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: calc(96px + env(safe-area-inset-bottom));
+            transform: translateX(-50%) translateY(16px);
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 18px rgba(31, 20, 52, 0.22);
+            font-size: 11px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s ease;
+            z-index: 220;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(18, 10, 34, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 230;
+            padding: 18px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            width: 100%;
+            max-width: 330px;
+            background: #efeefc;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 10px 24px rgba(31, 20, 52, 0.28);
+        }
+        .modal-title { font-size: 14px; margin-bottom: 10px; text-transform: uppercase; }
+        .modal-actions { display: flex; gap: 8px; }
+        .modal-btn { flex: 1; border: none; border-radius: 12px; height: 42px; font-family: inherit; font-size: 10px; text-transform: uppercase; cursor: pointer; }
+        .modal-btn.cancel { background: #fff; box-shadow: 0 3px 0 #c7c2df; }
+        .modal-btn.ok { background: #CBBAFD; box-shadow: 0 3px 0 #9B7FCC; }
 
         @media (max-width: 430px) {
             .container {
@@ -485,6 +525,16 @@
             </div>
         </div>
     </div>
+    <div class="toast" id="toast"></div>
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-title" id="confirmText">Подтвердите действие</div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="confirmNo">Отмена</button>
+                <button class="modal-btn ok" id="confirmYes">Подтвердить</button>
+            </div>
+        </div>
+    </div>
     <script>
         if (window.Telegram && window.Telegram.WebApp) {
             Telegram.WebApp.ready();
@@ -494,9 +544,26 @@
         const params = new URLSearchParams(window.location.search);
         let currentOrgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
         if (currentOrgId) localStorage.setItem("selectedOrgId", currentOrgId);
+        let confirmResolve = null;
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            if (!toast) return;
+            toast.textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 1800);
+        }
+
+        function askConfirm(message) {
+            return new Promise((resolve) => {
+                confirmResolve = resolve;
+                document.getElementById("confirmText").textContent = message;
+                document.getElementById("confirmModal").classList.add("show");
+            });
+        }
 
         function getUserId() {
-            return Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            return window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
         }
 
         function goTo(path, extraParams = {}) {
@@ -519,17 +586,27 @@
 
             if (backBtn) backBtn.onclick = () => goTo("/app/client_orgs.html");
             if (tabMain) tabMain.onclick = () => goTo("/app/client_main.html");
-            if (tabHistory) tabHistory.onclick = () => goTo("/app/client_history.html");
+            if (tabHistory) tabHistory.onclick = () => goTo("/client/history");
             if (tabSchedule) tabSchedule.onclick = () => goTo("/app/client_events.html", { view: "schedule" });
 
             if (leaveBtn) {
-                leaveBtn.onclick = () => {
-                    if(confirm("Вы точно хотите покинуть организацию?")) {
+                leaveBtn.onclick = async () => {
+                    if (await askConfirm("Вы точно хотите покинуть организацию?")) {
                         localStorage.removeItem("selectedOrgId");
                         window.location.href = "/app/client_orgs.html?v=2";
                     }
                 };
             }
+            document.getElementById("confirmNo").onclick = () => {
+                document.getElementById("confirmModal").classList.remove("show");
+                if (confirmResolve) confirmResolve(false);
+                confirmResolve = null;
+            };
+            document.getElementById("confirmYes").onclick = () => {
+                document.getElementById("confirmModal").classList.remove("show");
+                if (confirmResolve) confirmResolve(true);
+                confirmResolve = null;
+            };
             
             LoadActiveBookings();
         });
@@ -584,11 +661,12 @@
                             btn.textContent = "ЖДИТЕ...";
                             const cancelRes = await fetch(`/api/v1/client/${currentOrgId}/book/${trainingId}?user_id=${userId}`, { method: "DELETE" });
                             if (cancelRes.ok) {
+                                showToast("Запись отменена");
                                 await LoadActiveBookings();
                             } else {
                                 btn.disabled = false;
                                 btn.textContent = "ОТМЕНИТЬ ЗАПИСЬ";
-                                alert("Не удалось отменить запись");
+                                showToast("Не удалось отменить запись");
                             }
                         };
                     }

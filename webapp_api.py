@@ -42,6 +42,16 @@ async def get_orgs_page():
     with open("static/client_orgs.html", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
+@app.get("/client/history", response_class=HTMLResponse)
+async def get_client_history_page():
+    with open("static/client_history.html", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
+@app.get("/client/schedule", response_class=HTMLResponse)
+async def get_client_schedule_page():
+    with open("static/client_events.html", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
 app.include_router(router)
 
 if __name__ == "__main__":
