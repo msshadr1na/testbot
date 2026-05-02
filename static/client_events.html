@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расписание</title>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Russo One', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
+            color: #1f1f35;
+            padding: 20px 16px 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 430px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 150px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 8px 0;
+        }
+
+        .page-title-main {
+            font-size: 26px;
+            text-transform: uppercase;
+            color: #0b0b11;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        /* Контейнер дат */
+        .date-container {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 40px 10px 16px; /* Отступ сверху увеличен для кружков */
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            position: relative;
+            z-index: 10;
+        }
+
+        .date-selector {
+            display: flex;
+            justify-content: space-between;
+            overflow-x: auto;
+            overflow-y: visible; /* ВАЖНО: разрешаем выход элементов за пределы */
+            scrollbar-width: none;
+            padding: 0 4px;
+        }
+
+        .date-selector::-webkit-scrollbar { display: none; }
+
+        .date-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 46px;
+            height: 64px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            border: 2px solid #9B7FCC;
+            /* overflow: visible; - по умолчанию visible, но убедимся */
+        }
+
+        /* === КРУЖОК НАД ДАТОЙ (ИСПРАВЛЕНО) === */
+        .date-dot {
+            position: absolute;
+            top: -18px; /* Выносим выше блока */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid #9B7FCC;
+            background: transparent; /* ПО УМОЛЧАНИЮ ПУСТОЙ (ОБВОДКА) */
+            display: block; /* ВСЕГДА ВИДИМ */
+            z-index: 5;
+            transition: background 0.2s ease;
+        }
+
+        /* Если есть тренировки - закрашиваем */
+        .date-dot.has-trainings {
+            background: #9B7FCC; 
+        }
+
+        .date-item:not(.active):hover { background: #f5f5f5; }
+
+        .date-item.active {
+            background: #CBBAFD;
+            border-color: #9B7FCC;
+        }
+
+        .date-day {
+            font-size: 9px;
+            text-transform: lowercase;
+            color: #9B7FCC;
+            margin-bottom: 2px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .date-item.active .date-day { color: #7A23B8; }
+
+        .date-number {
+            font-size: 20px;
+            color: #000000;
+            font-weight: 700;
+        }
+
+        .date-item.active .date-number { color: #7A23B8; }
+
+        /* Секция карточек */
+        .schedule-wrapper {
+            background: #E8E8E8;
+            border-radius: 24px;
+            padding: 16px;
+            flex: 1;
+        }
+
+        .schedule-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .training-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 20px 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .training-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .time-wrapper { display: flex; align-items: baseline; gap: 6px; }
+        .time { font-size: 15px; color: #000000; font-weight: 700; }
+        .duration { font-size: 14px; color: #9B7FCC; font-weight: 500; }
+        .place-name { font-size: 13px; color: #9B7FCC; font-weight: 500; text-align: right; }
+
+        .card-body { margin-bottom: 16px; }
+        .event-type { font-size: 17px; text-transform: uppercase; color: #000000; margin-bottom: 6px; line-height: 1.3; }
+        .worker-name { font-size: 14px; color: #000000; font-weight: 500; opacity: 0.8; }
+
+        .card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .availability { font-size: 11px; color: #9B7FCC; font-weight: 500; opacity: 0.8; }
+        .availability.no-places { color: #999; opacity: 0.7; }
+
+        /* Кнопки */
+        .btn-base {
+            font-family: inherit;
+            font-size: 10px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 16px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-book {
+            background: linear-gradient(135deg, #CBBAFD 0%, #B8A0FC 100%);
+            box-shadow: 0 4px 0 #9B7FCC;
+            color: #000000;
+        }
+        .btn-book:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #9B7FCC; }
+        .btn-book:active { transform: translateY(0); box-shadow: 0 2px 0 #9B7FCC; }
+
+        .btn-cancel {
+            background: linear-gradient(135deg, #F8CECC 0%, #F5B8B5 100%);
+            box-shadow: 0 4px 0 #C5928F;
+            color: #000000;
+        }
+        .btn-cancel:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #C5928F; }
+        .btn-cancel:active { transform: translateY(0); box-shadow: 0 2px 0 #C5928F; }
+
+        .btn-disabled {
+            background: #e0e0e0;
+            box-shadow: 0 4px 0 #b0b0b0;
+            color: #999;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .loading { text-align: center; padding: 40px 20px; color: #666; font-size: 14px; font-weight: 500; }
+
+        /* Навигация */
+        .bottom-fixed-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0 16px calc(12px + env(safe-area-inset-bottom));
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .bottom-nav {
+            width: 100%;
+            max-width: 430px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 8px;
+            pointer-events: auto;
+        }
+
+        .tab-btn {
+            border: none;
+            border-radius: 16px;
+            background: transparent;
+            min-height: 64px;
+            padding: 8px 4px;
+            color: #231F20;
+            font-family: inherit;
+            font-size: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            box-sizing: border-box;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        .tab-btn .icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .tab-btn .icon img { width: 28px; height: 28px; object-fit: contain; object-position: center; display: block; }
+        .tab-btn span:last-child {
+            color: #231F20;
+            font-size: 8px;
+            line-height: 1.1;
+            text-align: center;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
+        }
+
+        .tab-btn.active { background: #CBBAFD; }
+        .tab-btn.active .icon img {
+            filter: brightness(0) saturate(100%) invert(27%) sepia(87%) saturate(1797%) hue-rotate(253deg) brightness(84%) contrast(93%);
+        }
+        .tab-btn.active span:last-child { color: #7A23B8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title-main">РАСПИСАНИЕ</h1>
+        </div>
+
+        <div class="date-container">
+            <div class="date-selector" id="dateSelector"></div>
+        </div>
+
+        <div class="schedule-wrapper">
+            <div class="schedule-section" id="scheduleSection">
+                <div class="loading">Загрузка...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-fixed-container">
+        <div class="bottom-nav">
+            <button class="tab-btn" id="tab-main">
+                <span class="icon"><img src="/app/icons/main.svg?v=2" alt="Main" onerror="this.style.display='none'"></span>
+                <span>ГЛАВНАЯ</span>
+            </button>
+            <button class="tab-btn" id="tab-history">
+                <span class="icon"><img src="/app/icons/gyms.svg?v=2" alt="History" onerror="this.style.display='none'"></span>
+                <span>ПРОШЕДШИЕ<br>СОБЫТИЯ</span>
+            </button>
+            <button class="tab-btn active" id="tab-schedule">
+                <span class="icon"><img src="/app/icons/events.svg?v=2" alt="Schedule" onerror="this.style.display='none'"></span>
+                <span>РАСПИСАНИЕ</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Telegram WebApp Init
+        if (window.Telegram && window.Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+        }
+
+        // Получаем ID организации
+        const params = new URLSearchParams(window.location.search);
+        let currentOrgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
+        if (currentOrgId) localStorage.setItem("selectedOrgId", currentOrgId);
+
+        let selectedDateStr = "";
+        let scheduleDataCache = {}; // Кэш данных, чтобы не грузить одно и то же
+
+        // === 1. ФУНКЦИЯ ЗАГРУЗКИ ДАННЫХ С СЕРВЕРА ===
+        async function fetchScheduleFromServer(orgId, date) {
+            try {
+                if (scheduleDataCache[date])
+                    return scheduleDataCache[date];
+
+                const tgId = Telegram.WebApp.initDataUnsafe?.user?.id;
+                const response = await fetch(`/api/v1/client/${orgId}/schedule?date=${date}&user_id=${tgId}`);
+                
+                if (!response.ok) throw new Error('Ошибка сети');
+                
+                const data = await response.json();
+                
+                // Сохраняем в кэш
+                scheduleDataCache[date] = data.trainings || [];
+                
+                return data.trainings || [];
+            } catch (error) {
+                console.error("Ошибка загрузки:", error);
+                return []; // Возвращаем пустой массив при ошибке
+            }
+        }
+
+        // === 2. ОТРИСОВКА ДАТ ===
+        async function renderDateSelector() {
+            const container = document.getElementById('dateSelector');
+            container.innerHTML = '';
+            
+            const today = new Date();
+            const daysOfWeek = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+            const todayStr = today.toISOString().split('T')[0];
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                const dayName = daysOfWeek[date.getDay()];
+                const dayNumber = date.getDate();
+                const dateStr = date.toISOString().split('T')[0];
+
+                // Создаем элемент даты
+                const el = document.createElement('div');
+                el.className = `date-item ${dateStr === todayStr ? 'active' : ''}`;
+                el.dataset.date = dateStr;
+
+                // Загружаем данные асинхронно для КАЖДОГО дня, чтобы узнать, рисовать кружок или нет
+                // Используем Promise.all для параллельной загрузки, чтобы не ждать по очереди
+                fetchScheduleFromServer(currentOrgId, dateStr).then(trainings => {
+                    const hasTrainings = trainings.length > 0;
+                    
+                    // Обновляем HTML кружка
+                    const dot = el.querySelector('.date-dot');
+                    if (dot) {
+                        if (hasTrainings) dot.classList.add('has-trainings');
+                        else dot.classList.remove('has-trainings');
+                    }
+                });
+
+                el.innerHTML = `
+                    <div class="date-dot"></div>
+                    <span class="date-day">${dayName}</span>
+                    <span class="date-number">${dayNumber}</span>
+                `;
+
+                el.onclick = () => handleDateClick(dateStr, el);
+                container.appendChild(el);
+
+                if (i === 0 && !selectedDateStr) {
+                    selectedDateStr = dateStr;
+                    handleDateClick(dateStr, el); // Сразу грузим первый день
+                }
+            }
+        }
+
+        function handleDateClick(dateStr, element) {
+            document.querySelectorAll('.date-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            selectedDateStr = dateStr;
+            loadAndRenderCards(dateStr);
+        }
+
+        // === 3. ЗАГРУЗКА И ОТРИСОВКА КАРТОЧЕК ===
+        async function loadAndRenderCards(date) {
+            const section = document.getElementById('scheduleSection');
+            section.innerHTML = '<div class="loading">Загрузка...</div>';
+
+            const trainings = await fetchScheduleFromServer(currentOrgId, date);
+
+            if (trainings.length === 0) {
+                section.innerHTML = `<div class="loading">На этот день событий нет</div>`;
+                return;
+            }
+
+            section.innerHTML = '';
+            trainings.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'training-card';
+
+                let btnClass = 'btn-book';
+                let btnText = 'ЗАПИСАТЬСЯ';
+                let isDisabled = false;
+
+                if (t.is_booked) {
+                    btnClass = 'btn-cancel';
+                    btnText = 'ОТМЕНИТЬ ЗАПИСЬ';
+                } else if (t.available_spots <= 0) {
+                    btnClass = 'btn-disabled';
+                    btnText = 'МЕСТ НЕТ';
+                    isDisabled = true;
+                }
+
+                const availabilityText = t.available_spots > 0
+                    ? `Свободно ${t.available_spots} из ${t.total_spots} мест`
+                    : 'Свободных мест нет';
+
+                const availabilityClass = t.available_spots > 0 ? 'availability' : 'availability no-places';
+
+                card.innerHTML = `
+                    <div class="training-card-header">
+                        <div class="time-wrapper">
+                            <span class="time">${t.time}</span>
+                            <span class="duration">${t.duration} мин</span>
+                        </div>
+                        <div class="place-name">${t.place}</div>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="event-type">${t.type}</h3>
+                        <p class="worker-name">${t.trainer}</p>
+                    </div>
+                    <div class="card-footer">
+                        <span class="${availabilityClass}">${availabilityText}</span>
+                        <button class="btn-base ${btnClass}" data-id="${t.id}" ${isDisabled ? 'disabled' : ''}>${btnText}</button>
+                    </div>
+                `;
+
+                const btn = card.querySelector('button');
+                if (!isDisabled) {
+                    btn.onclick = () => handleBookingAction(t.id, t.isBooked, date);
+                }
+                section.appendChild(card);
+            });
+        }
+
+        // === 4. ЛОГИКА ЗАПИСИ / ОТМЕНЫ ===
+        async function handleBookingAction(trainingId, isCurrentlyBooked, currentDate) {
+            const btn = document.querySelector(`button[data-id="${trainingId}"]`);
+            if (!btn) return;
+
+            const originalText = btn.innerText;
+            const originalClass = btn.className;
+            
+            btn.disabled = true;
+            btn.innerText = "Ждите...";
+
+            try {
+                let success = false;
+
+                if (isCurrentlyBooked) {
+                    // === ОТМЕНА ЗАПИСИ (DELETE) ===
+                    const response = await fetch(`/api/v1/client/${currentOrgId}/book/${trainingId}`, {
+                        method: 'DELETE'
+                    });
+                    success = response.ok;
+                } else {
+                    // === ЗАПИСЬ (POST) ===
+                    const response = await fetch(`/api/v1/client/${currentOrgId}/book`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ trainingId: trainingId })
+                    });
+                    success = response.ok;
+                }
+
+                if (success) {
+                    // Очищаем кэш, чтобы при обновлении данные были свежими
+                    delete scheduleDataCache[currentDate];
+                    // Перезагружаем карточки
+                    loadAndRenderCards(currentDate);
+                    // Перерисовываем кружки (вдруг все места закончились или освободились)
+                    renderDateSelector(); 
+                } else {
+                    alert("Не удалось выполнить действие");
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    btn.className = originalClass;
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert("Ошибка соединения");
+                btn.disabled = false;
+                btn.innerText = originalText;
+                btn.className = originalClass;
+            }
+        }
+
+        // Навигация
+        function goTo(url) { window.location.href = url; }
+        document.getElementById("tab-main").onclick = () => goTo("/app/client_main.html");
+        document.getElementById("tab-history").onclick = () => goTo("/app/client_history.html");
+        document.getElementById("tab-schedule").onclick = () => goTo("/app/client_schedule.html");
+
+        // Старт
+        document.addEventListener('DOMContentLoaded', () => {
+            if (currentOrgId) {
+                renderDateSelector();
+            } else {
+                document.getElementById('scheduleSection').innerHTML = '<div class="loading">ID организации не найден</div>';
+            }
+        });
+    </script>
+</body>
+</html>
+```

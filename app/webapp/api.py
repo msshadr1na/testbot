@@ -5,7 +5,7 @@ from app.webapp.deps import get_db
 from asyncpg import Pool
 from app.models import Training
 from infrastructure.repositories import BookingRepository, OrganizationMemberRepository, TrainingRepository
-from app.webapp.schemas import UserName
+from app.webapp.schemas import UserName, ScheduleResponse
 from config import bot_token
 import json
 from urllib.request import Request, urlopen
@@ -538,3 +538,12 @@ async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
     organizations = [{"id": org_id, "name": name} for org_id, name in zip(org_ids, names)]
     return {"organizations": organizations}
 
+@router.get("/api/v1/client/{orgId}/schedule", response_model=ScheduleResponse)
+async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...), db: Pool = Depends(get_db)):
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user_service = create_user_service(db)
+    end_date = date + timedelta(days=6)
+    result = await user_service.get_schedule(user.id, orgId, date, end_date)
+    return result

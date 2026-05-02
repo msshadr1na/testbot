@@ -20,6 +20,9 @@ class UserService:
         newUser = User(None, telegram_id, phone, first_name, last_name, saved_settings.id, middle_name)
         return await self.user_repository.create(newUser)
 
+
+
+
 class OrganizationService:
     def __init__(self, organization_repository : OrganizationRepository, 
                  organizationMember_repository : OrganizationMemberRepository, 
@@ -30,6 +33,10 @@ class OrganizationService:
         self.invite_repository = invite_repository
         self.gym_repository = gym_repository
         self.training_repository = training_repository
+
+    async def get_schedule(self, user_id: int, org_id: int, start_date, end_date):
+        return await self.organization_repository.get_client_schedule(user_id, org_id, start_date, end_date)
+
 
     async def get_schedule_for_calendar(self, org_id: int, year: int, month: int):
         """Возвращает словарь {дата: количество тренировок} для календаря"""
@@ -110,13 +117,18 @@ class OrganizationService:
         if not invite:
             raise ValueError("Приглашение не найдено")
 
-        existing = await self.organizationMember_repository.get_by_user_and_org(user_id, invite.organization_id,invite.role_id)
+        existing = await self.organizationMember_repository.get_by_user_and_org_any_role(user_id, invite.organization_id)
         if existing:
             raise ValueError("Вы уже состоите в этой организации")
 
         member = OrganizationMember(None, user_id, invite.role_id, invite.organization_id)
 
-        await self.organizationMember_repository.create(member)
+        try:
+            await self.organizationMember_repository.create(member)
+        except Exception as e:
+            if "organization_member_user_id_organization_id_key" in str(e):
+                raise ValueError("Вы уже состоите в этой организации")
+            raise
 
         return invite.role_id
 

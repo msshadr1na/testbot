@@ -81,6 +81,11 @@ class OrganizationMemberRepository:
         row = await self.pool.fetchrow(sql, user_id, org_id, role_id)
         return OrganizationMember(row["id"], row["user_id"], row["role_id"], row["organization_id"]) if row else None
 
+    async def get_by_user_and_org_any_role(self, user_id, org_id):
+        sql = "select * from organization_member where user_id = $1 and organization_id = $2"
+        row = await self.pool.fetchrow(sql, user_id, org_id)
+        return OrganizationMember(row["id"], row["user_id"], row["role_id"], row["organization_id"]) if row else None
+
     #Удаление связи участника с организацией
     async def delete(self, organization_member: OrganizationMember):
         sql = """delete from organization_member 
@@ -211,6 +216,22 @@ class OrganizationRepository:
         sql = "update organization set name = $2 where id = $1"
         row = await self.pool.execute(sql, organization.id, organization.name)
         return organization
+
+    async def get_client_schedule(self,user_id, org_id, start_date, end_date):
+        sql = """select t.id id, to_char(t.date_start , 'HH:MI') time, extract(epoch from (t.date_end - t.date_start)) / 60 as duration,
+         g.name place, tt.name type, concat(u.first_name,' ',u.last_name) trainer,
+         t.max_clients-count(b.id) as available_spots,t.max_clients total_spots,(count(*) filter (where b.user_id = $1) > 0) as is_booked
+         from training t
+         join gym g on t.gym_id=g.id
+         join training_type tt on t.type_id =tt.id
+         join users u on t.trainer_id = u.id
+         join booking b on t.id = b.training_id
+         where t.organization_id = $2 and t.date_start >= $3::date and t.date_end <= $4::date
+         group by t.id, g.name, tt.name, u.first_name, u.last_name
+         order by t.date_start asc, time asc;"""
+
+        rows = await self.pool.fetchrow(sql, user_id, org_id, start_date, end_date)
+        return [dict(row) for row in rows]
 
 class TrainingRepository:
     def __init__(self,pool):
