@@ -756,7 +756,7 @@ async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...),
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    user_service = create_user_service(db)
+    org_service = create_organization_service(db)
     end_date = date + timedelta(days=6)
-    result = await user_service.get_schedule(user.id, orgId, date, end_date)
+    result = await org_service.get_schedule(user.id, orgId, date, end_date)
     return result

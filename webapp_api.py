@@ -3,7 +3,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.webapp.api import router
 from fastapi.responses import HTMLResponse
+from pathlib import Path
 import uvicorn
+
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
 
 app = FastAPI(
     title="Fitness Bot Web App",
@@ -25,37 +29,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/app", StaticFiles(directory="static", html=True), name="static")
+app.mount("/app", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
+
+def _read_static(filename: str) -> str:
+    with open(STATIC_DIR / filename, encoding="utf-8") as f:
+        return f.read()
 
 @app.get("/orgs", response_class=HTMLResponse)
 async def get_orgs_page():
-    with open("static/org_menu.html", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+    return HTMLResponse(content=_read_static("org_menu.html"))
 
 @app.get("/worker", response_class=HTMLResponse)
 async def get_orgs_page():
-    with open("static/worker_orgs.html", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+    return HTMLResponse(content=_read_static("worker_orgs.html"))
 
 @app.get("/client", response_class=HTMLResponse)
 async def get_orgs_page():
-    with open("static/client_orgs.html", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+    return HTMLResponse(content=_read_static("client_orgs.html"))
 
 @app.get("/client/history", response_class=HTMLResponse)
 async def get_client_history_page():
-    with open("static/client_history.html", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+    return HTMLResponse(content=_read_static("client_history.html"))
 
 @app.get("/client/schedule", response_class=HTMLResponse)
 async def get_client_schedule_page():
-    with open("static/client_events.html", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+    return HTMLResponse(content=_read_static("client_events.html"))
 
 @app.get("/client/html", response_class=HTMLResponse)
 async def get_client_html_compat_page():
-    with open("static/client_html.html", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+    return HTMLResponse(content=_read_static("client_html.html"))
 
 app.include_router(router)
 
