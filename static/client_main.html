@@ -420,19 +420,83 @@
     </div>
 </div>
 <script>
-    Telegram.WebApp.ready()
-    const params = new URLSearchParams(window.location.search);
-    const orgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
-    if (orgId) localStorage.setItem("selectedOrgId", orgId);
+    // 1. Инициализация Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+    }
 
-    async function LoadActiveBookings()
-    {
+    // 2. Получение orgId
+    const params = new URLSearchParams(window.location.search);
+    let currentOrgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
+
+    // Сохраняем orgId, если его получили из URL
+    if (currentOrgId) {
+        localStorage.setItem("selectedOrgId", currentOrgId);
+    } else {
+        console.warn("org_id не найден ни в URL, ни в localStorage");
+    }
+
+    // 3. Функция перехода
+    function goTo(path) {
+        if (!currentOrgId) {
+            alert("Ошибка: ID организации не определен");
+            return;
+        }
+        // Добавляем параметр версии для сброса кэша браузера
+        const separator = path.includes('?') ? '&' : '?';
+        window.location.href = `${path}${separator}org_id=${currentOrgId}&v=2`;
+    }
+
+    // 4. Основная логика запускается только после полной загрузки страницы
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // Навешиваем обработчики на кнопки
+        const backBtn = document.getElementById("backBtn");
+        const tabMain = document.getElementById("tab-main");
+        const tabHistory = document.getElementById("tab-history");
+        const tabSchedule = document.getElementById("tab-schedule");
+        const leaveBtn = document.getElementById("leaveBtn");
+
+        if (backBtn) backBtn.onclick = () => goTo("/app/client_orgs.html");
+        if (tabMain) tabMain.onclick = () => goTo("/app/client_main.html");
+        if (tabHistory) tabHistory.onclick = () => goTo("/app/client_history.html");
+        if (tabSchedule) tabSchedule.onclick = () => goTo("/app/client_events.html");
+
+        if (leaveBtn) {
+            leaveBtn.onclick = () => {
+                if(confirm("Вы точно хотите покинуть организацию?")) {
+                    localStorage.removeItem("selectedOrgId");
+                    goTo("/app/client_orgs.html");
+                }
+            };
+        }
+
+        // Загрузка данных
+        LoadActiveBookings();
+    });
+
+    async function LoadActiveBookings() {
+        if (!currentOrgId) {
+            console.error("Нет orgId для загрузки данных");
+            return;
+        }
+
         const now = new Date();
-        fetch(`/api/v1/client/${orgId}?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.trainings.length === 0) {
-                        container.innerHTML = `
+        try {
+            const response = await fetch(`/api/v1/client/${currentOrgId}?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
+
+            if (!response.ok) throw new Error('Ошибка сети');
+
+            const data = await response.json();
+
+            // ИСПРАВЛЕНИЕ: Находим контейнер правильно по ID
+            const bookingsList = document.getElementById('bookingsList');
+
+            if (!bookingsList) return;
+
+            if (!data.trainings || data.trainings.length === 0) {
+                bookingsList.innerHTML = `
                     <div style="
                       text-align: center;
                       padding: 40px 20px;
@@ -440,20 +504,12 @@
                       font-size: 16px;">
                       Вы не записаны ни на одну тренировку.
                     </div>`;
-                        return;
-                    }
-            })
-    }
-    function goTo(path)
-        {
-            if (!orgId) return;
-            window.location.href = `${path}?org_id=${orgId}&v=2`;
+                return;
+            }
+        } catch (error) {
+            console.error("Ошибка загрузки расписания:", error);
         }
-    document.getElementById("backBtn").onclick = () => goTo("/app/client_orgs.html");
-    document.getElementById("tab-main").onclick = () => goTo("/app/client_main.html");
-    document.getElementById("tab-history").onclick = () => goTo("/app/client_history.html");
-    document.getElementById("tab-schedule").onclick = () => goTo("/app/client_events.html");
-    LoadActiveBookings();
+    }
 </script>
 </body>
 </html>
