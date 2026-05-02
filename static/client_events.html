@@ -557,7 +557,7 @@
             window.location.href = `${url.pathname}${url.search}`;
         }
         document.getElementById("tab-main").onclick = () => goTo("/app/client_main.html");
-        document.getElementById("tab-history").onclick = () => goTo("/app/client_events.html", { view: "history" });
+        document.getElementById("tab-history").onclick = () => goTo("/app/client_history.html");
         document.getElementById("tab-schedule").onclick = () => goTo("/app/client_events.html", { view: "schedule" });
 
         // Старт

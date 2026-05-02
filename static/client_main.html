@@ -519,7 +519,7 @@
 
             if (backBtn) backBtn.onclick = () => goTo("/app/client_orgs.html");
             if (tabMain) tabMain.onclick = () => goTo("/app/client_main.html");
-            if (tabHistory) tabHistory.onclick = () => goTo("/app/client_events.html", { view: "history" });
+            if (tabHistory) tabHistory.onclick = () => goTo("/app/client_history.html");
             if (tabSchedule) tabSchedule.onclick = () => goTo("/app/client_events.html", { view: "schedule" });
 
             if (leaveBtn) {
@@ -541,7 +541,7 @@
 
             const now = new Date();
             try {
-                const response = await fetch(`/api/v1/client/${currentOrgId}?year=${now.getFullYear()}&month=${now.getMonth() + 1}&user_id=${userId}`);
+                const response = await fetch(`/api/v1/client/${currentOrgId}/dashboard?year=${now.getFullYear()}&month=${now.getMonth() + 1}&user_id=${userId}`);
                 if (!response.ok) throw new Error('Ошибка сети');
                 
                 const data = await response.json();

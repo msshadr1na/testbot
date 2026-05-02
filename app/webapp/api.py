@@ -528,7 +528,7 @@ async def get_my_client_bookings(org_id: int, user_id: int, days: int = 30, db: 
         ]
     }
 
-@router.get("/client/{org_id}")
+@router.get("/client/{org_id}/dashboard")
 async def get_client_dashboard_bookings(org_id: int, year: int, month: int, user_id: int, db: Pool = Depends(get_db)):
     if month < 1 or month > 12:
         raise HTTPException(status_code=400, detail="Invalid month")
@@ -552,6 +552,113 @@ async def get_client_dashboard_bookings(org_id: int, year: int, month: int, user
             "trainer": row["trainer_name"] or "Тренер",
         })
     return {"trainings": trainings}
+
+@router.get("/client/{org_id}/history")
+async def get_client_history(
+    org_id: int,
+    user_id: int,
+    page: int = 1,
+    page_size: int = 6,
+    db: Pool = Depends(get_db),
+):
+    safe_page = max(1, page)
+    safe_page_size = max(1, min(20, page_size))
+    offset = (safe_page - 1) * safe_page_size
+
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    total = await db.fetchval(
+        """
+        select count(*)
+        from booking b
+        join training t on b.training_id = t.id
+        where b.user_id = $1
+          and t.organization_id = $2
+          and t.date_end < now()
+        """,
+        user.id, org_id
+    )
+
+    rows = await db.fetch(
+        """
+        select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
+               g.name as gym_name, tt.name as type_name,
+               concat_ws(' ', u.first_name, u.last_name) as trainer_name,
+               exists(select 1 from review r where r.user_id = $1 and r.training_id = t.id) as has_review
+        from booking b
+        join training t on b.training_id = t.id
+        join gym g on t.gym_id = g.id
+        join training_type tt on t.type_id = tt.id
+        join users u on t.trainer_id = u.id
+        where b.user_id = $1
+          and t.organization_id = $2
+          and t.date_end < now()
+        order by t.date_start desc
+        limit $3 offset $4
+        """,
+        user.id, org_id, safe_page_size, offset
+    )
+
+    return {
+        "items": [
+            {
+                "booking_id": row["booking_id"],
+                "training_id": row["training_id"],
+                "date_start": row["date_start"].isoformat(),
+                "date_end": row["date_end"].isoformat(),
+                "gym_name": row["gym_name"],
+                "type_name": row["type_name"],
+                "trainer_name": row["trainer_name"],
+                "has_review": row["has_review"],
+            }
+            for row in rows
+        ],
+        "page": safe_page,
+        "page_size": safe_page_size,
+        "total": int(total or 0),
+    }
+
+@router.post("/client/{org_id}/reviews")
+async def create_client_review(
+    org_id: int,
+    user_id: int,
+    training_id: int = Body(..., embed=True),
+    grade: int = Body(..., embed=True),
+    text: str = Body("", embed=True),
+    db: Pool = Depends(get_db),
+):
+    if grade < 1 or grade > 5:
+        raise HTTPException(status_code=400, detail="grade must be between 1 and 5")
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    training = await db.fetchrow(
+        """
+        select t.id
+        from training t
+        join booking b on b.training_id = t.id
+        where t.id = $1 and t.organization_id = $2 and b.user_id = $3 and t.date_end < now()
+        """,
+        training_id, org_id, user.id
+    )
+    if training is None:
+        raise HTTPException(status_code=404, detail="Training not found in history")
+
+    existing = await db.fetchval(
+        "select id from review where user_id = $1 and training_id = $2 limit 1",
+        user.id, training_id
+    )
+    if existing:
+        raise HTTPException(status_code=409, detail="Review already exists")
+
+    await db.execute(
+        "insert into review (user_id, training_id, grade, text) values ($1, $2, $3, $4)",
+        user.id, training_id, grade, (text or "").strip()
+    )
+    return {"ok": True}
 
 @router.post("/client/{org_id}/book")
 async def book_client_training(
