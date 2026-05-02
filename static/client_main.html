@@ -113,37 +113,45 @@
 
     }
 
-    .bookings-section {
+    #bookingsList {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .bookings-section {
+        width: 100%;
         background: #D9D9D9;
         border-radius: 0 0 20px 20px;
         border: 1px solid #ffffff;
         box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16);
-        padding: 18px 16px;
+        padding: 10px 20px;
     }
 
 
     .booking-item {
         background: #ffffff;
-        width: 340px;
         border-radius: 20px;
         padding: 20px;
+        display: flex;
         flex-direction: column;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        margin-bottom: 9px;
+        width: 100%;
     }
 
     .booking-card-header{
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
+        width: 100%;
+        gap: calc(100%/3);
     }
     .time-info{
         display: flex;
         align-items: baseline;
         gap:5px;
+        width: 100%;
     }
     .time{
         font-size: 14px;
@@ -156,6 +164,7 @@
     .place-name{
         font-size: 14px;
         color: #9B7FCC;
+        width: 100%;
     }
     .card-body{
         display: flex;
@@ -331,60 +340,60 @@
 </head>
 <body>
     <div class="container">
-    <!-- Верхняя панель -->
-    <div class="topbar">
-        <button class="back-btn" id="backBtn">←</button>
-        <div class="page-title">КАБИНЕТ КЛИЕНТА</div>
-    </div>
-
-    <div class="name-card">
-        <div class="name-title" id="orgName">НАЗВАНИЕ</div>
-        <div class="name-desc">
-            Регистрируйтесь на события, следите за обновлениями и оставляйте отзывы в одном месте.
+        <!-- Верхняя панель -->
+        <div class="topbar">
+            <button class="back-btn" id="backBtn">←</button>
+            <div class="page-title">КАБИНЕТ КЛИЕНТА</div>
         </div>
-    </div>
 
-    <div class="title-container">
-        <div class="title" id="title">МОИ ЗАПИСИ</div>
-    </div>
-
-    <div class="bookings-section">
-        <div id="bookingsList">
-            <div class="booking-item">
-                <div class="booking-card-header">
-                    <div class="time-info">
-                        <span class="time">12:00</span>
-                        <span class="duration">30 мин</span>
-                    </div>
-                    <div class="place-name">Основной зал</div>
-                </div>
-                <div class="card-body">
-                    <h3 class="event-type">ТИП ТРЕНИРОВКИ</h3>
-                    <p class="worker-name">Марина Шадрина</p>
-                </div>
-                <div class="card-footer">
-                    <button class="cancel-btn">ОТМЕНИТЬ ЗАПИСЬ</button>
-                </div>
-            </div>
-            <div class="booking-item">
-                <div class="booking-card-header">
-                    <div class="time-info">
-                        <span class="time">12:00</span>
-                        <span class="duration">30 мин</span>
-                    </div>
-                    <div class="place-name">Основной зал</div>
-                </div>
-                <div class="card-body">
-                    <h3 class="event-type">ТИП ТРЕНИРОВКИ</h3>
-                    <p class="worker-name">Марина Шадрина</p>
-                </div>
-                <div class="card-footer">
-                    <button class="cancel-btn">ОТМЕНИТЬ ЗАПИСЬ</button>
-                </div>
+        <div class="name-card">
+            <div class="name-title" id="orgName">НАЗВАНИЕ</div>
+            <div class="name-desc">
+                Регистрируйтесь на события, следите за обновлениями и оставляйте отзывы в одном месте.
             </div>
         </div>
+
+        <div class="title-container">
+            <div class="title" id="title">МОИ ЗАПИСИ</div>
+        </div>
+
+        <div class="bookings-section">
+            <div id="bookingsList">
+                <div class="booking-item">
+                    <div class="booking-card-header">
+                        <div class="time-info">
+                            <span class="time">12:00</span>
+                            <span class="duration">30 мин</span>
+                        </div>
+                        <div class="place-name">Основной зал</div>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="event-type">ТИП ТРЕНИРОВКИ</h3>
+                        <p class="worker-name">Марина Шадрина</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="cancel-btn">ОТМЕНИТЬ ЗАПИСЬ</button>
+                    </div>
+                </div>
+                <div class="booking-item">
+                    <div class="booking-card-header">
+                        <div class="time-info">
+                            <span class="time">12:00</span>
+                            <span class="duration">30 мин</span>
+                        </div>
+                        <div class="place-name">Основной зал</div>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="event-type">ТИП ТРЕНИРОВКИ</h3>
+                        <p class="worker-name">Марина Шадрина</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="cancel-btn">ОТМЕНИТЬ ЗАПИСЬ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 <div class="bottom-fixed-container">
     <button class="leave-btn" id="leaveBtn">Покинуть организацию</button>
     <div class="bottom-nav-wrap">
