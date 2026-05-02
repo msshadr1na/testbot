@@ -367,7 +367,15 @@
 
         let selectedDateStr = "";
         let scheduleDataCache = {}; // Кэш данных, чтобы не грузить одно и то же
-        const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        function getUserId() {
+            const fromTelegram = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            const fromQuery = params.get("user_id");
+            const fromStorage = localStorage.getItem("tgUserId");
+            const resolved = fromTelegram || fromQuery || fromStorage;
+            if (resolved) localStorage.setItem("tgUserId", String(resolved));
+            return resolved ? Number(resolved) : null;
+        }
+        const userId = getUserId();
 
         function showToast(message) {
             const toast = document.getElementById("toast");
@@ -383,8 +391,8 @@
                 if (scheduleDataCache[date])
                     return scheduleDataCache[date];
 
-                const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-                const response = await fetch(`/api/v1/client/${orgId}/schedule?date=${date}&user_id=${tgId || userId}`);
+                const resolvedUserId = getUserId();
+                const response = await fetch(`/api/v1/client/${orgId}/schedule?date=${date}&user_id=${resolvedUserId}`);
                 
                 if (!response.ok) throw new Error('Ошибка сети');
                 
@@ -580,6 +588,8 @@
             url.searchParams.set("org_id", currentOrgId);
             url.searchParams.set("v", "2");
             Object.entries(extraParams).forEach(([key, value]) => url.searchParams.set(key, value));
+            const uid = getUserId();
+            if (uid) url.searchParams.set("user_id", String(uid));
             window.location.href = `${url.pathname}${url.search}`;
         }
         document.getElementById("tab-main").onclick = () => goTo("/app/client_main.html");
@@ -589,8 +599,8 @@
         // Старт
         document.addEventListener('DOMContentLoaded', () => {
             if (currentOrgId) {
-                if (!userId) {
-                    document.getElementById('scheduleSection').innerHTML = '<div class="loading">Не удалось получить пользователя Telegram</div>';
+                if (!getUserId()) {
+                    document.getElementById('scheduleSection').innerHTML = '<div class="loading">Не удалось определить пользователя</div>';
                     return;
                 }
                 if (currentView === "history") {

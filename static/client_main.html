@@ -563,7 +563,12 @@
         }
 
         function getUserId() {
-            return window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            const fromTelegram = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            const fromQuery = params.get("user_id");
+            const fromStorage = localStorage.getItem("tgUserId");
+            const resolved = fromTelegram || fromQuery || fromStorage;
+            if (resolved) localStorage.setItem("tgUserId", String(resolved));
+            return resolved ? Number(resolved) : null;
         }
 
         function goTo(path, extraParams = {}) {
@@ -574,6 +579,8 @@
             Object.entries(extraParams).forEach(([key, value]) => {
                 url.searchParams.set(key, value);
             });
+            const uid = getUserId();
+            if (uid) url.searchParams.set("user_id", String(uid));
             window.location.href = `${url.pathname}${url.search}`;
         }
 
@@ -614,7 +621,10 @@
         async function LoadActiveBookings() {
             if (!currentOrgId) return;
             const userId = getUserId();
-            if (!userId) return;
+            if (!userId) {
+                showToast("TG ID не найден");
+                return;
+            }
 
             const now = new Date();
             try {

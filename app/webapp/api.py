@@ -581,25 +581,47 @@ async def get_client_history(
         user.id, org_id
     )
 
-    rows = await db.fetch(
-        """
-        select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
-               g.name as gym_name, tt.name as type_name,
-               concat_ws(' ', u.first_name, u.last_name) as trainer_name,
-               exists(select 1 from review r where r.user_id = $1 and r.training_id = t.id) as has_review
-        from booking b
-        join training t on b.training_id = t.id
-        join gym g on t.gym_id = g.id
-        join training_type tt on t.type_id = tt.id
-        join users u on t.trainer_id = u.id
-        where b.user_id = $1
-          and t.organization_id = $2
-          and t.date_end < now()
-        order by t.date_start desc
-        limit $3 offset $4
-        """,
-        user.id, org_id, safe_page_size, offset
-    )
+    review_table_exists = await db.fetchval("select to_regclass('public.review') is not null")
+    if review_table_exists:
+        rows = await db.fetch(
+            """
+            select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
+                   g.name as gym_name, tt.name as type_name,
+                   concat_ws(' ', u.first_name, u.last_name) as trainer_name,
+                   exists(select 1 from review r where r.user_id = $1 and r.training_id = t.id) as has_review
+            from booking b
+            join training t on b.training_id = t.id
+            join gym g on t.gym_id = g.id
+            join training_type tt on t.type_id = tt.id
+            join users u on t.trainer_id = u.id
+            where b.user_id = $1
+              and t.organization_id = $2
+              and t.date_end < now()
+            order by t.date_start desc
+            limit $3 offset $4
+            """,
+            user.id, org_id, safe_page_size, offset
+        )
+    else:
+        rows = await db.fetch(
+            """
+            select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
+                   g.name as gym_name, tt.name as type_name,
+                   concat_ws(' ', u.first_name, u.last_name) as trainer_name,
+                   false as has_review
+            from booking b
+            join training t on b.training_id = t.id
+            join gym g on t.gym_id = g.id
+            join training_type tt on t.type_id = tt.id
+            join users u on t.trainer_id = u.id
+            where b.user_id = $1
+              and t.organization_id = $2
+              and t.date_end < now()
+            order by t.date_start desc
+            limit $3 offset $4
+            """,
+            user.id, org_id, safe_page_size, offset
+        )
 
     return {
         "items": [
@@ -629,6 +651,9 @@ async def create_client_review(
     text: str = Body("", embed=True),
     db: Pool = Depends(get_db),
 ):
+    review_table_exists = await db.fetchval("select to_regclass('public.review') is not null")
+    if not review_table_exists:
+        raise HTTPException(status_code=400, detail="Отзывы пока недоступны")
     if grade < 1 or grade > 5:
         raise HTTPException(status_code=400, detail="grade must be between 1 and 5")
     user = await _resolve_user_by_any_id(user_id, db)

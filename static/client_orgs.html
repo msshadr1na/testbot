@@ -272,6 +272,7 @@
                 '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя</div>';
         } else {
             const userId = user.id;
+            localStorage.setItem("tgUserId", String(userId));
 
             fetch(`/api/v1/client/organizations?user_id=${userId}`)
                 .then(res => {
@@ -312,7 +313,7 @@
 
                             btn.onclick = () => {
                                 localStorage.setItem("selectedOrgId", org.id);
-                                window.location.href = `/app/client_main.html?org_id=${org.id}&v=2`;
+                                window.location.href = `/app/client_main.html?org_id=${org.id}&user_id=${userId}&v=2`;
                             };
 
                             container.appendChild(btn);
