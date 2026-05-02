@@ -52,6 +52,11 @@ async def get_client_schedule_page():
     with open("static/client_events.html", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
+@app.get("/client/html", response_class=HTMLResponse)
+async def get_client_html_compat_page():
+    with open("static/client_html.html", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
 app.include_router(router)
 
 if __name__ == "__main__":

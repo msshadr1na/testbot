@@ -263,17 +263,19 @@
     </div>
 
     <script>
-        const tg = Telegram.WebApp;
-        tg.ready();
+        const tg = window.Telegram?.WebApp;
+        if (tg) tg.ready();
+        const params = new URLSearchParams(window.location.search);
+        const tgUserId = tg?.initDataUnsafe?.user?.id;
+        const queryUserId = params.get("user_id");
+        const storedUserId = localStorage.getItem("tgUserId");
+        const userId = tgUserId || queryUserId || storedUserId;
+        if (userId) localStorage.setItem("tgUserId", String(userId));
 
-        const user = tg.initDataUnsafe?.user;
-        if (!user) {
+        if (!userId) {
             document.getElementById("org-list").innerHTML =
-                '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя</div>';
+                '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя. Откройте мини-приложение из Telegram.</div>';
         } else {
-            const userId = user.id;
-            localStorage.setItem("tgUserId", String(userId));
-
             fetch(`/api/v1/client/organizations?user_id=${userId}`)
                 .then(res => {
                     return res.json();
