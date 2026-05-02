@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -374,7 +375,7 @@
             z-index: 100;
             pointer-events: none;
         }
-
+        
         .bottom-fixed-container > * {
             pointer-events: auto;
         }
@@ -493,7 +494,7 @@
                     }
                 };
             }
-
+            
             LoadActiveBookings();
         });
 
@@ -504,7 +505,7 @@
             try {
                 const response = await fetch(`/api/v1/client/${currentOrgId}?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
                 if (!response.ok) throw new Error('Ошибка сети');
-
+                
                 const data = await response.json();
                 const bookingsList = document.getElementById('bookingsList');
                 if (!bookingsList) return;
@@ -523,3 +524,4 @@
     </script>
 </body>
 </html>
+```
