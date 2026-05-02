@@ -447,12 +447,12 @@
     function goTo(path)
         {
             if (!orgId) return;
-            window.location.href = `${path}`;
+            window.location.href = `${path}?org_id=${orgId}&v=2`;
         }
     document.getElementById("backBtn").onclick = () => goTo("/app/client_orgs.html");
-    document.getElementById("tab-main").onclick = () => goTo("/app/client_main.html?org_id=${orgId}&v=2");
-    document.getElementById("tab-history").onclick = () => goTo("/app/client_history.html?org_id=${orgId}&v=2");
-    document.getElementById("tab-schedule").onclick = () => goTo("/app/client_events.html?org_id=${orgId}&v=2");
+    document.getElementById("tab-main").onclick = () => goTo("/app/client_main.html");
+    document.getElementById("tab-history").onclick = () => goTo("/app/client_history.html");
+    document.getElementById("tab-schedule").onclick = () => goTo("/app/client_events.html");
     LoadActiveBookings();
 </script>
 </body>
