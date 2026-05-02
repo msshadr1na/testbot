@@ -64,7 +64,7 @@
             document.getElementById("org-list").innerHTML =
                 '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя. Откройте мини-приложение из Telegram.</div>';
         } else {
-            fetch(`/api/v1/me/organizations?user_id=${userId}&role_id=2`)
+            fetch(`/api/v1/worker/organizations?user_id=${userId}&role_id=2`)
                 .then(res => res.json())
                 .then(data => {
                     const container = document.getElementById("org-list");

@@ -1024,3 +1024,24 @@ async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...),
             "is_booked": bool(row["is_booked"]),
         })
     return {"trainings": trainings}
+
+@router.get("/api/v1/worker/organizations")
+async def get_worker_organizations(
+    user_id: int = Query(...),
+    role_id: int = Query(None),
+    organization_service: OrganizationService = Depends()
+):
+    if role_id is None:
+        org_ids, names = await organization_service.show_owned_orgs(user_id)
+    else:
+        org_ids = await organization_service.organizationMember_repository.get_membered_orgs(user_id, role_id)
+        if not org_ids:
+            return {"organizations": []}
+        names = await organization_service.organization_repository.get_names_by_ids(org_ids)
+
+    organizations = [
+        {"id": org_id, "name": name}
+        for org_id, name in zip(org_ids, names)
+    ]
+
+    return {"organizations": organizations}
