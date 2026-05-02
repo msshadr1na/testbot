@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Кабинет тренера</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; color: #1f1f35; overflow-x: hidden; }
+        .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
+        .container { width: 100%; max-width: 430px; margin: 0 auto; padding: 24px 24px 220px; }
+        .topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+        .back-btn {
+            border: none; background: #CBE949; width: 50px; height: 50px; border-radius: 18px;
+            font-size: 30px; font-family: inherit; cursor: pointer; line-height: 1;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18);
+        }
+        .page-title { font-size: 16px; letter-spacing: 0.6px; opacity: 0.75; line-height: 1.05; text-align: right; flex: 1; text-transform: uppercase; }
+        .name-card { background: #EFEEFC; border-radius: 20px; box-shadow: 0 12px 20px rgba(38, 30, 67, 0.13); padding: 22px 18px 20px; margin-bottom: 18px; }
+        .name-title { font-size: 27px; line-height: 1.1; text-transform: uppercase; margin-bottom: 10px; word-break: break-word; color: #0b0b11; }
+        .name-desc { font-size: 12px; opacity: 0.72; line-height: 1.4; }
+        .title-container { background: #efeefc; border-radius: 20px 20px 0 0; border: 1px solid #ffffff; box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16); padding: 18px 16px; display:flex; justify-content:center; }
+        .title { font-size: 18px; text-transform: uppercase; line-height: 1; color: #41404E; }
+        .bookings-section { width: 100%; background: #D9D9D9; border-radius: 0 0 20px 20px; border: 1px solid #ffffff; box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16); padding: 20px 10px; display:flex; flex-direction:column; align-items:center; }
+        #trainingsList { display:flex; flex-direction:column; gap: 12px; width: 100%; max-width: 400px; }
+        .booking-item { background:#fff; border-radius:20px; padding:20px; display:flex; flex-direction:column; box-shadow:0 4px 12px rgba(0,0,0,0.08); width:100%; min-width:300px; }
+        .booking-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px; }
+        .time-info { display:flex; align-items:baseline; gap:5px; flex-shrink:0; }
+        .time { font-size: 16px; color:#000; font-weight:bold; }
+        .duration { font-size: 13px; color:#9B7FCC; }
+        .place-name { font-size: 13px; color:#9B7FCC; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:50%; }
+        .card-body { display:flex; flex-direction:column; gap:5px; margin-bottom: 15px; }
+        .event-type { font-size:16px; text-transform:uppercase; color:#000; line-height:1.2; }
+        .worker-name { font-size:13px; color:#000; opacity:.8; }
+        .card-footer { display:flex; justify-content:center; }
+        .manage-btn { width: 100%; max-width: 200px; font-family: inherit; font-size: 10px; padding: 12px 0; background:#CBBAFD; box-shadow: 0px 6px 0px #9B7FCC; border:none; border-radius:20px; color:#000; text-transform:uppercase; cursor:pointer; }
+        .bottom-fixed-container { position: fixed; bottom: 0; left: 0; right: 0; display:flex; flex-direction:column; gap:12px; padding: 0 14px calc(10px + env(safe-area-inset-bottom)); z-index: 100; pointer-events:none; }
+        .bottom-fixed-container > * { pointer-events:auto; }
+        .bottom-nav { width: 100%; max-width: 380px; margin: 0 auto; background: rgba(239, 238, 252, 0.98); border: 1px solid #ffffff; border-radius: 20px; box-shadow: 0 -7px 18px rgba(37, 27, 76, 0.19); display:grid; grid-template-columns: repeat(3, 1fr); gap:4px; padding:8px; backdrop-filter: blur(3px); }
+        .tab-btn { border:none; border-radius:12px; background:transparent; min-height:64px; padding:6px 4px 4px; font-family:inherit; font-size:9px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; text-transform:uppercase; width:100%; }
+        .tab-btn .icon img { width:28px; height:28px; object-fit:contain; display:block; }
+        .tab-btn.active { background:#CBBAFD; }
+        .tab-btn.active span:last-child { color:#7A23B8; }
+        .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(16px); background:#fff; border-radius:14px; padding:12px 14px; box-shadow: 0 8px 18px rgba(31, 20, 52, 0.22); font-size: 11px; opacity:0; pointer-events:none; transition: opacity .2s ease, transform .2s ease; z-index:220; }
+        .toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+        .modal-overlay { position: fixed; inset:0; background: rgba(18,10,34,0.35); display:none; align-items:center; justify-content:center; z-index:230; padding:18px; }
+        .modal-overlay.show { display:flex; }
+        .modal { width:100%; max-width:340px; background:#efeefc; border-radius:20px; padding:16px; box-shadow: 0 10px 24px rgba(31,20,52,0.28); }
+        .modal-title { font-size:14px; margin-bottom:10px; text-transform:uppercase; }
+        .modal-field { margin-bottom:10px; }
+        .modal-field label { display:block; font-size:11px; margin-bottom:4px; }
+        .modal-field input, .modal-field select { width:100%; border:1px solid #d3cde8; border-radius:10px; padding:8px; font-family:inherit; font-size:11px; background:#fff; height: 40px; }
+        .modal-actions { display:flex; gap:8px; }
+        .modal-btn { flex:1; border:none; border-radius:12px; height:42px; font-family:inherit; font-size:10px; text-transform:uppercase; cursor:pointer; }
+        .modal-btn.cancel { background:#fff; box-shadow: 0 3px 0 #c7c2df; }
+        .modal-btn.ok { background:#CBBAFD; box-shadow: 0 3px 0 #9B7FCC; }
+        .modal-btn.danger { background:#F8CECC; box-shadow: 0 3px 0 #C5928F; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <div class="topbar">
+            <button class="back-btn" id="backBtn">←</button>
+            <div class="page-title">КАБИНЕТ ТРЕНЕРА</div>
+        </div>
+
+        <div class="name-card">
+            <div class="name-title" id="orgName">НАЗВАНИЕ</div>
+            <div class="name-desc">Управляйте своими тренировками и уведомляйте клиентов об изменениях.</div>
+        </div>
+
+        <div class="title-container">
+            <div class="title">МОИ ПРЕДСТОЯЩИЕ</div>
+        </div>
+        <div class="bookings-section">
+            <div id="trainingsList"></div>
+        </div>
+    </div>
+
+    <div class="bottom-fixed-container">
+        <div class="bottom-nav">
+            <button class="tab-btn active" id="tab-main">
+                <span class="icon"><img src="/app/icons/main.svg?v=2" alt=""></span>
+                <span>ГЛАВНАЯ</span>
+            </button>
+            <button class="tab-btn" id="tab-history">
+                <span class="icon"><img src="/app/icons/gyms.svg?v=2" alt=""></span>
+                <span>ПРОШЕДШИЕ</span>
+            </button>
+            <button class="tab-btn" id="tab-schedule">
+                <span class="icon"><img src="/app/icons/events.svg?v=2" alt=""></span>
+                <span>СОЗДАТЬ</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="modal-overlay" id="manageModal">
+        <div class="modal">
+            <div class="modal-title">Управление тренировкой</div>
+            <div class="modal-field">
+                <label>Начало (HH:MM)</label>
+                <input id="mStart" placeholder="12:00">
+            </div>
+            <div class="modal-field">
+                <label>Конец (HH:MM)</label>
+                <input id="mEnd" placeholder="13:00">
+            </div>
+            <div class="modal-field">
+                <label>Помещение</label>
+                <select id="mGym"></select>
+            </div>
+            <div class="modal-field">
+                <label>Тип</label>
+                <select id="mType"></select>
+            </div>
+            <div class="modal-field">
+                <label>Макс. клиентов</label>
+                <input id="mMax" type="number" min="1" max="100" placeholder="10">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="mCancel">Отмена</button>
+                <button class="modal-btn danger" id="mDelete">Отменить тренировку</button>
+                <button class="modal-btn ok" id="mSave">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if (window.Telegram && window.Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+        const params = new URLSearchParams(window.location.search);
+        const orgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
+        if (orgId) localStorage.setItem("selectedOrgId", orgId);
+
+        function getUserId() {
+            const fromTelegram = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            const fromQuery = params.get("user_id");
+            const fromStorage = localStorage.getItem("tgUserId");
+            const resolved = fromTelegram || fromQuery || fromStorage;
+            if (resolved) localStorage.setItem("tgUserId", String(resolved));
+            return resolved ? Number(resolved) : null;
+        }
+        const userId = getUserId();
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 1800);
+        }
+
+        async function loadOrgName() {
+            const res = await fetch(`/api/v1/org/${orgId}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            document.getElementById("orgName").textContent = (data.name || "ОРГАНИЗАЦИЯ").toUpperCase();
+        }
+
+        let optionsCache = null;
+        async function loadOptions() {
+            if (optionsCache) return optionsCache;
+            const res = await fetch(`/api/v1/org/${orgId}/events/options`);
+            optionsCache = await res.json();
+            return optionsCache;
+        }
+
+        function isValidTime(s) { return /^\d{2}:\d{2}$/.test(s); }
+
+        let currentTraining = null;
+        async function openManage(trainingId) {
+            const detailRes = await fetch(`/api/v1/org/${orgId}/events/${trainingId}`);
+            if (!detailRes.ok) { showToast("Не удалось открыть тренировку"); return; }
+            const detail = await detailRes.json();
+            currentTraining = detail;
+
+            const options = await loadOptions();
+            document.getElementById("mGym").innerHTML = options.places.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+            document.getElementById("mType").innerHTML = options.types.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+
+            const start = new Date(detail.date_start);
+            const end = new Date(detail.date_end);
+            document.getElementById("mStart").value = start.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+            document.getElementById("mEnd").value = end.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+            document.getElementById("mGym").value = String(detail.gym_id);
+            document.getElementById("mType").value = String(detail.type_id);
+            document.getElementById("mMax").value = String(detail.max_clients);
+
+            document.getElementById("manageModal").classList.add("show");
+        }
+
+        async function saveManage() {
+            if (!currentTraining) return;
+            const mStart = document.getElementById("mStart").value.trim();
+            const mEnd = document.getElementById("mEnd").value.trim();
+            const mGym = Number(document.getElementById("mGym").value);
+            const mType = Number(document.getElementById("mType").value);
+            const mMax = Number(document.getElementById("mMax").value);
+            if (!isValidTime(mStart) || !isValidTime(mEnd)) return showToast("Время в формате HH:MM");
+            if (!mMax || mMax < 1) return showToast("Максимум клиентов > 0");
+
+            const day = new Date(currentTraining.date_start).toISOString().slice(0,10);
+            const query = `day=${day}&time_start=${mStart}&time_end=${mEnd}&gym_id=${mGym}&trainer_id=${currentTraining.trainer_id}&type_id=${mType}&max_clients=${mMax}`;
+            const res = await fetch(`/api/v1/org/${orgId}/events/${currentTraining.id}?${query}`, { method: "PUT" });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return showToast(data.detail || "Не удалось сохранить");
+            showToast("Изменения сохранены");
+            closeManage();
+            await loadUpcoming();
+        }
+
+        async function deleteTraining() {
+            if (!currentTraining) return;
+            if (!confirm("Отменить тренировку? Все записанные будут уведомлены.")) return;
+            const res = await fetch(`/api/v1/org/${orgId}/events/${currentTraining.id}`, { method: "DELETE" });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return showToast(data.detail || "Не удалось отменить");
+            showToast("Тренировка отменена");
+            closeManage();
+            await loadUpcoming();
+        }
+
+        function closeManage() {
+            document.getElementById("manageModal").classList.remove("show");
+            currentTraining = null;
+        }
+
+        async function loadUpcoming() {
+            if (!orgId || !userId) return;
+            const res = await fetch(`/api/v1/worker/${orgId}/dashboard?user_id=${userId}&days=30`);
+            const list = document.getElementById("trainingsList");
+            if (!res.ok) {
+                if (res.status === 404) {
+                    localStorage.removeItem("selectedOrgId");
+                    window.location.href = "/app/worker_orgs.html?v=2";
+                    return;
+                }
+                list.innerHTML = `<div style="text-align:center;padding:30px 10px;color:#555;font-size:16px;">Ошибка загрузки</div>`;
+                return;
+            }
+            const data = await res.json();
+            if (!data.trainings || data.trainings.length === 0) {
+                list.innerHTML = `<div style="text-align:center;padding:30px 10px;color:#555;font-size:16px;">Предстоящих тренировок нет</div>`;
+                return;
+            }
+            list.innerHTML = "";
+            data.trainings.forEach((t) => {
+                const card = document.createElement("div");
+                card.className = "booking-item";
+                card.innerHTML = `
+                    <div class="booking-card-header">
+                        <div class="time-info">
+                            <span class="time">${t.time}</span>
+                            <span class="duration">${t.duration} мин</span>
+                        </div>
+                        <div class="place-name">${t.gym_name}</div>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="event-type">${t.type_name}</h3>
+                        <p class="worker-name">Тренировка</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="manage-btn" data-id="${t.id}">УПРАВЛЕНИЕ</button>
+                    </div>
+                `;
+                const btn = card.querySelector(".manage-btn");
+                btn.onclick = () => openManage(btn.dataset.id);
+                list.appendChild(card);
+            });
+        }
+
+        function goTo(path) {
+            if (!orgId) return;
+            const url = new URL(path, window.location.origin);
+            url.searchParams.set("org_id", orgId);
+            url.searchParams.set("v", "2");
+            if (userId) url.searchParams.set("user_id", String(userId));
+            window.location.href = `${url.pathname}${url.search}`;
+        }
+
+        document.getElementById("backBtn").onclick = () => goTo("/app/worker_orgs.html");
+        document.getElementById("tab-main").onclick = () => goTo("/app/worker_main.html");
+        document.getElementById("tab-history").onclick = () => goTo("/app/worker_history.html");
+        document.getElementById("tab-schedule").onclick = () => goTo("/app/worker_create.html");
+        document.getElementById("mCancel").onclick = closeManage;
+        document.getElementById("mSave").onclick = saveManage;
+        document.getElementById("mDelete").onclick = deleteTraining;
+
+        loadOrgName();
+        loadOptions();
+        loadUpcoming();
+    </script>
+</body>
+</html>
+

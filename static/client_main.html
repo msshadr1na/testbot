@@ -629,7 +629,15 @@
             const now = new Date();
             try {
                 const response = await fetch(`/api/v1/client/${currentOrgId}/dashboard?year=${now.getFullYear()}&month=${now.getMonth() + 1}&user_id=${userId}`);
-                if (!response.ok) throw new Error('Ошибка сети');
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        // Пользователь удалён или не найден в БД — возвращаем на выбор организаций.
+                        localStorage.removeItem("selectedOrgId");
+                        window.location.href = "/app/client_orgs.html?v=2";
+                        return;
+                    }
+                    throw new Error('Ошибка сети');
+                }
                 
                 const data = await response.json();
                 const bookingsList = document.getElementById('bookingsList');

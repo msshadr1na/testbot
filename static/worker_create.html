@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Создать тренировку</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; color: #1f1f35; overflow-x: hidden; }
+        .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
+        .container { width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh; padding: 20px 16px 150px; }
+        .title { text-align: center; font-size: 24px; margin-bottom: 16px; text-transform: uppercase; }
+        .card { background: #efeefc; border-radius: 24px; padding: 16px; border: 1px solid #fff; box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16); }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .field { margin-bottom: 10px; }
+        label { display:block; font-size: 11px; margin-bottom: 4px; opacity: .8; text-transform: uppercase; }
+        input, select { width: 100%; height: 44px; border: 1px solid #d3cde8; border-radius: 12px; padding: 8px 10px; font-family: inherit; font-size: 11px; background: #fff; }
+        .btn { width: 100%; height: 56px; border: none; border-radius: 20px; font-family: inherit; text-transform: uppercase; cursor: pointer; background: #CBBAFD; box-shadow: 0 6px 0 #9B7FCC; }
+        .status { margin-top: 10px; font-size: 12px; min-height: 16px; color: #5a5a5a; text-align: center; }
+        .bottom-fixed-container { position: fixed; bottom: 0; left: 0; right: 0; padding: 0 16px calc(12px + env(safe-area-inset-bottom)); z-index: 100; pointer-events: none; }
+        .bottom-nav { width: 100%; max-width: 382px; margin: 0 auto; background: rgba(239, 238, 252, 0.98); border: 1px solid #fff; border-radius: 20px; box-shadow: 0 -7px 18px rgba(37, 27, 76, 0.19); display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 8px; pointer-events: auto; }
+        .tab-btn { border: none; border-radius: 12px; min-height: 64px; background: transparent; font-family: inherit; font-size: 8px; cursor: pointer; text-transform: uppercase; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .tab-btn .icon img { width: 28px; height: 28px; object-fit: contain; }
+        .tab-btn.active { background: #CBBAFD; }
+        .tab-btn.active span:last-child { color: #7A23B8; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <div class="title">СОЗДАТЬ ТРЕНИРОВКУ</div>
+        <div class="card">
+            <div class="field">
+                <label>Дата (YYYY-MM-DD)</label>
+                <input id="day" placeholder="2026-05-02">
+            </div>
+            <div class="row">
+                <div class="field">
+                    <label>Начало (HH:MM)</label>
+                    <input id="timeStart" placeholder="12:00">
+                </div>
+                <div class="field">
+                    <label>Конец (HH:MM)</label>
+                    <input id="timeEnd" placeholder="13:00">
+                </div>
+            </div>
+            <div class="row">
+                <div class="field">
+                    <label>Помещение</label>
+                    <select id="gym"></select>
+                </div>
+                <div class="field">
+                    <label>Тип</label>
+                    <select id="type"></select>
+                </div>
+            </div>
+            <div class="field">
+                <label>Макс. клиентов</label>
+                <input id="maxClients" type="number" min="1" max="100" placeholder="10">
+            </div>
+            <button class="btn" id="createBtn">Создать</button>
+            <div class="status" id="status"></div>
+        </div>
+    </div>
+
+    <div class="bottom-fixed-container">
+        <div class="bottom-nav">
+            <button class="tab-btn" id="tab-main">
+                <span class="icon"><img src="/app/icons/main.svg?v=2" alt=""></span>
+                <span>ГЛАВНАЯ</span>
+            </button>
+            <button class="tab-btn" id="tab-history">
+                <span class="icon"><img src="/app/icons/gyms.svg?v=2" alt=""></span>
+                <span>ПРОШЕДШИЕ</span>
+            </button>
+            <button class="tab-btn active" id="tab-create">
+                <span class="icon"><img src="/app/icons/events.svg?v=2" alt=""></span>
+                <span>СОЗДАТЬ</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        if (window.Telegram && window.Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+        const params = new URLSearchParams(window.location.search);
+        const orgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
+        if (orgId) localStorage.setItem("selectedOrgId", orgId);
+
+        function getUserId() {
+            const fromTelegram = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            const fromQuery = params.get("user_id");
+            const fromStorage = localStorage.getItem("tgUserId");
+            const resolved = fromTelegram || fromQuery || fromStorage;
+            if (resolved) localStorage.setItem("tgUserId", String(resolved));
+            return resolved ? Number(resolved) : null;
+        }
+        const userId = getUserId();
+        const statusEl = document.getElementById("status");
+        function setStatus(t, isError=false) { statusEl.textContent = t || ""; statusEl.style.color = isError ? "#d32f2f" : "#5a5a5a"; }
+        function isValidTime(s) { return /^\d{2}:\d{2}$/.test(s); }
+        function isValidDay(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s); }
+
+        async function loadOptions() {
+            const res = await fetch(`/api/v1/org/${orgId}/events/options`);
+            const data = await res.json();
+            document.getElementById("gym").innerHTML = (data.places || []).map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+            document.getElementById("type").innerHTML = (data.types || []).map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+        }
+
+        async function createTraining() {
+            const day = document.getElementById("day").value.trim();
+            const timeStart = document.getElementById("timeStart").value.trim();
+            const timeEnd = document.getElementById("timeEnd").value.trim();
+            const gymId = Number(document.getElementById("gym").value);
+            const typeId = Number(document.getElementById("type").value);
+            const maxClients = Number(document.getElementById("maxClients").value);
+
+            if (!orgId || !userId) return setStatus("Не удалось определить пользователя/организацию", true);
+            if (!isValidDay(day)) return setStatus("Дата в формате YYYY-MM-DD", true);
+            if (!isValidTime(timeStart) || !isValidTime(timeEnd)) return setStatus("Время в формате HH:MM", true);
+            if (!maxClients || maxClients < 1) return setStatus("Макс. клиентов > 0", true);
+
+            const q = `user_id=${userId}&day=${encodeURIComponent(day)}&time_start=${encodeURIComponent(timeStart)}&time_end=${encodeURIComponent(timeEnd)}&gym_id=${gymId}&type_id=${typeId}&max_clients=${maxClients}`;
+            const res = await fetch(`/api/v1/worker/${orgId}/events?${q}`, { method: "POST" });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return setStatus(data.detail || "Не удалось создать", true);
+            setStatus("Тренировка создана");
+        }
+
+        function goTo(path) {
+            const url = new URL(path, window.location.origin);
+            url.searchParams.set("org_id", orgId);
+            url.searchParams.set("v", "2");
+            if (userId) url.searchParams.set("user_id", String(userId));
+            window.location.href = `${url.pathname}${url.search}`;
+        }
+        document.getElementById("tab-main").onclick = () => goTo("/app/worker_main.html");
+        document.getElementById("tab-history").onclick = () => goTo("/app/worker_history.html");
+        document.getElementById("tab-create").onclick = () => goTo("/app/worker_create.html");
+        document.getElementById("createBtn").onclick = createTraining;
+
+        // default day = today
+        const d = new Date();
+        document.getElementById("day").value = d.toISOString().slice(0,10);
+        loadOptions();
+    </script>
+</body>
+</html>
+

@@ -181,6 +181,24 @@
             transform: translateY(0);
             box-shadow: 0 6px 0 #9B7FCC;
         }
+
+        .btn-profile
+        {
+            top: 381px;
+            background: #CBE949;
+            box-shadow: 0 6px 0 #9EB82E;
+        }
+        .btn-profile:hover
+        {
+            transform: scale(1.02);
+            box-shadow: 0 6px 0 #9EB82E,
+            0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+        .btn-profile:active
+        {
+            transform: translateY(0);
+            box-shadow: 0 6px 0 #9EB82E;
+        }
         .loading-hidden
         {
             opacity: 0;
@@ -223,6 +241,9 @@
             <button class="button btn-client" onclick="goToClientOrgs()">
                 КЛИЕНТ
             </button>
+            <button class="button btn-profile" onclick="goToProfile()">
+                ЛИЧНЫЙ КАБИНЕТ
+            </button>
         </div>
     </div>
 
@@ -259,6 +280,9 @@
         }
         function goToClientOrgs() {
             window.location.href = '/client';
+        }
+        function goToProfile() {
+            window.location.href = '/app/profile.html?v=2';
         }
     </script>
 

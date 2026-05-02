@@ -829,6 +829,30 @@ async def check_invite(message: types.Message,state: FSMContext, user_id: int, p
             org = await org_service.get_by_id(org_id)
             role_name = {2: "тренер", 3: "клиент"}.get(role_id, "участник")
             await message.answer(f"Вы добавлены в организацию {org.name} как {role_name}!")
+
+            # Уведомляем организаторов о новом участнике
+            try:
+                new_user = await UserService(UserRepository(pool), SettingsRepository(pool)).find_by_tgid(user_id)
+                new_user_name = "участник"
+                if new_user:
+                    new_user_name = f"{new_user.first_name} {new_user.last_name}".strip()
+
+                owner_rows = await pool.fetch(
+                    """
+                    select u.telegram_id
+                    from organization_member om
+                    join users u on u.id = om.user_id
+                    where om.organization_id = $1 and om.role_id = 1
+                    """,
+                    org_id,
+                )
+                owner_tg_ids = [r["telegram_id"] for r in owner_rows]
+                notify_text = f"В организацию {org.name} добавлен {role_name}: {new_user_name}."
+                for tg_id in owner_tg_ids:
+                    if tg_id:
+                        await message.bot.send_message(tg_id, notify_text)
+            except Exception:
+                pass
         except ValueError as e:
             await message.answer(f"Ошибка: {e}")
         except Exception as e:

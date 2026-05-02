@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Прошедшие тренировки</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Russo One', sans-serif; min-height: 100vh; color: #1f1f35; overflow-x: hidden; }
+        .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
+        .container { width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh; padding: 20px 16px 150px; }
+        .title { text-align: center; font-size: 24px; margin-bottom: 16px; text-transform: uppercase; }
+        .list-wrap { background: #E2E2E2; border-radius: 24px; padding: 16px; }
+        .cards { display: flex; flex-direction: column; gap: 12px; }
+        .card { background: #fff; border-radius: 20px; padding: 18px; }
+        .head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+        .time { font-size: 15px; }
+        .place { font-size: 12px; color: #9B7FCC; text-align: right; }
+        .type { font-size: 16px; margin-bottom: 4px; text-transform: uppercase; }
+        .trainer { font-size: 13px; opacity: .8; margin-bottom: 10px; }
+        .stats-btn { border: none; border-radius: 14px; padding: 10px 12px; font-family: inherit; background: #CBBAFD; box-shadow: 0 4px 0 #9B7FCC; cursor: pointer; font-size: 10px; text-transform: uppercase; }
+        .pager { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; }
+        .pager button { flex: 1; height: 42px; border: none; border-radius: 14px; font-family: inherit; background: #fff; box-shadow: 0 4px 0 rgba(77,67,110,.24); cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .pager button:disabled { opacity: .5; cursor: not-allowed; }
+        .empty { text-align: center; padding: 30px 10px; color: #555; font-size: 13px; }
+        .bottom-fixed-container { position: fixed; bottom: 0; left: 0; right: 0; padding: 0 16px calc(12px + env(safe-area-inset-bottom)); z-index: 100; pointer-events: none; }
+        .bottom-nav { width: 100%; max-width: 382px; margin: 0 auto; background: rgba(239, 238, 252, 0.98); border: 1px solid #fff; border-radius: 20px; box-shadow: 0 -7px 18px rgba(37, 27, 76, 0.19); display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 8px; pointer-events: auto; }
+        .tab-btn { border: none; border-radius: 12px; min-height: 64px; background: transparent; font-family: inherit; font-size: 8px; cursor: pointer; text-transform: uppercase; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .tab-btn .icon img { width: 28px; height: 28px; object-fit: contain; }
+        .tab-btn.active { background: #CBBAFD; }
+        .tab-btn.active span:last-child { color: #7A23B8; }
+        .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(16px); background: #fff; border-radius: 14px; padding: 12px 14px; box-shadow: 0 8px 18px rgba(31, 20, 52, 0.22); font-size: 11px; opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 250; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(18, 10, 34, 0.35); display: none; align-items: center; justify-content: center; z-index: 260; padding: 18px; }
+        .modal-overlay.show { display: flex; }
+        .modal { width: 100%; max-width: 360px; background: #efeefc; border-radius: 20px; padding: 16px; box-shadow: 0 10px 24px rgba(31, 20, 52, 0.28); }
+        .modal-title { font-size: 14px; margin-bottom: 10px; text-transform: uppercase; }
+        .review { background:#fff; border-radius:14px; padding:10px; font-size:11px; margin-bottom:8px; }
+        .modal-actions { display:flex; gap:8px; }
+        .modal-btn { flex: 1; border: none; border-radius: 12px; height: 42px; font-family: inherit; font-size: 10px; text-transform: uppercase; cursor: pointer; }
+        .modal-btn.cancel { background: #fff; box-shadow: 0 3px 0 #c7c2df; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <div class="title">ПРОШЕДШИЕ ТРЕНИРОВКИ</div>
+        <div class="list-wrap">
+            <div class="cards" id="cards"></div>
+            <div class="pager">
+                <button id="prev-btn">Назад</button>
+                <button id="next-btn">Далее</button>
+            </div>
+        </div>
+    </div>
+    <div class="bottom-fixed-container">
+        <div class="bottom-nav">
+            <button class="tab-btn" id="tab-main">
+                <span class="icon"><img src="/app/icons/main.svg?v=2" alt=""></span>
+                <span>ГЛАВНАЯ</span>
+            </button>
+            <button class="tab-btn active" id="tab-history">
+                <span class="icon"><img src="/app/icons/gyms.svg?v=2" alt=""></span>
+                <span>ПРОШЕДШИЕ</span>
+            </button>
+            <button class="tab-btn" id="tab-schedule">
+                <span class="icon"><img src="/app/icons/events.svg?v=2" alt=""></span>
+                <span>СОЗДАТЬ</span>
+            </button>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <div class="modal-overlay" id="statsModal">
+        <div class="modal">
+            <div class="modal-title" id="statsTitle">Статистика</div>
+            <div id="statsBody"></div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" id="statsClose">Закрыть</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        if (window.Telegram && window.Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+        const params = new URLSearchParams(window.location.search);
+        const orgId = params.get("org_id") || localStorage.getItem("selectedOrgId");
+        if (orgId) localStorage.setItem("selectedOrgId", orgId);
+
+        function getUserId() {
+            const fromTelegram = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            const fromQuery = params.get("user_id");
+            const fromStorage = localStorage.getItem("tgUserId");
+            const resolved = fromTelegram || fromQuery || fromStorage;
+            if (resolved) localStorage.setItem("tgUserId", String(resolved));
+            return resolved ? Number(resolved) : null;
+        }
+        const userId = getUserId();
+
+        const pageSize = 6;
+        let page = 1;
+        let total = 0;
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 1800);
+        }
+
+        function goTo(path) {
+            if (!orgId) return;
+            const url = new URL(path, window.location.origin);
+            url.searchParams.set("org_id", orgId);
+            url.searchParams.set("v", "2");
+            if (userId) url.searchParams.set("user_id", String(userId));
+            window.location.href = `${url.pathname}${url.search}`;
+        }
+
+        async function openStats(trainingId) {
+            const res = await fetch(`/api/v1/worker/${orgId}/training/${trainingId}/stats?user_id=${userId}`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) { showToast(data.detail || "Не удалось загрузить статистику"); return; }
+
+            document.getElementById("statsTitle").textContent = "СТАТИСТИКА";
+            const avg = (data.avg_grade === null || data.avg_grade === undefined) ? "—" : Number(data.avg_grade).toFixed(2);
+            const reviews = (data.reviews || []).map(r => `<div class="review"><b>${r.author}</b> · ${r.grade}/5<br>${(r.text || "").replace(/</g,'&lt;')}</div>`).join("");
+            document.getElementById("statsBody").innerHTML = `
+                <div style="font-size:12px;margin-bottom:10px;">Средняя оценка: <b>${avg}</b></div>
+                <div style="max-height:260px; overflow:auto;">${reviews || '<div style="font-size:12px;color:#555;">Отзывов пока нет</div>'}</div>
+            `;
+            document.getElementById("statsModal").classList.add("show");
+        }
+
+        async function loadHistory() {
+            const cards = document.getElementById("cards");
+            if (!orgId || !userId) {
+                cards.innerHTML = '<div class="empty">Не удалось получить org_id или user_id</div>';
+                return;
+            }
+            const res = await fetch(`/api/v1/worker/${orgId}/history?user_id=${userId}&page=${page}&page_size=${pageSize}`);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                cards.innerHTML = `<div class="empty">${err.detail || "Ошибка загрузки истории"}</div>`;
+                return;
+            }
+            const data = await res.json();
+            total = data.total || 0;
+            if (!data.items || data.items.length === 0) {
+                cards.innerHTML = '<div class="empty">Проведённых тренировок пока нет</div>';
+            } else {
+                cards.innerHTML = "";
+                data.items.forEach((item) => {
+                    const start = new Date(item.date_start);
+                    const end = new Date(item.date_end);
+                    const duration = Math.max(1, Math.round((end - start) / 60000));
+                    const card = document.createElement("div");
+                    card.className = "card";
+                    card.innerHTML = `
+                        <div class="head">
+                            <div class="time">${start.toLocaleDateString("ru-RU")} ${start.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })} · ${duration} мин</div>
+                            <div class="place">${item.gym_name}</div>
+                        </div>
+                        <div class="type">${item.type_name}</div>
+                        <div class="trainer">Тренировка</div>
+                    `;
+                    const btn = document.createElement("button");
+                    btn.className = "stats-btn";
+                    btn.textContent = "Статистика";
+                    btn.onclick = () => openStats(item.training_id);
+                    card.appendChild(btn);
+                    cards.appendChild(card);
+                });
+            }
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            document.getElementById("prev-btn").disabled = page <= 1;
+            document.getElementById("next-btn").disabled = page >= totalPages;
+        }
+
+        document.getElementById("prev-btn").onclick = async () => { if (page > 1) { page -= 1; await loadHistory(); } };
+        document.getElementById("next-btn").onclick = async () => { const totalPages = Math.max(1, Math.ceil(total / pageSize)); if (page < totalPages) { page += 1; await loadHistory(); } };
+        document.getElementById("tab-main").onclick = () => goTo("/app/worker_main.html");
+        document.getElementById("tab-history").onclick = () => goTo("/app/worker_history.html");
+        document.getElementById("tab-schedule").onclick = () => goTo("/app/worker_create.html");
+        document.getElementById("statsClose").onclick = () => document.getElementById("statsModal").classList.remove("show");
+
+        loadHistory();
+    </script>
+</body>
+</html>
+

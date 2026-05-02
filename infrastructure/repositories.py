@@ -384,6 +384,46 @@ class TrainingRepository:
         sql = "delete from training where id = $1"
         return await self.pool.execute(sql, training_id)
 
+    async def has_gym_conflict(
+        self,
+        org_id: int,
+        gym_id: int,
+        date_start,
+        date_end,
+        exclude_training_id: int | None = None,
+    ) -> bool:
+        sql = """
+            select 1
+            from training
+            where organization_id = $1
+              and gym_id = $2
+              and date_start < $4
+              and date_end > $3
+              and ($5::int is null or id <> $5)
+            limit 1
+        """
+        row = await self.pool.fetchrow(sql, org_id, gym_id, date_start, date_end, exclude_training_id)
+        return row is not None
+
+    async def has_trainer_conflict(
+        self,
+        trainer_id: int,
+        date_start,
+        date_end,
+        exclude_training_id: int | None = None,
+    ) -> bool:
+        sql = """
+            select 1
+            from training
+            where trainer_id = $1
+              and date_start < $3
+              and date_end > $2
+              and ($4::int is null or id <> $4)
+            limit 1
+        """
+        row = await self.pool.fetchrow(sql, trainer_id, date_start, date_end, exclude_training_id)
+        return row is not None
+
 class BookingRepository:
     def __init__(self,pool):
         self.pool = pool
@@ -421,6 +461,16 @@ class BookingRepository:
         sql = "select user_id from booking where training_id = $1"
         rows = await self.pool.fetch(sql, training_id)
         return [row["user_id"] for row in rows]
+
+    async def get_user_telegram_ids_by_training_id(self, training_id: int):
+        sql = """
+            select u.telegram_id
+            from booking b
+            join users u on u.id = b.user_id
+            where b.training_id = $1
+        """
+        rows = await self.pool.fetch(sql, training_id)
+        return [row["telegram_id"] for row in rows]
 
 class ReviewRepository:
     def __init__(self,pool):

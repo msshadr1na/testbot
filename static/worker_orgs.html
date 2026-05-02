@@ -2,53 +2,135 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Организации работника</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Выберите организацию</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Russo One', sans-serif; min-height: 100vh; }
-        .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
-        .container { width: 100%; max-width: 375px; margin: 0 auto; padding-top: 20px; min-height: 100vh; display: flex; flex-direction: column; }
-        .title { text-align: center; font-size: 24px; margin-bottom: 18px; text-transform: uppercase; }
-        .panel { background: #EFEEFC; border-radius: 20px 20px 0 0; flex: 1; padding: 20px 0; display: flex; flex-direction: column; align-items: center; }
-        .list { width: 313px; flex: 1; }
-        .item { width: 313px; height: 62px; margin-bottom: 10px; border: none; border-radius: 16px; font-family: inherit; background: #CBBAFD; cursor: pointer; }
-        .btn { width: 313px; height: 56px; border: none; border-radius: 16px; font-family: inherit; background: #FFFFFF; border: 1px solid #E0E0E0; cursor: pointer; }
+        body { margin: 0; padding: 0; font-family: 'Russo One', sans-serif; overflow-x: hidden; min-height: 100vh; position: relative; display: flex; flex-direction: column; }
+        .bg-gradient { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); z-index: -1; }
+        .content { position: relative; width: 100%; height: 685px; top: 60px; background: #FFFFFF; border-radius: 20px 20px 20px 20px; padding-top: 50px; }
+        .container { width: 100%; max-width: 375px; margin: 0 auto; position: relative; padding-top: 20px; }
+        .header { position: relative; width: 381px; top: 33px; text-align: center; }
+        .header-title { font-size: 24px; line-height: 26px; letter-spacing: 1px; text-transform: uppercase; color: #000000; font-weight: 400; }
+        .org-list-container { background: #EFEEFC; border-radius: 20px 20px 0 0; padding: 20px 0; flex-grow: 1; display: flex; flex-direction: column; z-index: 1; }
+        .org-list { flex-grow: 1; padding: 0 20px; padding-bottom: 70px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #CBBAFD #EFEEFC; min-height: 326px; transition: opacity 0.2s ease; }
+        .org-btn { width: 100%; max-width: 313px; height: 70px; margin: 0 auto 8px; border-radius: 20px; font-family: 'Russo One', sans-serif; font-size: 20px; line-height: 26px; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #000000; transition: all 0.25s ease; position: relative; box-sizing: border-box; }
+        .org-btn:last-child { margin-bottom: 0; }
+        .org-btn:nth-child(odd) { background: rgba(203, 233, 73, 0.5); border: 3px solid #9EB82E; }
+        .org-btn:nth-child(even) { background: rgba(203, 186, 253, 0.5); border: 3px solid #9B7FCC; }
+        .org-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 6px rgba(0, 0, 0, 0.15); }
+        .org-btn:active { transform: translateY(0); box-shadow: none; }
+        .action-btn { width: 313px; height: 56px; border: none; border-radius: 20px; font-family: 'Russo One', sans-serif; font-size: 18px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #000000; transition: all 0.2s; }
+        .action-btn:hover { transform: scale(1.02); }
+        .navigation { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 20px 15px; background: #EFEEFC; flex-shrink: 0; }
+        .nav-btn { width: 56px; height: 56px; border-radius: 28px; background: rgba(255, 255, 255, 0.9); border: none; font-size: 24px; font-weight: bold; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: all 0.2s; visibility: hidden; opacity: 0; pointer-events: none; }
+        .nav-btn.visible { visibility: visible; opacity: 1; pointer-events: auto; }
+        .nav-btn:hover { background: #FFFFFF; transform: scale(1.05); }
+        .menu-btn { background: #CBE949; width: 116px; height: 56px; box-shadow: 0 6px 0 #9EB82E; }
+        .menu-btn:hover { transform: scale(1.02); box-shadow: 0 6px 0 #9EB82E, 0 15px 6px rgba(0, 0, 0, 0.3); }
+        .menu-btn:active { transform: translateY(0); box-shadow: 0 6px 0 #9EB82E; }
     </style>
 </head>
 <body>
     <div class="bg-gradient"></div>
     <div class="container">
-        <div class="title">Я РАБОТНИК</div>
-        <div class="panel">
-            <div class="list" id="list">Загрузка...</div>
-            <button class="btn" onclick="window.location.href='/app'">Назад</button>
+        <div class="header">
+            <div class="header-title">ВЫБЕРИТЕ ОРГАНИЗАЦИЮ</div>
+        </div>
+        <div class="content">
+            <div class="org-list-container">
+                <div class="org-list" id="org-list" style="opacity: 0;">Загрузка...</div>
+                <div class="navigation">
+                    <button class="nav-btn" id="prev-page-nav">←</button>
+                    <button class="action-btn menu-btn" onclick="window.location.href = '/app'">Меню</button>
+                    <button class="nav-btn" id="next-page-nav">→</button>
+                </div>
+            </div>
         </div>
     </div>
     <script>
-        Telegram.WebApp.ready();
-        const tgId = Telegram.WebApp.initDataUnsafe?.user?.id;
-        async function load() {
-            const res = await fetch(`/api/v1/me/organizations?user_id=${tgId}&role_id=2`);
-            const data = await res.json();
-            const list = document.getElementById("list");
-            list.innerHTML = "";
-            if (!data.organizations.length) {
-                list.innerHTML = "Вы пока не состоите в организациях как работник";
-                return;
-            }
-            data.organizations.forEach((org, i) => {
-                const b = document.createElement("button");
-                b.className = "item";
-                b.style.background = i % 2 ? "#CBE949" : "#CBBAFD";
-                b.textContent = org.name;
-                b.onclick = () => window.location.href = `/app/worker_dashboard.html?org_id=${org.id}`;
-                list.appendChild(b);
-            });
+        const tg = window.Telegram?.WebApp;
+        if (tg) tg.ready();
+        const params = new URLSearchParams(window.location.search);
+        const tgUserId = tg?.initDataUnsafe?.user?.id;
+        const queryUserId = params.get("user_id");
+        const storedUserId = localStorage.getItem("tgUserId");
+        const userId = tgUserId || queryUserId || storedUserId;
+        if (userId) localStorage.setItem("tgUserId", String(userId));
+
+        if (!userId) {
+            document.getElementById("org-list").innerHTML =
+                '<div style="text-align:center; padding:40px; color:#777;">Не удалось определить пользователя. Откройте мини-приложение из Telegram.</div>';
+        } else {
+            fetch(`/api/v1/me/organizations?user_id=${userId}&role_id=2`)
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById("org-list");
+                    container.style.opacity = '0';
+                    const prevBtn = document.getElementById("prev-page-nav");
+                    const nextBtn = document.getElementById("next-page-nav");
+
+                    if (data.organizations.length === 0) {
+                        container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: #555; font-size: 16px;">
+                      Вы не состоите ни в одной организации как работник.
+                    </div>`;
+                        container.style.opacity = '1';
+                        return;
+                    }
+
+                    const totalOrgs = data.organizations.length;
+                    const perPage = 3;
+                    let currentPage = 0;
+
+                    function renderPage(page) {
+                        container.innerHTML = '';
+                        const start = page * perPage;
+                        const end = Math.min(start + perPage, totalOrgs);
+                        const pageOrgs = data.organizations.slice(start, end);
+
+                        pageOrgs.forEach((org) => {
+                            const btn = document.createElement("button");
+                            btn.className = "org-btn";
+                            btn.textContent = org.name.toUpperCase();
+                            btn.onclick = () => {
+                                localStorage.setItem("selectedOrgId", org.id);
+                                window.location.href = `/app/worker_main.html?org_id=${org.id}&user_id=${userId}&v=2`;
+                            };
+                            container.appendChild(btn);
+                        });
+
+                        const hasPrev = page > 0;
+                        const hasNext = page < Math.ceil(totalOrgs / perPage) - 1;
+                        prevBtn.classList.toggle('visible', hasPrev);
+                        nextBtn.classList.toggle('visible', hasNext);
+                    }
+
+                    nextBtn.onclick = () => {
+                        if ((currentPage + 1) * perPage < totalOrgs) {
+                            currentPage++;
+                            renderPage(currentPage);
+                        }
+                    };
+                    prevBtn.onclick = () => {
+                        if (currentPage > 0) {
+                            currentPage--;
+                            renderPage(currentPage);
+                        }
+                    };
+
+                    renderPage(currentPage);
+                    container.style.opacity = '1';
+                })
+                .catch(err => {
+                    document.getElementById("org-list").innerHTML = `
+                  <div style="text-align:center; padding:40px; color:#d32f2f;">
+                    Ошибка загрузки<br><small>${err.message}</small>
+                  </div>`;
+                });
         }
-        load();
     </script>
 </body>
 </html>
