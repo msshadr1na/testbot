@@ -1002,6 +1002,17 @@ async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
     organizations = [{"id": org_id, "name": name} for org_id, name in zip(org_ids, names)]
     return {"organizations": organizations}
 
+@router.get("/worker/organizations")
+async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        return {"organizations": []}
+
+    org_ids, names = await org_service.show_worker_orgs(user.id)
+    organizations = [{"id": org_id, "name": name} for org_id, name in zip(org_ids, names)]
+    return {"organizations": organizations}
+
 @router.get("/client/{orgId}/schedule", response_model=ScheduleResponse)
 async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...), db: Pool = Depends(get_db)):
     user = await _resolve_user_by_any_id(user_id, db)

@@ -206,4 +206,14 @@ class OrganizationService:
 
         return org_ids, names
 
+    async def show_worker_orgs(self, user_id):
+        org_ids = await self.organizationMember_repository.get_membered_orgs(user_id, 2)
+
+        if not org_ids:
+            return [], []
+
+        names = await self.organization_repository.get_names_by_ids(org_ids)
+
+        return org_ids, names
+
 
