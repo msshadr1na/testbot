@@ -509,9 +509,9 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         raise HTTPException(status_code=409, detail="Зал занят в это время")
     if await training_repo.has_trainer_conflict(trainer_id, date_start, date_end, exclude_training_id=training_id):
         raise HTTPException(status_code=409, detail="У тренера уже есть тренировка в это время")
-    old_start = existing["date_start"]
-    old_end = existing["date_end"]
-    training_type = await org_service.get_type_name(existing["type_id"])
+    old_start = existing.date_start
+    old_end = existing.date_end
+    training_type = await org_service.get_type_name(existing.type_id)
 
     updated = await training_repo.update(training_id, gym_id, trainer_id, date_start, date_end, type_id, max_clients)
 
