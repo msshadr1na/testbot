@@ -12,7 +12,7 @@
         font-family: 'Russo One', sans-serif;
         min-height: 100vh;
         color: #1f1f35;
-        overflow-x: hidden; /* Важно: убирает горизонтальную прокрутку */
+        overflow-x: hidden;
     }
     .bg-gradient {
         position: fixed;
@@ -21,15 +21,14 @@
         z-index: -1;
     }
 
-    /* === КОПИРУЕМ СТРУКТУРУ КОНТЕЙНЕРА ИЗ ORG_MAIN === */
     .container {
         width: 100%;
-        max-width: 430px; /* Ограничиваем ширину как на главной */
+        max-width: 430px;
         margin: 0 auto;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        padding: 24px 24px 132px; /* Те же отступы, что и на главной */
+        padding: 24px 24px 132px;
     }
 
     .topbar {
