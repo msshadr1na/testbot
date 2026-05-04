@@ -181,7 +181,7 @@ class OrganizationService:
         return gyms
 
     # Получение всех названий помещений организации
-    async def get_places_list(self, org_id):
+    async def get_places_names_list(self, org_id):
         gyms = await self.gym_repository.get_gyms_names_by_org_id(org_id)
         return gyms
 
