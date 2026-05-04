@@ -40,7 +40,7 @@ async def _broadcast_telegram_messages(telegram_ids: list[int], text: str):
 async def _require_org_role(db: Pool, org_id: int, user_id: int, allowed_roles: set[int]):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
     member_repo = OrganizationMemberRepository(db)
     membership = await member_repo.get_by_user_and_org_any_role(user.id, org_id)
     if not membership or membership.role_id not in allowed_roles:
@@ -79,7 +79,7 @@ async def get_user(telegram_id: int = Query(...), db: Pool = Depends(get_db)):
 async def get_my_profile(user_id: int, db: Pool = Depends(get_db)):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
     return {
         "id": user.id,
         "telegram_id": user.telegram_id,
@@ -99,7 +99,7 @@ async def update_my_profile(
     user_service = create_user_service(db)
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     first_name = (payload.get("first_name") or "").strip()
     last_name = (payload.get("last_name") or "").strip()
@@ -286,7 +286,7 @@ async def get_client(org_id: int, client_id: int, db: Pool = Depends(get_db)):
     user_service = create_user_service(db)
     client = await user_service.get_by_id(client_id)
     if client is None:
-        raise HTTPException(status_code=404, detail="Client not found")
+        raise HTTPException(status_code=404, detail="Клиент не найден")
     full_name = f"{client.last_name} {client.first_name}".strip()
     if client.middle_name:
         full_name = f"{full_name} {client.middle_name}"
@@ -322,7 +322,7 @@ async def get_place(org_id: int, place_id: int, db: Pool = Depends(get_db)):
     org_service = create_organization_service(db)
     place = await org_service.get_place_by_id(place_id)
     if place is None or place.organization_id != org_id:
-        raise HTTPException(status_code=404, detail="Place not found")
+        raise HTTPException(status_code=404, detail="Помещение не найдено")
     return {"id": place.id, "name": place.name, "organization_id": place.organization_id}
 
 
@@ -332,7 +332,7 @@ async def update_place(org_id: int, place_id: int, name: str, db: Pool = Depends
     org_service = create_organization_service(db)
     place = await org_service.get_place_by_id(place_id)
     if place is None or place.organization_id != org_id:
-        raise HTTPException(status_code=404, detail="Place not found")
+        raise HTTPException(status_code=404, detail="Помещение не найдено")
     updated = await org_service.update_place_name(place_id, name.strip())
     return {"id": updated.id, "name": updated.name, "organization_id": updated.organization_id}
 
@@ -353,7 +353,7 @@ async def delete_place(org_id: int, place_id: int, db: Pool = Depends(get_db)):
 @router.get("/org/{org_id}/events/calendar")
 async def get_events_calendar(org_id: int, year: int, month: int, db: Pool = Depends(get_db)):
     if month < 1 or month > 12:
-        raise HTTPException(status_code=400, detail="Invalid month")
+        raise HTTPException(status_code=400, detail="Неверный месяц")
 
     training_repo = TrainingRepository(db)
     start_date = date(year, month, 1)
@@ -513,7 +513,8 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         raise HTTPException(status_code=409, detail="У тренера уже есть тренировка в это время")
     old_start = existing.date_start
     old_end = existing.date_end
-    training_type = await training_type_service.get_type_name(existing.type_id)
+    new_training_type = await training_type_service.get_type_name(type_id)
+    old_training_type = await training_type_service.get_type_name(existing.type_id)
 
     updated = await training_repo.update(training_id, gym_id, trainer_id, date_start, date_end, type_id, max_clients)
 
@@ -525,12 +526,16 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         trainer_name = ""
         if trainer:
             trainer_name = f"{trainer.first_name} {trainer.last_name}".strip()
-        msg = (
-            f"Изменены параметры тренировки: {training_type} в организации {org_name}.\n"
-            f"Старые дата/время: {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n"
-            f"Новая дата/время: {date_start.strftime('%d.%m %H:%M')}–{date_end.strftime('%H:%M')}\n"
-            f"Тренер: {trainer_name or 'Тренер'}"
-        )
+
+        if old_start == time_start and old_end == time_end and old_training_type==new_training_type:
+            msg = ""
+        elif old_start != time_start or old_end != time_end and old_training_type==new_training_type:
+            msg = (
+                f"Изменена тренировка: {old_training_type} в организации {org_name}.\n"
+                f"Старые дата/время:\n {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n"
+                f"Новая дата/время:\n {date_start.strftime('%d.%m %H:%M')}–{date_end.strftime('%H:%M')}\n"
+                f"Тренер:\n {trainer_name or 'Тренер'}"
+            )
         await _broadcast_telegram_messages(booked_tg_ids, msg)
     except Exception:
         pass
@@ -547,7 +552,7 @@ async def delete_event(org_id: int, training_id: int, db: Pool = Depends(get_db)
 
     training = await training_repo.get_by_id(training_id)
     if not training or training.organization_id != org_id:
-        raise HTTPException(status_code=404, detail="Training not found")
+        raise HTTPException(status_code=404, detail="Тренировка не найдена")
 
     org = await org_service.get_by_id(org_id)
     users_to_notify = await booking_repo.get_user_telegram_ids_by_training_id(training_id)
@@ -609,9 +614,9 @@ async def create_worker_event(
         date_start = datetime.strptime(f"{day} {time_start}", "%Y-%m-%d %H:%M")
         date_end = datetime.strptime(f"{day} {time_end}", "%Y-%m-%d %H:%M")
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date/time format")
+        raise HTTPException(status_code=400, detail="Неверный формат времени")
     if date_end <= date_start:
-        raise HTTPException(status_code=400, detail="End time must be after start time")
+        raise HTTPException(status_code=400, detail="Время окончания должно быть позже времени начала")
 
     training_repo = TrainingRepository(db)
     if await training_repo.has_gym_conflict(org_id, gym_id, date_start, date_end):
@@ -702,7 +707,7 @@ async def get_worker_training_stats(org_id: int, training_id: int, user_id: int,
         user.id,
     )
     if not row:
-        raise HTTPException(status_code=404, detail="Training not found")
+        raise HTTPException(status_code=404, detail="Тренировка не найдена")
 
     review_table_exists = await db.fetchval("select to_regclass('public.review') is not null")
     if not review_table_exists:
@@ -729,7 +734,7 @@ async def get_worker_training_stats(org_id: int, training_id: int, user_id: int,
 async def get_my_worker_schedule(org_id: int, user_id: int, days: int = 3, db: Pool = Depends(get_db)):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
     training_repo = TrainingRepository(db)
     now = datetime.now()
     horizon = now + timedelta(days=max(1, min(days, 14)))
@@ -752,7 +757,7 @@ async def get_my_worker_schedule(org_id: int, user_id: int, days: int = 3, db: P
 async def get_my_client_bookings(org_id: int, user_id: int, days: int = 30, db: Pool = Depends(get_db)):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
     booking_repo = BookingRepository(db)
     now = datetime.now()
     horizon = now + timedelta(days=max(1, min(days, 60)))
@@ -775,10 +780,10 @@ async def get_my_client_bookings(org_id: int, user_id: int, days: int = 30, db: 
 @router.get("/client/{org_id}/dashboard")
 async def get_client_dashboard_bookings(org_id: int, year: int, month: int, user_id: int, db: Pool = Depends(get_db)):
     if month < 1 or month > 12:
-        raise HTTPException(status_code=400, detail="Invalid month")
+        raise HTTPException(status_code=400, detail="Неверный месяц")
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     booking_repo = BookingRepository(db)
     start = datetime(year, month, 1)
@@ -811,7 +816,7 @@ async def get_client_history(
 
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     total = await db.fetchval(
         """
@@ -902,7 +907,7 @@ async def create_client_review(
         raise HTTPException(status_code=400, detail="grade must be between 1 and 5")
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     training = await db.fetchrow(
         """
@@ -914,7 +919,7 @@ async def create_client_review(
         training_id, org_id, user.id
     )
     if training is None:
-        raise HTTPException(status_code=404, detail="Training not found in history")
+        raise HTTPException(status_code=404, detail="Тренировка не найдена в архиве")
 
     existing = await db.fetchval(
         "select id from review where user_id = $1 and training_id = $2 limit 1",
@@ -938,7 +943,7 @@ async def book_client_training(
 ):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     row = await db.fetchrow(
         """
@@ -951,7 +956,7 @@ async def book_client_training(
         user.id, trainingId, org_id
     )
     if row is None:
-        raise HTTPException(status_code=404, detail="Training not found")
+        raise HTTPException(status_code=404, detail="Тренировка не найдена")
     if row["is_booked"]:
         raise HTTPException(status_code=409, detail="Already booked")
     if row["booked_count"] >= row["max_clients"]:
@@ -966,21 +971,21 @@ async def book_client_training(
 async def unbook_client_training(org_id: int, training_id: int, user_id: int = Query(...), db: Pool = Depends(get_db)):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     training_exists = await db.fetchval(
         "select id from training where id = $1 and organization_id = $2",
         training_id, org_id
     )
     if training_exists is None:
-        raise HTTPException(status_code=404, detail="Training not found")
+        raise HTTPException(status_code=404, detail="Тренировка не найдена")
 
     deleted_id = await db.fetchval(
         "delete from booking where user_id = $1 and training_id = $2 returning id",
         user.id, training_id
     )
     if deleted_id is None:
-        raise HTTPException(status_code=404, detail="Booking not found")
+        raise HTTPException(status_code=404, detail="Запись не найдена")
 
     return {"ok": True}
 
@@ -1010,7 +1015,7 @@ async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
 async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...), db: Pool = Depends(get_db)):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
     org_service = create_organization_service(db)
     end_date = date + timedelta(days=6)
     rows = await org_service.get_schedule(user.id, orgId, date, end_date)
@@ -1050,3 +1055,21 @@ async def get_worker_organizations(
     ]
 
     return {"organizations": organizations}
+
+
+@router.post("/org/{org_id}/places")
+async def create_place(org_id: int,name: str = Query(...),db: Pool = Depends(get_db)):
+    _validate_place_name(name)
+    org_service = create_organization_service(db)
+
+    org = await org_service.get_by_id(org_id)
+    if not org:
+        raise HTTPException(status_code=404, detail="Организация не найдена")
+    org_places_list = await org_service.get_places_names_list(org_id)
+    if name in org_places_list:
+        raise HTTPException(status_code=409, detail="Помещение с таким названием уже есть в организации")
+    try:
+        new_place = await org_service.create_place(org_id, name.strip())
+        return {"id": new_place.id,"name": new_place.name,"organization_id": new_place.organization_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

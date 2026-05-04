@@ -155,6 +155,10 @@ class GymRepository:
         sql = "select id, name from gym where organization_id = $1"
         rows = await self.pool.fetch(sql,org_id)
         return [(row["id"], row["name"]) for row in rows]
+    async def get_gyms_names_by_org_id(self, org_id):
+        sql = "select id, name from gym where organization_id = $1"
+        rows = await self.pool.fetch(sql,org_id)
+        return [row["name"] for row in rows]
 
     async def update_name(self, gym_id: int, name: str):
         sql = "update gym set name = $2 where id = $1 returning id, name, organization_id"

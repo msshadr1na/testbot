@@ -157,7 +157,36 @@
         {
             background: #BBAAEF;
         }
+        .add-place-btn {
+            margin-top: 24px;
+            width: 100%;
+            min-height: 56px;
+            border: none;
+            border-radius: 20px;
+            font-family: 'Russo One', sans-serif;
+            font-size: 18px;
+            background: #CBBAFD;
+            box-shadow: 0 6px 0 #9B7FCC;
+            cursor: pointer;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            padding: 12px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            color: #000000 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
+        .add-place-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 0 #9B7FCC, 0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .add-place-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 0 #9B7FCC;
+        }
         @media (max-width: 430px) {
             .bottom-nav-wrap
             {
@@ -194,7 +223,14 @@
             {
                 font-size: 8px;
             }
+            .add-place-btn {
+                margin-top: 16px;
+                min-height: 64px;
+                font-size: 16px;
+                border-radius: 18px;
+            }
         }
+
     </style>
 </head>
 <body>
@@ -208,6 +244,7 @@
                 <div class="places-nav-center"></div>
                 <button class="places-nav-btn" id="next-page-btn">→</button>
             </div>
+            <button class="add-place-btn" onclick="window.location.href = `/app/create_place.html?org_id=${orgId}&v=2`">ДОБАВИТЬ ПОМЕЩЕНИЕ</button>
         </div>
     </div>
     <div class="bottom-nav-wrap">
