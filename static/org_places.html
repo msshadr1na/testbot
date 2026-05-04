@@ -245,7 +245,7 @@
                 el.style.background = isPurple ? "#CBBAFD" : "#CBE949";
                 el.style.borderColor = isPurple ? "#9B7FCC" : "#9EB82E";
                 el.textContent = place.name;
-                el.onclick = () => window.location.href = `/app/static/org_place_detail.html?org_id=${orgId}&place_id=${place.id}&v=2`;
+                el.onclick = () => window.location.href = `/app/org_place_detail.html?org_id=${orgId}&place_id=${place.id}&v=2`;
                 list.appendChild(el);
             });
 
