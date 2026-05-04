@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from app.factory import create_organization_service, create_user_service
+from app.services import TrainingTypeService
 from app.webapp.deps import get_db
 from asyncpg import Pool
 from app.models import Booking, Training
@@ -501,6 +502,7 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
     booking_repo = BookingRepository(db)
     org_service = create_organization_service(db)
     user_service = create_user_service(db)
+    training_type_service = TrainingTypeService(TrainingRepository(db))
     existing = await training_repo.get_by_id(training_id)
     if not existing or existing.organization_id != org_id:
         raise HTTPException(status_code=404, detail="тренировка не найдена")
@@ -511,7 +513,7 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         raise HTTPException(status_code=409, detail="У тренера уже есть тренировка в это время")
     old_start = existing.date_start
     old_end = existing.date_end
-    training_type = await org_service.get_type_name(existing.type_id)
+    training_type = await training_type_service.get_type_name(existing.type_id)
 
     updated = await training_repo.update(training_id, gym_id, trainer_id, date_start, date_end, type_id, max_clients)
 
