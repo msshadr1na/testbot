@@ -330,6 +330,11 @@ class TrainingRepository:
         rows = await self.pool.fetch(sql)
         return [(row["id"], row["name"]) for row in rows]
 
+    async def get_training_type_by_id(self, training_id: int):
+        sql = "select * from training_type where id = $1"
+        row = await self.pool.fetchrow(sql, training_id)
+        return TrainingType(row["id"], row["name"])
+
     async def find_training_type_by_name(self, name: str):
         sql = "select id, name from training_type where lower(name) = lower($1)"
         return await self.pool.fetchrow(sql, name)
@@ -519,3 +524,4 @@ class InviteRepository:
     async def delete_by_org_and_role(self, organization_id: int, role_id: int):
         sql = """delete from invites where organization_id = $1 and role_id = $2"""
         await self.pool.execute(sql, organization_id, role_id)
+

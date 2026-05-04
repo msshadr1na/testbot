@@ -216,4 +216,14 @@ class OrganizationService:
 
         return org_ids, names
 
+class TrainingTypeService:
+    def __init__(self, training_repo: TrainingRepository):
+        self.training_repo = training_repo
+
+    async def get_type_name(self, training_id):
+        training = await self.training_repo.get_by_id(training_id)
+        return training.name
+
+
+
 

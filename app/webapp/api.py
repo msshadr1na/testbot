@@ -144,12 +144,12 @@ async def create_organization(name: str, first_place_name: str, user_id: int, db
     _validate_place_name(first_place_name)
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     org_service = create_organization_service(db)
     existing = await org_service.find_by_name(name.strip())
     if existing:
-        raise HTTPException(status_code=400, detail="Organization name already exists")
+        raise HTTPException(status_code=400, detail="Организация с таким названием уже существует")
 
     org = await org_service.create_organization(user, name.strip())
     await org_service.create_place(org.id, first_place_name.strip())
@@ -161,7 +161,7 @@ async def get_organization(org_id: int, db: Pool = Depends(get_db)):
     org_service = create_organization_service(db)
     org = await org_service.get_by_id(org_id)
     if org is None:
-        raise HTTPException(status_code=404, detail="Organization not found")
+        raise HTTPException(status_code=404, detail="Организация не найдена")
     return {"id": org.id, "name": org.name}
 
 
@@ -170,10 +170,10 @@ async def update_organization_name(org_id: int, name: str, db: Pool = Depends(ge
     org_service = create_organization_service(db)
     existing = await org_service.get_by_id(org_id)
     if existing is None:
-        raise HTTPException(status_code=404, detail="Organization not found")
+        raise HTTPException(status_code=404, detail="Организация не найдена")
     existing = await org_service.find_by_name(name.strip())
     if existing:
-        raise HTTPException(status_code=409, detail="Organization name already exists")
+        raise HTTPException(status_code=409, detail="Организация с таким названием уже сущетсвует")
     updated = await org_service.update_name(org_id, name.strip())
     return {"id": updated.id, "name": updated.name}
 
@@ -182,7 +182,7 @@ async def update_organization_name(org_id: int, name: str, db: Pool = Depends(ge
 async def delete_organization(org_id: int, user_id: int, db: Pool = Depends(get_db)):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
 
     org_service = create_organization_service(db)
     await org_service.delete_organization(user.id, org_id)
@@ -215,7 +215,7 @@ async def get_worker(org_id: int, worker_id: int, db: Pool = Depends(get_db)):
     user_service = create_user_service(db)
     worker = await user_service.get_by_id(worker_id)
     if worker is None:
-        raise HTTPException(status_code=404, detail="Worker not found")
+        raise HTTPException(status_code=404, detail="Работник не найден")
     full_name = f"{worker.last_name} {worker.first_name}".strip()
     if worker.middle_name:
         full_name = f"{full_name} {worker.middle_name}"
@@ -341,7 +341,7 @@ async def delete_place(org_id: int, place_id: int, db: Pool = Depends(get_db)):
     org_service = create_organization_service(db)
     place = await org_service.get_place_by_id(place_id)
     if place is None or place.organization_id != org_id:
-        raise HTTPException(status_code=404, detail="Place not found")
+        raise HTTPException(status_code=404, detail="Помещение не найдено")
     places = await org_service.get_places_list(org_id)
     if len(places) <= 1:
         raise HTTPException(status_code=400, detail="Нельзя удалить единственное помещение организации")
@@ -372,7 +372,7 @@ async def get_events_day(org_id: int, day: str, db: Pool = Depends(get_db)):
     try:
         day_date = datetime.strptime(day, "%Y-%m-%d").date()
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid day format")
+        raise HTTPException(status_code=400, detail="Неверный формат даты")
     training_repo = TrainingRepository(db)
     rows = await training_repo.get_trainings_with_details_by_org_and_date_range(org_id, day_date, day_date + timedelta(days=1))
     return {
@@ -422,14 +422,14 @@ async def create_event(
     db: Pool = Depends(get_db),
 ):
     if max_clients < 1:
-        raise HTTPException(status_code=400, detail="max_clients must be > 0")
+        raise HTTPException(status_code=400, detail="Максимальное количество клиентов должно быть больше 0")
     try:
         date_start = datetime.strptime(f"{day} {time_start}", "%Y-%m-%d %H:%M")
         date_end = datetime.strptime(f"{day} {time_end}", "%Y-%m-%d %H:%M")
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date/time format")
+        raise HTTPException(status_code=400, detail="Неверный формат даты/времени")
     if date_end <= date_start:
-        raise HTTPException(status_code=400, detail="End time must be after start time")
+        raise HTTPException(status_code=400, detail="Время окончания должно быть позже времени начала")
 
     training_repo = TrainingRepository(db)
     if await training_repo.has_gym_conflict(org_id, gym_id, date_start, date_end):
@@ -472,7 +472,7 @@ async def get_event_detail(org_id: int, training_id: int, db: Pool = Depends(get
     training_repo = TrainingRepository(db)
     training = await training_repo.get_by_id(training_id)
     if not training or training.organization_id != org_id:
-        raise HTTPException(status_code=404, detail="Training not found")
+        raise HTTPException(status_code=404, detail="Тренировка не найдена")
     return {
         "id": training.id,
         "organization_id": training.organization_id,
@@ -485,28 +485,17 @@ async def get_event_detail(org_id: int, training_id: int, db: Pool = Depends(get
     }
 
 
-@router.put("/org/{org_id}/events/{training_id}")
-async def update_event(
-    org_id: int,
-    training_id: int,
-    day: str,
-    time_start: str,
-    time_end: str,
-    gym_id: int,
-    trainer_id: int,
-    type_id: int,
-    max_clients: int,
-    db: Pool = Depends(get_db),
-):
+@router.put("/org/{org_id}/events/{training_id}") ###
+async def update_event(org_id: int,training_id: int,day: str,time_start: str,time_end: str,gym_id: int,trainer_id: int,type_id: int,max_clients: int,db: Pool = Depends(get_db),):
     if max_clients < 1:
-        raise HTTPException(status_code=400, detail="max_clients must be > 0")
+        raise HTTPException(status_code=400, detail="Максимальное количество клиентов должно быть больше 0")
     try:
         date_start = datetime.strptime(f"{day} {time_start}", "%Y-%m-%d %H:%M")
         date_end = datetime.strptime(f"{day} {time_end}", "%Y-%m-%d %H:%M")
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date/time format")
+        raise HTTPException(status_code=400, detail="Неверный формат даты/времени")
     if date_end <= date_start:
-        raise HTTPException(status_code=400, detail="End time must be after start time")
+        raise HTTPException(status_code=400, detail="Время окончания должно быть позже времени начала")
 
     training_repo = TrainingRepository(db)
     booking_repo = BookingRepository(db)
@@ -514,16 +503,18 @@ async def update_event(
     user_service = create_user_service(db)
     existing = await training_repo.get_by_id(training_id)
     if not existing or existing.organization_id != org_id:
-        raise HTTPException(status_code=404, detail="Training not found")
+        raise HTTPException(status_code=404, detail="тренировка не найдена")
 
     if await training_repo.has_gym_conflict(org_id, gym_id, date_start, date_end, exclude_training_id=training_id):
         raise HTTPException(status_code=409, detail="Зал занят в это время")
     if await training_repo.has_trainer_conflict(trainer_id, date_start, date_end, exclude_training_id=training_id):
         raise HTTPException(status_code=409, detail="У тренера уже есть тренировка в это время")
+    old_start = existing["date_start"]
+    old_end = existing["date_end"]
+    training_type = await org_service.get_type_name(existing["type_id"])
 
     updated = await training_repo.update(training_id, gym_id, trainer_id, date_start, date_end, type_id, max_clients)
 
-    # Уведомляем всех записанных пользователей о любых изменениях.
     try:
         org = await org_service.get_by_id(org_id)
         org_name = org.name if org else "организации"
@@ -533,13 +524,13 @@ async def update_event(
         if trainer:
             trainer_name = f"{trainer.first_name} {trainer.last_name}".strip()
         msg = (
-            f"Изменены параметры тренировки в организации {org_name}.\n"
+            f"Изменены параметры тренировки: {training_type} в организации {org_name}.\n"
+            f"Старые дата/время: {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n"
             f"Новая дата/время: {date_start.strftime('%d.%m %H:%M')}–{date_end.strftime('%H:%M')}\n"
             f"Тренер: {trainer_name or 'Тренер'}"
         )
         await _broadcast_telegram_messages(booked_tg_ids, msg)
     except Exception:
-        # Не блокируем изменение тренировки, если Telegram недоступен.
         pass
 
     return {"id": updated.id, "organization_id": updated.organization_id}
