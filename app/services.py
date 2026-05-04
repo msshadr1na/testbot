@@ -221,8 +221,8 @@ class TrainingTypeService:
         self.training_repo = training_repo
 
     async def get_type_name(self, training_id):
-        training = await self.training_repo.get_by_id(training_id)
-        return training.name
+        type = await self.training_repo.get_training_type_by_id(training_id)
+        return type.name
 
 
 
