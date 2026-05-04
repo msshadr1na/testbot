@@ -12,12 +12,41 @@
         .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
         .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 18px 14px 112px; min-height: 100vh; }
         .title { text-align: center; font-size: 24px; margin-bottom: 14px; text-transform: uppercase; }
-        .panel { background: #EFEEFC; border-radius: 20px; border: 1px solid #fff; box-shadow: 0 12px 20px rgba(37,27,76,.15); padding: 16px; min-height: 420px; display: flex; flex-direction: column; }
+        .panel {
+            background: #EFEEFC;
+            border-radius: 20px;
+            border: 1px solid #fff;
+            box-shadow: 0 12px 20px rgba(37,27,76,.15);
+            padding: 16px; min-height: 420px;
+            display: flex;
+            flex-direction: column; }
         #list { flex: 1; }
-        .item { width: 100%; height: 62px; margin: 0 auto 12px; border: 3px solid #9EB82E; border-radius: 16px; font-family: inherit; font-size: 16px; box-shadow: 0 7px 0 rgba(57,42,103,.18), 0 12px 18px rgba(57,42,103,.12); cursor: pointer; }
-        .item:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57,42,103,.18), 0 8px 10px rgba(57,42,103,.12); }
-        .places-nav { display: grid; grid-template-columns: 40px 1fr 40px; gap: 10px; margin-top: 8px; align-items: center; }
-        .places-nav-center { height: 40px; }
+        .item {
+            width: 100%;
+            height: 62px;
+            margin: 0 auto 12px;
+            border: 3px solid #9EB82E;
+            border-radius: 16px;
+            font-family: inherit;
+            font-size: 16px;
+            box-shadow: 0 7px 0 rgba(57,42,103,.18), 0 12px 18px rgba(57,42,103,.12);
+            color: #000;
+            cursor: pointer;
+        }
+        .item:active {
+            transform: translateY(4px);
+            box-shadow: 0 3px 0 rgba(57,42,103,.18), 0 8px 10px rgba(57,42,103,.12);
+        }
+        .places-nav {
+            display: grid;
+            grid-template-columns: 40px 1fr 40px;
+            gap: 10px;
+            margin-top: 8px;
+            align-items: center;
+        }
+        .places-nav-center {
+            height: 40px;
+        }
         .places-nav-btn {
             width: 40px;
             height: 40px;
