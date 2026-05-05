@@ -19,7 +19,10 @@
             box-shadow: 0 12px 20px rgba(37,27,76,.15);
             padding: 16px; min-height: 420px;
             display: flex;
-            flex-direction: column; }
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
         #list { flex: 1; }
         .item {
             width: 100%;
@@ -37,29 +40,30 @@
             transform: translateY(4px);
             box-shadow: 0 3px 0 rgba(57,42,103,.18), 0 8px 10px rgba(57,42,103,.12);
         }
+
         .places-nav {
-            display: grid;
-            grid-template-columns: 40px 1fr 40px;
-            gap: 10px;
-            margin-top: 8px;
+            display: flex;
             align-items: center;
-        }
-        .places-nav-center {
-            height: 40px;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 16px;
+            gap: 10px;
         }
         .places-nav-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 20px;
-            border: 1px solid #d6d6e7;
             background: #fff;
+            width: 50px;
+            height: 50px;
+            border-radius: 28px;
+            border: none;
+            font-size: 24px;
+            font-weight: bold;
+            color: #000;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(57, 42, 103, 0.15);
-            font-family: inherit;
-            font-size: 20px;
-            line-height: 1;
-        }
-        .places-nav-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             visibility: hidden;
             opacity: 0;
             pointer-events: none;
@@ -68,6 +72,14 @@
             visibility: visible;
             opacity: 1;
             pointer-events: auto;
+        }
+        .places-nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18), 0 15px 6px rgba(26, 15, 52, 0.22);
+        }
+        .places-nav-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 4px 0 rgba(64, 52, 96, 0.22), 0 7px 12px rgba(26, 15, 52, 0.15);
         }
         .bottom-nav-wrap {
             position: fixed;
@@ -158,8 +170,8 @@
             background: #BBAAEF;
         }
         .add-place-btn {
-            margin-top: 24px;
-            width: 100%;
+            margin-top: 10px;
+            width: fit-content;
             min-height: 56px;
             border: none;
             border-radius: 20px;
@@ -241,10 +253,9 @@
             <div id="list" style="text-align:center;padding:30px 10px;">Загрузка...</div>
             <div class="places-nav">
                 <button class="places-nav-btn" id="prev-page-btn">←</button>
-                <div class="places-nav-center"></div>
+                <button class="add-place-btn" onclick="window.location.href = `/app/create_place.html?org_id=${orgId}&v=2`">ДОБАВИТЬ</button>
                 <button class="places-nav-btn" id="next-page-btn">→</button>
             </div>
-            <button class="add-place-btn" onclick="window.location.href = `/app/create_place.html?org_id=${orgId}&v=2`">ДОБАВИТЬ ПОМЕЩЕНИЕ</button>
         </div>
     </div>
     <div class="bottom-nav-wrap">
@@ -289,7 +300,7 @@
         const list = document.getElementById("list");
         let placesData = [];
         let currentPage = 0;
-        const perPage = 5;
+        const perPage = 4;
 
         function renderPlacesPage(page) {
             list.innerHTML = "";
