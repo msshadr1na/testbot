@@ -29,7 +29,7 @@
             background: #EFEEFC; border-radius: 20px; padding: 22px 18px; margin-bottom: 18px;
             box-shadow: 0 12px 20px rgba(38, 30, 67, 0.13); border: 1px solid #fff;
         }
-        .worker-name { font-size: 24px; line-height: 1.1; text-transform: uppercase; margin-bottom: 8px; color: #0b0b11; }
+        .worker-name { font-size: 22px; line-height: 1.1; text-transform: uppercase; margin-bottom: 8px; color: #0b0b11; }
         .worker-phone { font-size: 14px; opacity: 0.7; }
 
         .schedule-header {
@@ -124,7 +124,7 @@
         </div>
 
         <div class="schedule-header">
-            <div class="schedule-title">РАСПИСАНИЕ НА 3 ДНЯ</div>
+            <div class="schedule-title">РАСПИСАНИЕ НА НЕДЕЛЮ</div>
         </div>
 
         <div class="schedule-list-container">
@@ -178,7 +178,7 @@
 
         async function loadSchedule() {
             try {
-                const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}/schedule?days=3`);
+                const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}/schedule?days=7`);
                 const data = await res.json();
 
                 scheduleListEl.innerHTML = "";
@@ -204,7 +204,7 @@
                         <div class="card-top">
                             <div class="time-block">
                                 <span class="time-val">${timeStart} - ${timeEnd}</span>
-                                <span class="duration-val">(${durationMin} мин)</span>
+                                <span class="duration-val">${durationMin} мин</span>
                             </div>
                             <div class="gym-tag">${item.gym_name}</div>
                         </div>
