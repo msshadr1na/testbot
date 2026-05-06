@@ -481,6 +481,11 @@ class BookingRepository:
         rows = await self.pool.fetch(sql, training_id)
         return [row["telegram_id"] for row in rows]
 
+    async def get_by_training_id(self, training_id: int):
+        sql = "select * from booking where training_id = $1"
+        rows = await self.pool.fetch(sql, training_id)
+        return [Booking(row["id"],row["user_id"], row["training_id"], row["created_at"]) for row in rows]
+
 class ReviewRepository:
     def __init__(self,pool):
         self.pool = pool
@@ -491,6 +496,13 @@ class ReviewRepository:
 
         review.id = row["id"]
         return review
+
+    async def get_by_training_id(self, training_id: int):
+        sql = """select u.first_name, u.last_name, r.grade, r.text from review r
+                join users u on u.id = r.user_id
+                where training_id = $1"""
+        rows = await self.pool.fetch(sql, training_id)
+        return rows
 
 class InviteRepository:
     def __init__(self, pool):

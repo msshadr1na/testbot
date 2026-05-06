@@ -5,7 +5,8 @@ from app.services import TrainingTypeService
 from app.webapp.deps import get_db
 from asyncpg import Pool
 from app.models import Booking, Training
-from infrastructure.repositories import BookingRepository, OrganizationMemberRepository, TrainingRepository
+from infrastructure.repositories import BookingRepository, OrganizationMemberRepository, TrainingRepository, \
+    ReviewRepository
 from app.webapp.schemas import UserName, ScheduleResponse
 from config import bot_token
 import json
@@ -1073,3 +1074,57 @@ async def create_place(org_id: int,name: str = Query(...),db: Pool = Depends(get
         return {"id": new_place.id,"name": new_place.name,"organization_id": new_place.organization_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/org/{org_id}/events/{training_id}/bookings")
+async def get_training_bookings(org_id: int, training_id: int, db: Pool = Depends(get_db)):
+    training_repo = TrainingRepository(db)
+    training = await training_repo.get_by_id(training_id)
+    if not training or training.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Training not found")
+
+    booking_repo = BookingRepository(db)
+    bookings = await booking_repo.get_by_training_id(training_id)
+
+    user_service = create_user_service(db)
+    result = []
+    for b in bookings:
+        user = await user_service.get_by_id(b.user_id)
+        name = f"{user.first_name} {user.last_name}" if user else "Unknown"
+        result.append({
+            "client_name": name,
+            "created_at": b.created_at.isoformat()
+        })
+
+    return {"bookings": result}
+
+
+@router.get("/org/{org_id}/events/{training_id}/reviews")
+async def get_training_reviews(org_id: int, training_id: int, db: Pool = Depends(get_db)):
+    # Проверка принадлежности
+    training_repo = TrainingRepository(db)
+    training = await training_repo.get_by_id(training_id)
+    if not training or training.organization_id != org_id:
+        raise HTTPException(status_code=404, detail="Training not found")
+
+    reviews_repo = ReviewRepository(db)
+    reviews_db = await reviews_repo.get_by_training_id(training_id)
+
+    reviews = []
+    total_grade = 0
+    count = len(reviews_db)
+
+    for row in reviews_db:
+        reviews.append({
+            "grade": row["grade"],
+            "text": row["text"],
+            "client_name": f"{row['first_name']} {row['last_name']}"
+        })
+        total_grade += row["grade"]
+
+    avg_grade = round(total_grade / count, 1) if count > 0 else None
+
+    return {
+        "reviews": reviews,
+        "avg_grade": avg_grade
+    }
