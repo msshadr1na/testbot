@@ -124,8 +124,10 @@
                 <div class="grid" id="calendar-grid"></div>
             </div>
 
-            <div style="width:100%; text-align:left; font-size:14px; margin-bottom:5px; font-weight:bold;">Тренировки на день:</div>
-            <div class="list" id="day-list">Выберите день</div>
+            <div id="day-header" style="width:100%; text-align:left; font-size:16px; margin-bottom:8px; font-weight:bold; color: #41404E; display: none;">Тренировки <span id="header-date"></span>
+            </div>
+
+            <div class="list" id="day-list">Выберите день в календаре</div>
 
             <div class="form-card" id="edit-form">
                 <div style="font-size:12px;margin-bottom:8px;" id="selected-day-label">Дата: не выбрана</div>
@@ -151,8 +153,8 @@
             </div>
 
             <div class="form-card" id="view-actions" style="display:none;">
-                <button class="btn btn-info" id="view-clients-btn">👥 Посмотреть клиентов</button>
-                <button class="btn btn-info" id="view-reviews-btn">⭐ Отзывы и статистика</button>
+                <button class="btn btn-info" id="view-clients-btn">Посмотреть клиентов</button>
+                <button class="btn btn-info" id="view-reviews-btn">Отзывы и статистика</button>
             </div>
 
             <div class="status" id="status"></div>
@@ -261,14 +263,12 @@
             if (isPastTraining) {
                 editForm.classList.remove("visible");
                 viewActions.style.display = "block";
-                setStatus("Это прошедшая тренировка. Редактирование запрещено.");
             } else {
                 editForm.classList.add("visible");
                 viewActions.style.display = "none";
                 createBtn.style.display = "none";
                 updateBtn.style.display = "block";
                 deleteBtn.style.display = "block";
-                setStatus("Режим редактирования");
             }
         }
 
@@ -318,14 +318,19 @@
             selectedTrainingId = null;
             editForm.classList.remove("visible");
             viewActions.style.display = "none";
-            selectedDayLabel.textContent = `Дата: ${dayDate}`;
+            const dayHeader = document.getElementById("day-header");
+            const headerDateSpan = document.getElementById("header-date");
+            const dateParts = dayDate.split("-");
+            const formattedDate = `${dateParts[2]}.${dateParts[1]}`;
+            headerDateSpan.textContent = formattedDate;
+            dayHeader.style.display = "block";
+            selectedDayLabel.textContent = `Дата: ${formattedDate}`;
             createBtn.style.display = "block";
-
             const res = await fetch(`/api/v1/org/${orgId}/events/day?day=${dayDate}`);
             const data = await res.json();
 
             if (!data.trainings.length) {
-                dayList.innerHTML = "На этот день тренировок нет";
+                dayList.innerHTML = `<div style="text-align:center; padding:10px; color:#888;">На ${formattedDate} тренировок нет</div>`;
                 return;
             }
 
@@ -333,6 +338,7 @@
             data.trainings.forEach((t) => {
                 const s = new Date(t.date_start).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
                 const e = new Date(t.date_end).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+
                 const btn = document.createElement("button");
                 btn.className = "training-item";
                 btn.innerHTML = `${s}-${e} • ${t.type_name}<br>${t.trainer_name || 'Тренер'} • ${t.gym_name}`;
