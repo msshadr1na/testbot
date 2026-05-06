@@ -40,12 +40,13 @@
         }
         .small {
             height: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.55);
+            border: 1px solid #CBBAFD;
             border-radius: 14px;
             font-family: inherit;
             font-size: 12px;
             cursor: pointer;
             transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+            color:#000;
         }
         .a1 {
             background: #CBBAFD;
@@ -58,6 +59,7 @@
             border: 1px solid #d6d6e7;
             font-size: 18px;
             box-shadow: 0 2px 4px rgba(57, 42, 103, 0.15);
+            color: #000;
         }
         .page-nav {
             visibility: hidden;
@@ -69,7 +71,10 @@
             opacity: 1;
             pointer-events: auto;
         }
-        #invite-btn:hover, #refresh-btn:hover { filter: brightness(1.03); }
+        #invite-btn:hover, #refresh-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 0 #9B7FCC, 0 15px 6px rgba(0, 0, 0, 0.3);
+        }
         #invite-btn:active, #refresh-btn:active { transform: translateY(2px); }
         .invite-inline {
             width: 100%;
@@ -94,13 +99,14 @@
             width: 34px;
             height: 34px;
             border-radius: 17px;
-            border: 1px solid #d6d6e7;
+            border: none;
             background: #ffffff;
             cursor: pointer;
             font-family: inherit;
             font-size: 16px;
             line-height: 1;
             box-shadow: 0 2px 4px rgba(57, 42, 103, 0.15);
+            color: #000;
         }
         .invite-icon-btn:active { transform: translateY(1px); }
         .status { width: 100%; font-size: 12px; margin-top: 8px; min-height: 16px; color: #5a5a5a; word-break: break-word; text-align: center; }
@@ -285,6 +291,7 @@
             </button>
         </div>
     </div>
+
     <script>
         Telegram.WebApp.ready();
         const orgId = new URLSearchParams(window.location.search).get("org_id");
