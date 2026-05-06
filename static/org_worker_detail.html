@@ -10,70 +10,97 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Russo One', sans-serif; min-height: 100vh; color: #1f1f35; }
         .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
+
         .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 20px 14px 24px; min-height: 100vh; }
+
         .topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
         .back-btn {
-            border: none;
-            background: #CBE949;
-            width: 50px;
-            height: 50px;
-            border-radius: 18px;
-            font-size: 30px;
-            font-family: inherit;
-            cursor: pointer;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border: none; background: #CBE949; width: 50px; height: 50px; border-radius: 18px;
+            font-size: 30px; font-family: inherit; cursor: pointer; line-height: 1;
+            display:flex; align-items:center; justify-content:center;
             box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18);
         }
         .page-label {
-            font-size: 16px;
-            letter-spacing: 0.6px;
-            opacity: 0.75;
-            text-align: right;
-            flex: 1;
-            text-transform: uppercase;
-            white-space: nowrap;
+            font-size: 16px; letter-spacing: 0.6px; opacity: 0.75; text-align: right; flex: 1;
+            text-transform: uppercase; white-space: nowrap;
         }
-        .panel { background: #EFEEFC; border-radius: 20px; padding: 18px; min-height: calc(100vh - 130px); border: 1px solid #fff; box-shadow: 0 12px 20px rgba(37,27,76,.15); }
-        .card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-        .btn { width: 100%; height: 56px; border: none; border-radius: 16px; font-family: inherit; cursor: pointer; margin-top: 10px; box-shadow: 0 7px 0 rgba(57,42,103,.18), 0 12px 18px rgba(57,42,103,.12); }
-        .btn:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57,42,103,.18), 0 8px 10px rgba(57,42,103,.12); }
-        .status { font-size: 13px; min-height: 18px; color: #5a5a5a; margin-top: 8px; }
+
+        .info-card {
+            background: #EFEEFC; border-radius: 20px; padding: 22px 18px; margin-bottom: 18px;
+            box-shadow: 0 12px 20px rgba(38, 30, 67, 0.13); border: 1px solid #fff;
+        }
+        .worker-name { font-size: 24px; line-height: 1.1; text-transform: uppercase; margin-bottom: 8px; color: #0b0b11; }
+        .worker-phone { font-size: 14px; opacity: 0.7; }
+
+        .schedule-header {
+            background: #efeefc; border-radius: 20px 20px 0 0; border: 1px solid #ffffff;
+            box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16); padding: 18px 16px;
+            display:flex; justify-content:center;
+        }
+        .schedule-title { font-size: 18px; text-transform: uppercase; line-height: 1; color: #41404E; }
+
+        .schedule-list-container {
+            width: 100%; background: #D9D9D9; border-radius: 0 0 20px 20px;
+            border: 1px solid #ffffff; box-shadow: 0 12px 24px rgba(37, 27, 76, 0.16);
+            padding: 20px 10px; display:flex; flex-direction:column; align-items:center;
+            margin-bottom: 20px;
+        }
+
+        #schedule-list { display:flex; flex-direction:column; gap: 12px; width: 100%; }
+
+        .training-card {
+            background:#fff; border-radius:20px; padding:16px;
+            display:flex; flex-direction:column;
+            box-shadow:0 4px 12px rgba(0,0,0,0.08); width:100%;
+        }
+
+        .card-top {
+            display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;
+        }
+
+        .time-block { display:flex; align-items:baseline; gap:6px; }
+        .time-val { font-size: 18px; color:#000; font-weight:bold; }
+        .duration-val { font-size: 12px; color:#9B7FCC; font-weight: normal; }
+
+        .gym-tag {
+            font-size: 12px; color:#9B7FCC; background: rgba(155, 127, 204, 0.1);
+            padding: 4px 8px; border-radius: 8px;
+        }
+
+        .card-type {
+            font-size: 16px; text-transform:uppercase; color:#000; margin-bottom: 4px;
+        }
+
+        .card-empty-msg {
+            text-align: center; padding: 20px; color: #666; font-size: 14px;
+        }
+
+        .delete-btn {
+            width: 100%; height: 56px; border: none; border-radius: 20px;
+            font-family: 'Russo One', sans-serif; font-size: 18px; text-transform: uppercase;
+            background: #F8CECC; box-shadow: 0px 6px 0px #C5928F;
+            color: #000; cursor: pointer; transition: transform 0.1s ease;
+        }
+        .delete-btn:hover { transform: scale(1.02); }
+        .delete-btn:active { transform: translateY(4px); box-shadow: 0px 2px 0px #C5928F; }
+
+        .status { font-size: 13px; min-height: 18px; color: #5a5a5a; margin-top: 8px; text-align: center; }
+
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.3); z-index: 1000;
+            display: none; align-items: center; justify-content: center; opacity: 0;
             transition: opacity 0.2s ease;
         }
         .modal-overlay.active { display: flex; opacity: 1; }
         .modal {
-            width: 90%;
-            max-width: 360px;
-            background: #D9D9D9;
-            border-radius: 20px;
-            padding: 28px 18px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
+            width: 90%; max-width: 360px; background: #D9D9D9; border-radius: 20px;
+            padding: 28px 18px 20px; display: flex; flex-direction: column;
+            align-items: center; gap: 16px;
         }
         .modal-title { font-size: 18px; text-transform: uppercase; text-align: center; }
         .modal-btn {
-            width: 220px;
-            height: 48px;
-            border: none;
-            border-radius: 18px;
-            font-family: inherit;
-            font-size: 16px;
-            cursor: pointer;
-            text-transform: uppercase;
+            width: 220px; height: 48px; border: none; border-radius: 18px;
+            font-family: inherit; font-size: 16px; cursor: pointer; text-transform: uppercase;
         }
         .modal-btn--delete { background: #F8CECC; box-shadow: 0 6px 0 #C5928F; }
         .modal-btn--cancel { background: #CBE949; box-shadow: 0 6px 0 #A3B83A; }
@@ -86,13 +113,26 @@
             <button class="back-btn" id="back-btn">←</button>
             <div class="page-label">РАБОТНИК</div>
         </div>
-        <div class="panel">
-            <div class="card" id="card">Загрузка...</div>
-            <div class="card" id="schedule">Расписание на 3 дня: загрузка...</div>
-            <button class="btn" style="background:#CBBAFD;" id="delete-btn">Удалить работника</button>
-            <div id="status" class="status"></div>
+
+        <div class="info-card" id="info-card">
+            <div class="worker-name" id="w-name">Загрузка...</div>
+            <div class="worker-phone" id="w-phone">...</div>
         </div>
+
+        <div class="schedule-header">
+            <div class="schedule-title">РАСПИСАНИЕ НА 3 ДНЯ</div>
+        </div>
+
+        <div class="schedule-list-container">
+            <div id="schedule-list">
+                <div class="card-empty-msg">Загрузка...</div>
+            </div>
+        </div>
+
+        <button class="delete-btn" id="delete-btn">Удалить работника</button>
+        <div id="status" class="status"></div>
     </div>
+
     <div class="modal-overlay" id="delete-modal">
         <div class="modal">
             <div class="modal-title">Подтвердите удаление</div>
@@ -100,13 +140,16 @@
             <button class="modal-btn modal-btn--cancel" id="cancel-delete-btn">Отмена</button>
         </div>
     </div>
+
     <script>
         Telegram.WebApp.ready();
         const params = new URLSearchParams(window.location.search);
         const orgId = params.get("org_id");
         const workerId = params.get("worker_id");
-        const card = document.getElementById("card");
-        const schedule = document.getElementById("schedule");
+
+        const wNameEl = document.getElementById("w-name");
+        const wPhoneEl = document.getElementById("w-phone");
+        const scheduleListEl = document.getElementById("schedule-list");
         const statusEl = document.getElementById("status");
         const deleteModal = document.getElementById("delete-modal");
 
@@ -116,23 +159,60 @@
         }
 
         async function loadDetail() {
-            const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}`);
-            const data = await res.json();
-            card.innerHTML = `Имя: ${data.full_name}<br><br>Телефон: ${data.phone || "не указан"}`;
+            try {
+                const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}`);
+                if (!res.ok) throw new Error("Не удалось загрузить данные");
+                const data = await res.json();
+
+                wNameEl.textContent = data.full_name || "Без имени";
+                wPhoneEl.textContent = data.phone ? `📞 ${data.phone}` : "Телефон не указан";
+            } catch (e) {
+                wNameEl.textContent = "Ошибка";
+                setStatus(e.message, true);
+            }
         }
 
         async function loadSchedule() {
-            const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}/schedule?days=3`);
-            const data = await res.json();
-            if (!data.schedule || !data.schedule.length) {
-                schedule.innerHTML = "Расписание на 3 дня: нет тренировок";
-                return;
+            try {
+                const res = await fetch(`/api/v1/org/${orgId}/workers/${workerId}/schedule?days=3`);
+                const data = await res.json();
+
+                scheduleListEl.innerHTML = "";
+
+                if (!data.schedule || data.schedule.length === 0) {
+                    scheduleListEl.innerHTML = `<div class="card-empty-msg">Нет предстоящих тренировок</div>`;
+                    return;
+                }
+
+                data.schedule.forEach(item => {
+                    const startDate = new Date(item.date_start);
+                    const endDate = new Date(item.date_end);
+
+                    const timeStart = startDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+                    const timeEnd = endDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+
+                    const diffMs = endDate - startDate;
+                    const durationMin = Math.round(diffMs / 60000);
+
+                    const card = document.createElement("div");
+                    card.className = "training-card";
+                    card.innerHTML = `
+                        <div class="card-top">
+                            <div class="time-block">
+                                <span class="time-val">${timeStart} - ${timeEnd}</span>
+                                <span class="duration-val">(${durationMin} мин)</span>
+                            </div>
+                            <div class="gym-tag">${item.gym_name}</div>
+                        </div>
+                        <div class="card-type">${item.type_name}</div>
+                    `;
+
+                    scheduleListEl.appendChild(card);
+                });
+
+            } catch (e) {
+                scheduleListEl.innerHTML = `<div class="card-empty-msg" style="color:red;">Ошибка загрузки расписания</div>`;
             }
-            schedule.innerHTML = "Расписание на 3 дня:<br><br>" + data.schedule.map(item => {
-                const start = new Date(item.date_start).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-                const end = new Date(item.date_end).toLocaleString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-                return `${start}-${end} • ${item.type_name} • ${item.gym_name}`;
-            }).join("<br>");
         }
 
         document.getElementById("delete-btn").onclick = () => {
@@ -142,9 +222,7 @@
             deleteModal.classList.remove("active");
         };
         deleteModal.onclick = (e) => {
-            if (e.target === deleteModal) {
-                deleteModal.classList.remove("active");
-            }
+            if (e.target === deleteModal) deleteModal.classList.remove("active");
         };
         document.getElementById("confirm-delete-btn").onclick = async () => {
             deleteModal.classList.remove("active");
@@ -158,6 +236,7 @@
         document.getElementById("back-btn").onclick = () => {
             window.location.href = `/app/org_workers.html?org_id=${orgId}&v=2`;
         };
+
         loadDetail();
         loadSchedule();
     </script>
