@@ -58,7 +58,8 @@ CREATE TABLE organization_member (
 
 CREATE TABLE training_type (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
+    name VARCHAR(50) NOT NULL UNIQUE,
+    organization_id INTEGER NOT NULL REFERENCES organization(id) on DELETE CASCADE
 );
 
 CREATE TABLE training (

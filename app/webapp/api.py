@@ -402,7 +402,7 @@ async def get_event_options(org_id: int, db: Pool = Depends(get_db)):
 
     places = await org_service.get_places_list(org_id)
     workers = await org_service.get_workers_list(org_id)
-    types = await training_repo.get_training_types()
+    types = await training_repo.get_training_types(org_id)
     return {
         "places": [{"id": place_id, "name": name} for place_id, name in places],
         "workers": [{"id": worker_id, "name": name} for worker_id, name in workers],
@@ -461,10 +461,10 @@ async def create_event_type(org_id: int, name: str, db: Pool = Depends(get_db)):
     if len(type_name) < 2:
         raise HTTPException(status_code=400, detail="Название типа слишком короткое")
     training_repo = TrainingRepository(db)
-    existing = await training_repo.find_training_type_by_name(type_name)
+    existing = await training_repo.find_training_type_by_name(type_name, org_id)
     if existing:
         return {"id": existing["id"], "name": existing["name"]}
-    created = await training_repo.create_training_type(type_name)
+    created = await training_repo.create_training_type(type_name, org_id)
     return {"id": created["id"], "name": created["name"]}
 
 

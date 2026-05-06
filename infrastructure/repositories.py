@@ -329,9 +329,9 @@ class TrainingRepository:
         """
         return await self.pool.fetch(sql, trainer_id, org_id, start_date, end_date)
 
-    async def get_training_types(self):
-        sql = "select id, name from training_type order by id"
-        rows = await self.pool.fetch(sql)
+    async def get_training_types(self,org_id: int):
+        sql = "select id, name from training_type where organization_id = $1 order by id"
+        rows = await self.pool.fetch(sql, org_id)
         return [(row["id"], row["name"]) for row in rows]
 
     async def get_training_type_by_id(self, training_id: int):
@@ -339,13 +339,13 @@ class TrainingRepository:
         row = await self.pool.fetchrow(sql, training_id)
         return TrainingType(row["id"], row["name"])
 
-    async def find_training_type_by_name(self, name: str):
-        sql = "select id, name from training_type where lower(name) = lower($1)"
-        return await self.pool.fetchrow(sql, name)
+    async def find_training_type_by_name(self, name: str, org_id: int):
+        sql = "select id, name from training_type where lower(name) = lower($1) and organization_id = $2"
+        return await self.pool.fetchrow(sql, name, org_id)
 
-    async def create_training_type(self, name: str):
-        sql = "insert into training_type (name) values ($1) returning id, name"
-        return await self.pool.fetchrow(sql, name)
+    async def create_training_type(self, name: str, org_id: int):
+        sql = "insert into training_type (name, organization_id) values ($1,$2) returning id, name"
+        return await self.pool.fetchrow(sql, name,org_id)
 
     async def get_by_id(self, training_id: int):
         sql = "select * from training where id = $1"
