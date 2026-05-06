@@ -72,6 +72,15 @@
             box-shadow:0 4px 12px rgba(0,0,0,0.08); width:100%;
         }
 
+        .card-date {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+
         .card-top {
             display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;
         }
@@ -210,6 +219,12 @@
                     const startDate = new Date(item.date_start);
                     const endDate = new Date(item.date_end);
 
+                    const dateStr = startDate.toLocaleDateString("ru-RU", {
+                        day: "numeric",
+                        month: "long",
+                        weekday: "short"
+                    });
+
                     const timeStart = startDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
                     const timeEnd = endDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
 
@@ -218,7 +233,9 @@
 
                     const card = document.createElement("div");
                     card.className = "training-card";
+
                     card.innerHTML = `
+                        <div class="card-date">${dateStr}</div>
                         <div class="card-top">
                             <div class="time-block">
                                 <span class="time-val">${timeStart} - ${timeEnd}</span>
