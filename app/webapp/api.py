@@ -512,7 +512,7 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
     training_type_service = TrainingTypeService(TrainingRepository(db))
     existing = await training_repo.get_by_id(training_id)
     if not existing or existing.organization_id != org_id:
-        raise HTTPException(status_code=404, detail="тренировка не найдена")
+        raise HTTPException(status_code=404, detail="Тренировка не найдена")
 
     if await training_repo.has_gym_conflict(org_id, gym_id, date_start, date_end, exclude_training_id=training_id):
         raise HTTPException(status_code=409, detail="Выбранный зал занят в это время")
@@ -539,7 +539,7 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         msg = f"Изменена тренировка: {old_training_type} в организации {org_name}.\n"
         if old_training_type != new_training_type:
             msg += (f"Новый тип тренировки: {new_training_type.name}\n")
-        if old_start != time_start or old_end != time_end:
+        if old_start != date_start or old_end != date_end:
             msg += (f"Старые дата/время:\n {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n"
                 f"Новая дата/время:\n {date_start.strftime('%d.%m %H:%M')}–{date_end.strftime('%H:%M')}\n")
         if old_gym.id != gym_id:
