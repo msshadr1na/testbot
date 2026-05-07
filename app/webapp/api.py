@@ -429,15 +429,18 @@ async def create_event(
         date_start = datetime.strptime(f"{day} {time_start}", "%Y-%m-%d %H:%M")
         date_end = datetime.strptime(f"{day} {time_end}", "%Y-%m-%d %H:%M")
     except ValueError:
-        raise HTTPException(status_code=400, detail="Неверный формат даты/времени")
+        raise HTTPException(status_code=400, detail="Неверный формат времени")
     if date_end <= date_start:
         raise HTTPException(status_code=400, detail="Время окончания должно быть позже времени начала")
+    current_date = datetime.now()
+    if current_date > date_start:
+        raise HTTPException(status_code=400, detail="Время начала должно быть позже настоящего времени")
 
     training_repo = TrainingRepository(db)
     if await training_repo.has_gym_conflict(org_id, gym_id, date_start, date_end):
-        raise HTTPException(status_code=409, detail="Зал занят в это время")
+        raise HTTPException(status_code=409, detail="Выбранный зал занят в это время")
     if await training_repo.has_trainer_conflict(trainer_id, date_start, date_end):
-        raise HTTPException(status_code=409, detail="У тренера уже есть тренировка в это время")
+        raise HTTPException(status_code=409, detail="У этого тренера уже есть тренировка в это время")
 
     training = Training(
         id=None,
@@ -495,9 +498,12 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         date_start = datetime.strptime(f"{day} {time_start}", "%Y-%m-%d %H:%M")
         date_end = datetime.strptime(f"{day} {time_end}", "%Y-%m-%d %H:%M")
     except ValueError:
-        raise HTTPException(status_code=400, detail="Неверный формат даты/времени")
+        raise HTTPException(status_code=400, detail="Неверный формат времени")
     if date_end <= date_start:
         raise HTTPException(status_code=400, detail="Время окончания должно быть позже времени начала")
+    current_date = datetime.now()
+    if current_date > date_start:
+        raise HTTPException(status_code=400, detail="Время начала должно быть позже настоящего времени")
 
     training_repo = TrainingRepository(db)
     booking_repo = BookingRepository(db)
@@ -509,13 +515,15 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         raise HTTPException(status_code=404, detail="тренировка не найдена")
 
     if await training_repo.has_gym_conflict(org_id, gym_id, date_start, date_end, exclude_training_id=training_id):
-        raise HTTPException(status_code=409, detail="Зал занят в это время")
+        raise HTTPException(status_code=409, detail="Выбранный зал занят в это время")
     if await training_repo.has_trainer_conflict(trainer_id, date_start, date_end, exclude_training_id=training_id):
-        raise HTTPException(status_code=409, detail="У тренера уже есть тренировка в это время")
+        raise HTTPException(status_code=409, detail="У этого тренера уже есть тренировка в это время")
     old_start = existing.date_start
     old_end = existing.date_end
     new_training_type = await training_type_service.get_type_name(type_id)
     old_training_type = await training_type_service.get_type_name(existing.type_id)
+    old_trainer_id = existing.trainer_id
+    old_gym = await org_service.get_place_by_id(existing.gym_id)
 
     updated = await training_repo.update(training_id, gym_id, trainer_id, date_start, date_end, type_id, max_clients)
 
@@ -524,23 +532,25 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         org_name = org.name if org else "организации"
         booked_tg_ids = await booking_repo.get_user_telegram_ids_by_training_id(training_id)
         trainer = await user_service.get_by_id(trainer_id)
+        old_trainer = await user_service.get_by_id(trainer_id)
         trainer_name = ""
         if trainer:
             trainer_name = f"{trainer.first_name} {trainer.last_name}".strip()
-
-        if old_start == time_start and old_end == time_end and old_training_type==new_training_type:
-            msg = ""
-        elif old_start != time_start or old_end != time_end and old_training_type==new_training_type:
-            msg = (
-                f"Изменена тренировка: {old_training_type} в организации {org_name}.\n"
-                f"Старые дата/время:\n {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n"
-                f"Новая дата/время:\n {date_start.strftime('%d.%m %H:%M')}–{date_end.strftime('%H:%M')}\n"
-                f"Тренер:\n {trainer_name or 'Тренер'}"
-            )
+        msg = f"Изменена тренировка: {old_training_type} в организации {org_name}.\n"
+        if old_training_type != new_training_type:
+            msg += (f"Новый тип тренировки: {new_training_type.name}\n")
+        if old_start != time_start or old_end != time_end:
+            msg += (f"Старые дата/время:\n {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n"
+                f"Новая дата/время:\n {date_start.strftime('%d.%m %H:%M')}–{date_end.strftime('%H:%M')}\n")
+        if old_gym.id != gym_id:
+            msg += f"Новое место: {gym_id}\n"
+        if old_trainer_id != trainer_id:
+            old_name = f"{old_trainer.first_name} {old_trainer.last_name}".strip()
+            msg += (f"Старый тренер: {old_name}.\n"
+                    f"Новый тренер: {trainer_name}.\n")
         await _broadcast_telegram_messages(booked_tg_ids, msg)
     except Exception:
         pass
-
     return {"id": updated.id, "organization_id": updated.organization_id}
 
 
@@ -1101,7 +1111,6 @@ async def get_training_bookings(org_id: int, training_id: int, db: Pool = Depend
 
 @router.get("/org/{org_id}/events/{training_id}/reviews")
 async def get_training_reviews(org_id: int, training_id: int, db: Pool = Depends(get_db)):
-    # Проверка принадлежности
     training_repo = TrainingRepository(db)
     training = await training_repo.get_by_id(training_id)
     if not training or training.organization_id != org_id:
