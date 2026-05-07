@@ -537,11 +537,13 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         if trainer:
             trainer_name = f"{trainer.first_name} {trainer.last_name}".strip()
         msg = f"Изменена тренировка: {old_training_type} в организации {org_name}.\n"
-        if old_training_type != new_training_type:
+        if existing.type_id != type_id:
             msg += (f"Новый тип тренировки: {new_training_type.name}\n")
         if old_start != date_start or old_end != date_end:
             msg += (f"Старые дата/время:\n {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n"
                 f"Новая дата/время:\n {date_start.strftime('%d.%m %H:%M')}–{date_end.strftime('%H:%M')}\n")
+        else:
+            msg += (f"Дата:\n {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n")
         if old_gym.id != gym_id:
             msg += f"Новое место: {gym_id}\n"
         if old_trainer_id != trainer_id:
