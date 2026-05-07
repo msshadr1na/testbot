@@ -551,7 +551,6 @@
             <div class="form-card" id="view-actions" style="display:none;">
                 <button class="btn-main" id="view-clients-btn">👥 Посмотреть клиентов</button>
                 <button class="btn-main" id="view-reviews-btn">⭐ Отзывы и статистика</button>
-                <button class="btn-main" id="create-past-btn">➕ Создать тренировку</button>
             </div>
 
             <div class="status" id="status"></div>
@@ -603,7 +602,6 @@
         const createBtn = document.getElementById("create-btn");
         const updateBtn = document.getElementById("update-btn");
         const deleteBtn = document.getElementById("delete-btn");
-        const createPastBtn = document.getElementById("create-past-btn");
         const addTypeBtn = document.getElementById("add-type-btn");
         const typeSelect = document.getElementById("type-select");
         const newTypeInput = document.getElementById("new-type-name");
@@ -681,14 +679,6 @@
             document.getElementById("max-clients").value = String(training.max_clients);
         }
 
-        function resetFormForCreation() {
-            document.getElementById("time-start").value = "";
-            document.getElementById("time-end").value = "";
-            document.getElementById("max-clients").value = "";
-            newTypeInput.value = "";
-            selectedTrainingId = null;
-        }
-
         async function loadCalendar() {
             const y = current.getFullYear();
             const m = current.getMonth() + 1;
@@ -742,7 +732,6 @@
 
             if (isPastDay) {
                 createBtn.style.display = "none";
-                viewActions.style.display = "block";
             } else {
                 createBtn.style.display = "block";
             }
@@ -800,17 +789,6 @@
             setStatus("Тренировка создана");
             await loadCalendar();
             await selectDay(selectedDay);
-        };
-
-        createPastBtn.onclick = () => {
-            resetFormForCreation();
-            editForm.classList.add("visible");
-            viewActions.style.display = "none";
-            createBtn.style.display = "block";
-            updateBtn.style.display = "none";
-            deleteBtn.style.display = "none";
-            selectedDayLabel.textContent = "Создание новой тренировки";
-            setStatus("Заполните данные для новой тренировки");
         };
 
         updateBtn.onclick = async () => {
