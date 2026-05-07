@@ -532,7 +532,7 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         org_name = org.name if org else "организации"
         booked_tg_ids = await booking_repo.get_user_telegram_ids_by_training_id(training_id)
         trainer = await user_service.get_by_id(trainer_id)
-        old_trainer = await user_service.get_by_id(trainer_id)
+        old_trainer = await user_service.get_by_id(old_trainer_id)
         trainer_name = ""
         if trainer:
             trainer_name = f"{trainer.first_name} {trainer.last_name}".strip()
