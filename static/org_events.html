@@ -7,24 +7,129 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Russo One', sans-serif; min-height: 100vh; color: #1f1f35; }
-        .bg-gradient { position: fixed; inset: 0; background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%); z-index: -1; }
-        .container { width: 100%; max-width: 375px; margin: 0 auto; padding: 20px 14px 112px; min-height: 100vh; display: flex; flex-direction: column; }
-        .title { text-align: center; font-size: 24px; margin-bottom: 18px; text-transform: uppercase; }
-        .panel { background: #EFEEFC; border-radius: 20px; border: 1px solid #fff; box-shadow: 0 12px 20px rgba(37,27,76,.15); flex: 1; padding: 16px; display: flex; flex-direction: column; align-items: center; }
-        .calendar { width: 100%; background: #fff; border-radius: 16px; padding: 12px; margin-bottom: 10px; }
-        .month-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .month-nav button { width: 38px; height: 38px; border-radius: 19px; border: none; cursor: pointer; background: #EFEEFC; font-family: inherit; color: #000; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .day { height: 36px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; font-size: 12px; color: #000; }
-        .day.empty { visibility: hidden; }
-        .day-0 { background: #ffffff; border: 1px solid #ddd; }
-        .day-1 { background: #CBBAFD; }
-        .day-2 { background: #CBE949; }
-        .day-3 { background: #F8CECC; }
-        .list { width: 100%; background:#fff; border-radius:16px; padding: 10px; font-size: 12px; margin-bottom: 10px; min-height: 60px; }
-        .training-item { width: 100%;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Russo One', sans-serif;
+            min-height: 100vh;
+            color: #1f1f35;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(127.42deg, #CBBAFD 9.38%, #CBE949 58.67%);
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 375px;
+            margin: 0 auto;
+            padding: 20px 14px 112px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+        }
+
+        .panel {
+            background: #EFEEFC;
+            border-radius: 20px;
+            border: 1px solid #fff;
+            box-shadow: 0 12px 20px rgba(37, 27, 76, .15);
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .calendar {
+            width: 100%;
+            background: #fff;
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .month-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .month-nav button {
+            width: 38px;
+            height: 38px;
+            border-radius: 19px;
+            border: none;
+            cursor: pointer;
+            background: #EFEEFC;
+            font-family: inherit;
+            color: #000;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .day {
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            color: #000;
+        }
+
+        .day.empty {
+            visibility: hidden;
+        }
+
+        .day-0 {
+            background: #ffffff;
+            border: 1px solid #ddd;
+        }
+
+        .day-1 {
+            background: #CBBAFD;
+        }
+
+        .day-2 {
+            background: #CBE949;
+        }
+
+        .day-3 {
+            background: #F8CECC;
+        }
+
+        .list {
+            width: 100%;
+            background: #fff;
+            border-radius: 16px;
+            padding: 10px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            min-height: 60px;
+        }
+
+        .training-item {
+            width: 100%;
             border: 1px solid transparent;
             background: #ffffff;
             border-radius: 12px;
@@ -36,13 +141,15 @@
             font-size: 12px;
             color: #000;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             position: relative;
             overflow: hidden;
         }
+
         .training-item:last-child {
             margin-bottom: 0;
         }
+
         .training-item.active {
             border-color: #9B7FCC;
             background: #f4eeff;
@@ -50,63 +157,350 @@
             box-shadow: 0 8px 15px rgba(155, 127, 204, 0.3);
             z-index: 10;
         }
+
         .training-item.past {
             opacity: 0.6;
             background: #f0f0f0;
             border-left: 4px solid #ccc;
         }
+
         .training-item.past.active {
             opacity: 1;
             background: #f4eeff;
             border-left: 4px solid #9B7FCC;
         }
+
         .training-item:not(.active):hover {
             background: #fafafa;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .training-item:active {
             transform: scale(0.98);
         }
-        .form-card { width: 100%; background: #fff; border-radius: 16px; padding: 12px; margin-bottom: 10px; display: none; }
-        .form-card.visible { display: block; }
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-        input, select { width: 100%; height: 42px; border: 1px solid #ddd; border-radius: 10px; padding: 0 10px; font-family: inherit; font-size: 12px; }
-        .btn { width: 100%; height: 56px; border: none; border-radius: 16px; font-family: inherit; cursor: pointer; margin-top: 8px; box-shadow: 0 7px 0 rgba(57,42,103,.18), 0 12px 18px rgba(57,42,103,.12); color: #000; transition: transform 0.1s; }
-        .btn:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(57,42,103,.18); }
-        .btn-purple { background:#CBBAFD; }
-        .btn-white { background:#FFFFFF; border:1px solid #E0E0E0; }
-        .btn-red { background:#F8CECC; }
-        .btn-info { background: #EFEEFC; border: 1px solid #d7d7e8; }
-        .small-btn { height: 38px; border-radius: 10px; border: 1px solid #d7d7e8; background: #fff; font-family: inherit; font-size: 11px; cursor: pointer; color: #000; }
-        .status { width: 100%; font-size: 12px; min-height: 16px; color: #5a5a5a; text-align: center; margin-top: 5px; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; }
-        .modal-overlay.open { display: flex; }
-        .modal-content { background: #fff; width: 90%; max-width: 350px; max-height: 80vh; border-radius: 20px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .modal-title { font-size: 18px; text-transform: uppercase; }
-        .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; }
-        .info-row { padding: 8px; background: #f9f9f9; border-radius: 8px; font-size: 13px; margin-bottom: 5px; }
-        .review-item { border-bottom: 1px solid #eee; padding: 8px 0; }
-        .review-grade { font-weight: bold; color: #9B7FCC; }
-        .bottom-nav-wrap { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; padding: 10px 24px calc(14px + env(safe-area-inset-bottom)); pointer-events: none; z-index: 100; }
-        .bottom-nav { width: 100%; max-width: 382px; background: rgba(239, 238, 252, 0.98); border: 1px solid #ffffff; border-radius: 20px; box-shadow: 0 -7px 18px rgba(37, 27, 76, 0.19); display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 8px; pointer-events: auto; backdrop-filter: blur(3px); }
-        .tab-btn { border: none; border-radius: 12px; background: transparent; min-height: 72px; padding: 6px 4px 4px; color: #231F20; font-family: inherit; font-size: 9px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: background .12s ease, transform .12s ease; text-transform: uppercase; box-sizing: border-box; flex: 1; }
-        .tab-btn .icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .tab-btn .icon img { width: 32px; height: 32px; object-fit: contain; object-position: center; display: block; }
-        .tab-btn span:last-child { color: #231F20; transition: color .12s ease; font-size: 9px; line-height: 1.1; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .tab-btn:not(.active):hover { background: #CBBAFD; transform: translateY(-1px); }
-        .tab-btn.active { background: #CBBAFD; }
-        .tab-btn.active .icon img { filter: brightness(0) saturate(100%) invert(27%) sepia(87%) saturate(1797%) hue-rotate(253deg) brightness(84%) contrast(93%); }
-        .tab-btn.active span:last-child { color: #7A23B8; }
-        .tab-btn.active:hover { background: #BBAAEF; }
+
+        .form-card {
+            width: 100%;
+            background: #fff;
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .form-card.visible {
+            display: block;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 0 10px;
+            font-family: inherit;
+            font-size: 12px;
+        }
+
+        .btn-main {
+            width: 100%;
+            min-height: 56px;
+            border: none;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 16px;
+            background: #CBBAFD;
+            box-shadow: 0 6px 0 #9B7FCC;
+            cursor: pointer;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            padding: 12px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            color: #000000 !important;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-main:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 0 #9B7FCC, 0 15px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-main:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 0 #9B7FCC;
+        }
+
+        .btn-danger {
+            width: 100%;
+            min-height: 56px;
+            border: none;
+            border-radius: 20px;
+            background: #F8CECC;
+            color: #000000;
+            font-family: inherit;
+            font-size: 16px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0px 6px 0px #C5928F;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #C5928F, 0 15px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-danger:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #C5928F;
+        }
+
+        .small-btn {
+            height: 42px;
+            border-radius: 10px;
+            border: none;
+            background: #EFEEFC;
+            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+            color: #000;
+            box-shadow: 0 4px 0 #dcd8f0;
+            transition: all 0.1s;
+        }
+
+        .small-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #dcd8f0;
+        }
+
+        .status {
+            width: 100%;
+            font-size: 12px;
+            min-height: 16px;
+            color: #5a5a5a;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 90%;
+            max-width: 350px;
+            max-height: 80vh;
+            border-radius: 20px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .info-row {
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .review-item {
+            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+        }
+
+        .review-grade {
+            font-weight: bold;
+            color: #9B7FCC;
+        }
+
+        .bottom-nav-wrap {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            padding: 10px 24px calc(14px + env(safe-area-inset-bottom));
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .bottom-nav {
+            width: 100%;
+            max-width: 382px;
+            background: rgba(239, 238, 252, 0.98);
+            border: 1px solid #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 -7px 18px rgba(37, 27, 76, 0.19);
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            padding: 8px;
+            pointer-events: auto;
+            backdrop-filter: blur(3px);
+        }
+
+        .tab-btn {
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            min-height: 72px;
+            padding: 6px 4px 4px;
+            color: #231F20;
+            font-family: inherit;
+            font-size: 9px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background .12s ease, transform .12s ease;
+            text-transform: uppercase;
+            box-sizing: border-box;
+            flex: 1;
+        }
+
+        .tab-btn .icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tab-btn .icon img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            object-position: center;
+            display: block;
+        }
+
+        .tab-btn span:last-child {
+            color: #231F20;
+            transition: color .12s ease;
+            font-size: 9px;
+            line-height: 1.1;
+            text-align: center;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tab-btn:not(.active):hover {
+            background: #CBBAFD;
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            background: #CBBAFD;
+        }
+
+        .tab-btn.active .icon img {
+            filter: brightness(0) saturate(100%) invert(27%) sepia(87%) saturate(1797%) hue-rotate(253deg) brightness(84%) contrast(93%);
+        }
+
+        .tab-btn.active span:last-child {
+            color: #7A23B8;
+        }
+
+        .tab-btn.active:hover {
+            background: #BBAAEF;
+        }
+
         @media (max-width: 430px) {
-            .bottom-nav-wrap { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
-            .bottom-nav { max-width: 347px; background: rgba(239,238,252,.95); border: 1px solid #fff; border-radius: 18px; box-shadow: 0 -8px 20px rgba(37,27,76,.2); gap: 2px; padding: 6px; }
-            .tab-btn { min-height: 68px; padding: 4px 2px 3px; gap: 4px; font-size: 8px; }
-            .tab-btn .icon { width: 32px; height: 32px; }
-            .tab-btn .icon img { width: 32px; height: 32px; }
-            .tab-btn span:last-child { font-size: 8px; }
+            .bottom-nav-wrap {
+                padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+            }
+
+            .bottom-nav {
+                max-width: 347px;
+                background: rgba(239, 238, 252, .95);
+                border: 1px solid #fff;
+                border-radius: 18px;
+                box-shadow: 0 -8px 20px rgba(37, 27, 76, .2);
+                gap: 2px;
+                padding: 6px;
+            }
+
+            .tab-btn {
+                min-height: 68px;
+                padding: 4px 2px 3px;
+                gap: 4px;
+                font-size: 8px;
+            }
+
+            .tab-btn .icon {
+                width: 32px;
+                height: 32px;
+            }
+
+            .tab-btn .icon img {
+                width: 32px;
+                height: 32px;
+            }
+
+            .tab-btn span:last-child {
+                font-size: 8px;
+            }
+
+            .btn-main,
+            .btn-danger {
+                font-size: 14px;
+                min-height: 50px;
+            }
         }
     </style>
 </head>
@@ -124,7 +518,8 @@
                 <div class="grid" id="calendar-grid"></div>
             </div>
 
-            <div id="day-header" style="width:100%; text-align:left; font-size:16px; margin-bottom:8px; font-weight:bold; color: #41404E; display: none;">Тренировки <span id="header-date"></span>
+            <div id="day-header" style="width:100%; text-align:left; font-size:16px; margin-bottom:8px; font-weight:bold; color: #41404E; display: none;">
+                Тренировки <span id="header-date"></span>
             </div>
 
             <div class="list" id="day-list">Выберите день в календаре</div>
@@ -147,14 +542,15 @@
                     <input id="new-type-name" placeholder="Новый тип тренировки">
                     <button class="small-btn" id="add-type-btn">Добавить тип</button>
                 </div>
-                <button class="btn btn-purple" id="create-btn">Создать тренировку</button>
-                <button class="btn btn-white" id="update-btn">Сохранить изменения</button>
-                <button class="btn btn-red" id="delete-btn">Отменить тренировку</button>
+
+                <button class="btn-main" id="create-btn">Создать тренировку</button>
+                <button class="btn-main" id="update-btn">Сохранить изменения</button>
+                <button class="btn-danger" id="delete-btn">Отменить тренировку</button>
             </div>
 
             <div class="form-card" id="view-actions" style="display:none;">
-                <button class="btn btn-info" id="view-clients-btn">Посмотреть клиентов</button>
-                <button class="btn btn-info" id="view-reviews-btn">Отзывы и статистика</button>
+                <button class="btn-main" id="view-clients-btn">👥 Посмотреть клиентов</button>
+                <button class="btn-main" id="view-reviews-btn">⭐ Отзывы и статистика</button>
             </div>
 
             <div class="status" id="status"></div>
@@ -255,7 +651,7 @@
 
             document.querySelectorAll(".training-item").forEach(el => el.classList.remove("active"));
             btnElement.classList.add("active");
-            if(isPastTraining) btnElement.classList.add("past");
+            if (isPastTraining) btnElement.classList.add("past");
 
             fillFormFromTraining(t);
             selectedDayLabel.textContent = `Редактирование: ${t.type_name}`;
@@ -290,7 +686,9 @@
             const res = await fetch(`/api/v1/org/${orgId}/events/calendar?year=${y}&month=${m}`);
             const data = await res.json();
             countsByDay = {};
-            data.days.forEach(d => { countsByDay[d.date] = d.count; });
+            data.days.forEach(d => {
+                countsByDay[d.date] = d.count;
+            });
 
             grid.innerHTML = "";
             const firstDay = new Date(y, m - 1, 1);
@@ -318,14 +716,17 @@
             selectedTrainingId = null;
             editForm.classList.remove("visible");
             viewActions.style.display = "none";
+
             const dayHeader = document.getElementById("day-header");
             const headerDateSpan = document.getElementById("header-date");
             const dateParts = dayDate.split("-");
             const formattedDate = `${dateParts[2]}.${dateParts[1]}`;
+
             headerDateSpan.textContent = formattedDate;
             dayHeader.style.display = "block";
             selectedDayLabel.textContent = `Дата: ${formattedDate}`;
             createBtn.style.display = "block";
+
             const res = await fetch(`/api/v1/org/${orgId}/events/day?day=${dayDate}`);
             const data = await res.json();
 
@@ -336,8 +737,14 @@
 
             dayList.innerHTML = "";
             data.trainings.forEach((t) => {
-                const s = new Date(t.date_start).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-                const e = new Date(t.date_end).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+                const s = new Date(t.date_start).toLocaleTimeString("ru-RU", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
+                const e = new Date(t.date_end).toLocaleTimeString("ru-RU", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                });
 
                 const btn = document.createElement("button");
                 btn.className = "training-item";
@@ -348,7 +755,9 @@
             });
         }
 
-        function isValidTime(s) { return /^\d{2}:\d{2}$/.test(s); }
+        function isValidTime(s) {
+            return /^\d{2}:\d{2}$/.test(s);
+        }
 
         createBtn.onclick = async () => {
             const timeStart = document.getElementById("time-start").value.trim();
@@ -363,7 +772,9 @@
             if (!maxClients || Number(maxClients) < 1) return setStatus("Максимум клиентов > 0", true);
 
             const query = `day=${selectedDay}&time_start=${timeStart}&time_end=${timeEnd}&gym_id=${gymId}&trainer_id=${trainerId}&type_id=${typeId}&max_clients=${maxClients}`;
-            const res = await fetch(`/api/v1/org/${orgId}/events?${query}`, { method: "POST" });
+            const res = await fetch(`/api/v1/org/${orgId}/events?${query}`, {
+                method: "POST"
+            });
             const data = await res.json();
             if (!res.ok) return setStatus(data.detail || "Ошибка создания", true);
             setStatus("Тренировка создана");
@@ -381,7 +792,9 @@
             const maxClients = document.getElementById("max-clients").value;
 
             const query = `day=${selectedDay}&time_start=${timeStart}&time_end=${timeEnd}&gym_id=${gymId}&trainer_id=${trainerId}&type_id=${typeId}&max_clients=${maxClients}`;
-            const res = await fetch(`/api/v1/org/${orgId}/events/${selectedTrainingId}?${query}`, { method: "PUT" });
+            const res = await fetch(`/api/v1/org/${orgId}/events/${selectedTrainingId}?${query}`, {
+                method: "PUT"
+            });
             const data = await res.json();
             if (!res.ok) return setStatus(data.detail || "Ошибка обновления", true);
             setStatus("Обновлено");
@@ -391,8 +804,10 @@
 
         deleteBtn.onclick = async () => {
             if (!selectedTrainingId) return;
-            if(!confirm("Отменить тренировку?")) return;
-            const res = await fetch(`/api/v1/org/${orgId}/events/${selectedTrainingId}`, { method: "DELETE" });
+            if (!confirm("Отменить тренировку?")) return;
+            const res = await fetch(`/api/v1/org/${orgId}/events/${selectedTrainingId}`, {
+                method: "DELETE"
+            });
             if (!res.ok) return setStatus("Ошибка удаления", true);
             setStatus("Отменено");
             editForm.classList.remove("visible");
@@ -403,7 +818,9 @@
         addTypeBtn.onclick = async () => {
             const typeName = newTypeInput.value.trim();
             if (typeName.length < 2) return setStatus("Мин. 2 символа", true);
-            const res = await fetch(`/api/v1/org/${orgId}/events/types?name=${encodeURIComponent(typeName)}`, { method: "POST" });
+            const res = await fetch(`/api/v1/org/${orgId}/events/types?name=${encodeURIComponent(typeName)}`, {
+                method: "POST"
+            });
             const data = await res.json();
             if (!res.ok) return setStatus(data.detail, true);
             await loadOptions();
@@ -481,7 +898,9 @@
             await loadCalendar();
         };
 
-        function goTo(path) { window.location.href = `${path}?org_id=${orgId}&v=2`; }
+        function goTo(path) {
+            window.location.href = `${path}?org_id=${orgId}&v=2`;
+        }
         document.getElementById("tab-dashboard").onclick = () => goTo("/app/org_main.html");
         document.getElementById("tab-places").onclick = () => goTo("/app/org_places.html");
         document.getElementById("tab-workers").onclick = () => goTo("/app/org_workers.html");
