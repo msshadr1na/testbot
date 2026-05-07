@@ -714,8 +714,6 @@
         async function selectDay(dayDate) {
             selectedDay = dayDate;
             selectedTrainingId = null;
-            editForm.classList.remove("visible");
-            viewActions.style.display = "none";
 
             const dayHeader = document.getElementById("day-header");
             const headerDateSpan = document.getElementById("header-date");
@@ -730,10 +728,21 @@
             const now = new Date();
             const isPastDay = selectedDateObj < new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+            viewActions.style.display = "none";
+
             if (isPastDay) {
+                editForm.classList.remove("visible");
                 createBtn.style.display = "none";
             } else {
+                editForm.classList.add("visible");
                 createBtn.style.display = "block";
+                updateBtn.style.display = "none";
+                deleteBtn.style.display = "none";
+
+                document.getElementById("time-start").value = "";
+                document.getElementById("time-end").value = "";
+                document.getElementById("max-clients").value = "";
+                newTypeInput.value = "";
             }
 
             const res = await fetch(`/api/v1/org/${orgId}/events/day?day=${dayDate}`);
