@@ -225,7 +225,7 @@
     <div class="container">
         <div class="welcome-container">
             <div class="welcome-line-1">ДОБРО ПОЖАЛОВАТЬ,</div>
-            <div class="welcome-line-2" id="username" style="opacity: 0;">ИМЯ ФАМИЛИЯ</div>
+            <div class="welcome-line-2" id="username" style="opacity: 0;">…</div>
         </div>
 
         <div class="content">
@@ -252,22 +252,33 @@
         tg.ready();
 
         const usernameEl = document.getElementById('username');
+        const urlParams = new URLSearchParams(window.location.search);
+
+        function nameFromTelegramUser(u) {
+            if (!u) return '';
+            return [u.first_name, u.last_name].filter(Boolean).join(' ').trim();
+        }
 
         async function loadUserName() {
             const user = tg.initDataUnsafe?.user;
+            const telegramId = user?.id ?? urlParams.get('telegram_id') ?? urlParams.get('user_id');
+            const fallbackFromTg = nameFromTelegramUser(user);
 
-            if (!user)
-            {
-                usernameEl.textContent = "Гость";
+            if (!telegramId) {
+                usernameEl.textContent = fallbackFromTg || "Гость";
                 usernameEl.style.opacity = '1';
                 return;
             }
 
-            const telegramId = user.id;
-            const response = await fetch(`/api/v1/get-user?telegram_id=${telegramId}`);
-            const userData = await response.json();
-            const name = `${userData.first_name}`.trim();
-            usernameEl.textContent = name || "Гость";
+            try {
+                const response = await fetch(`/api/v1/get-user?telegram_id=${telegramId}`);
+                if (!response.ok) throw new Error('get-user');
+                const userData = await response.json();
+                const name = [userData.first_name, userData.last_name].filter(Boolean).join(' ').trim();
+                usernameEl.textContent = name || fallbackFromTg || "Гость";
+            } catch {
+                usernameEl.textContent = fallbackFromTg || "Гость";
+            }
             usernameEl.style.opacity = '1';
         }
         loadUserName();

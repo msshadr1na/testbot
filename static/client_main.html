@@ -453,7 +453,7 @@
         </div>
 
         <div class="name-card">
-            <div class="name-title" id="orgName">НАЗВАНИЕ</div>
+            <div class="name-title" id="orgName">…</div>
             <div class="name-desc">
                 Регистрируйтесь на события, следите за обновлениями и оставляйте отзывы в одном месте.
             </div>
@@ -615,8 +615,23 @@
                 confirmResolve = null;
             };
             
+            loadOrgName();
             LoadActiveBookings();
         });
+
+        async function loadOrgName() {
+            const el = document.getElementById("orgName");
+            if (!el || !currentOrgId) return;
+            try {
+                const res = await fetch(`/api/v1/org/${currentOrgId}`);
+                if (!res.ok) throw new Error("org");
+                const data = await res.json();
+                const name = (data && data.name) ? String(data.name) : "Организация";
+                el.textContent = name.toUpperCase();
+            } catch {
+                el.textContent = "ОРГАНИЗАЦИЯ";
+            }
+        }
 
         async function LoadActiveBookings() {
             if (!currentOrgId) return;

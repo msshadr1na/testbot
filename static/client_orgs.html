@@ -252,7 +252,7 @@
 
                 <div class="navigation">
                     <button class="nav-btn" id="prev-page-nav">←</button>
-                    <button class="action-btn menu-btn" onclick="window.location.href = '/app'">
+                    <button class="action-btn menu-btn" id="menu-to-main">
                         Меню
                     </button>
                     <button class="nav-btn" id="next-page-nav">→</button>
@@ -271,6 +271,15 @@
         const storedUserId = localStorage.getItem("tgUserId");
         const userId = tgUserId || queryUserId || storedUserId;
         if (userId) localStorage.setItem("tgUserId", String(userId));
+
+        const menuBtn = document.getElementById("menu-to-main");
+        if (menuBtn) {
+            menuBtn.onclick = () => {
+                const tid = userId || tgUserId || queryUserId || localStorage.getItem("tgUserId");
+                const q = tid ? `?v=2&telegram_id=${encodeURIComponent(String(tid))}` : "?v=2";
+                window.location.href = "/app/index.html" + q;
+            };
+        }
 
         if (!userId) {
             document.getElementById("org-list").innerHTML =
@@ -345,12 +354,12 @@
                     container.style.opacity = '1';
                 })
                 .catch(err => {
-                    document.getElementById("org-list").innerHTML = `
+                    const el = document.getElementById("org-list");
+                    el.innerHTML = `
                   <div style="text-align:center; padding:40px; color:#d32f2f;">
                     Ошибка загрузки<br><small>${err.message}</small>
-                  </div>
-                  container.style.opacity = '1';
-                `;
+                  </div>`;
+                    el.style.opacity = "1";
                 });
         }
     </script>
