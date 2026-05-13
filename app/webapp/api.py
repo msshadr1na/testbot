@@ -1,12 +1,16 @@
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
-from app.factory import create_organization_service, create_user_service
-from app.services import TrainingTypeService
+from app.factory import (
+    create_booking_service,
+    create_organization_service,
+    create_review_service,
+    create_training_service,
+    create_training_type_service,
+    create_user_service,
+)
 from app.webapp.deps import get_db
 from asyncpg import Pool
 from app.models import Booking, Training
-from infrastructure.repositories import BookingRepository, OrganizationMemberRepository, TrainingRepository, \
-    ReviewRepository
 from app.webapp.schemas import UserName, ScheduleResponse
 from config import bot_token
 import json
@@ -42,8 +46,8 @@ async def _require_org_role(db: Pool, org_id: int, user_id: int, allowed_roles: 
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
-    member_repo = OrganizationMemberRepository(db)
-    membership = await member_repo.get_by_user_and_org_any_role(user.id, org_id)
+    org_service = create_organization_service(db)
+    membership = await org_service.get_membership_any_role(user.id, org_id)
     if not membership or membership.role_id not in allowed_roles:
         raise HTTPException(status_code=403, detail="Forbidden")
     return user, membership
@@ -126,7 +130,7 @@ async def update_my_profile(
     user.last_name = last_name
     user.middle_name = middle_name
     user.phone = phone
-    await user_service.user_repository.update(user)
+    await user_service.update(user)
     return {"ok": True}
 
 
@@ -231,10 +235,10 @@ async def get_worker(org_id: int, worker_id: int, db: Pool = Depends(get_db)):
 
 @router.get("/org/{org_id}/workers/{worker_id}/schedule")
 async def get_worker_schedule(org_id: int, worker_id: int, days: int = 3, db: Pool = Depends(get_db)):
-    training_repo = TrainingRepository(db)
+    training_service = create_training_service(db)
     now = datetime.now()
     horizon = now + timedelta(days=max(1, min(days, 14)))
-    rows = await training_repo.get_trainings_by_trainer_and_org_in_period(worker_id, org_id, now, horizon)
+    rows = await training_service.get_trainings_by_trainer_and_org_in_period(worker_id, org_id, now, horizon)
     return {
         "schedule": [
             {
@@ -356,10 +360,10 @@ async def get_events_calendar(org_id: int, year: int, month: int, db: Pool = Dep
     if month < 1 or month > 12:
         raise HTTPException(status_code=400, detail="Неверный месяц")
 
-    training_repo = TrainingRepository(db)
+    training_service = create_training_service(db)
     start_date = date(year, month, 1)
     end_date = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
-    by_day = await training_repo.get_trainings_counts_by_org_grouped_by_day(
+    by_day = await training_service.get_trainings_counts_by_org_grouped_by_day(
         org_id, start_date, end_date
     )
     return {
@@ -375,8 +379,10 @@ async def get_events_day(org_id: int, day: str, db: Pool = Depends(get_db)):
         day_date = datetime.strptime(day, "%Y-%m-%d").date()
     except ValueError:
         raise HTTPException(status_code=400, detail="Неверный формат даты")
-    training_repo = TrainingRepository(db)
-    rows = await training_repo.get_trainings_with_details_by_org_and_date_range(org_id, day_date, day_date + timedelta(days=1))
+    training_service = create_training_service(db)
+    rows = await training_service.get_trainings_with_details_by_org_and_date_range(
+        org_id, day_date, day_date + timedelta(days=1)
+    )
     return {
         "trainings": [
             {
@@ -399,11 +405,11 @@ async def get_events_day(org_id: int, day: str, db: Pool = Depends(get_db)):
 @router.get("/org/{org_id}/events/options")
 async def get_event_options(org_id: int, db: Pool = Depends(get_db)):
     org_service = create_organization_service(db)
-    training_repo = TrainingRepository(db)
+    training_service = create_training_service(db)
 
     places = await org_service.get_places_list(org_id)
     workers = await org_service.get_workers_list(org_id)
-    types = await training_repo.get_training_types(org_id)
+    types = await training_service.get_training_types(org_id)
     return {
         "places": [{"id": place_id, "name": name} for place_id, name in places],
         "workers": [{"id": worker_id, "name": name} for worker_id, name in workers],
@@ -436,10 +442,10 @@ async def create_event(
     if current_date > date_start:
         raise HTTPException(status_code=400, detail="Время начала должно быть позже настоящего времени")
 
-    training_repo = TrainingRepository(db)
-    if await training_repo.has_gym_conflict(org_id, gym_id, date_start, date_end):
+    training_service = create_training_service(db)
+    if await training_service.has_gym_conflict(org_id, gym_id, date_start, date_end):
         raise HTTPException(status_code=409, detail="Выбранный зал занят в это время")
-    if await training_repo.has_trainer_conflict(trainer_id, date_start, date_end):
+    if await training_service.has_trainer_conflict(trainer_id, date_start, date_end):
         raise HTTPException(status_code=409, detail="У этого тренера уже есть тренировка в это время")
 
     training = Training(
@@ -452,7 +458,7 @@ async def create_event(
         type_id=type_id,
         max_clients=max_clients,
     )
-    created = await training_repo.create(training)
+    created = await training_service.create(training)
     return {
         "id": created.id,
         "organization_id": created.organization_id,
@@ -464,18 +470,18 @@ async def create_event_type(org_id: int, name: str, db: Pool = Depends(get_db)):
     type_name = (name or "").strip()
     if len(type_name) < 2:
         raise HTTPException(status_code=400, detail="Название типа слишком короткое")
-    training_repo = TrainingRepository(db)
-    existing = await training_repo.find_training_type_by_name(type_name, org_id)
+    training_service = create_training_service(db)
+    existing = await training_service.find_training_type_by_name(type_name, org_id)
     if existing:
         return {"id": existing["id"], "name": existing["name"]}
-    created = await training_repo.create_training_type(type_name, org_id)
+    created = await training_service.create_training_type(type_name, org_id)
     return {"id": created["id"], "name": created["name"]}
 
 
 @router.get("/org/{org_id}/events/{training_id}")
 async def get_event_detail(org_id: int, training_id: int, db: Pool = Depends(get_db)):
-    training_repo = TrainingRepository(db)
-    training = await training_repo.get_by_id(training_id)
+    training_service = create_training_service(db)
+    training = await training_service.get_by_id(training_id)
     if not training or training.organization_id != org_id:
         raise HTTPException(status_code=404, detail="Тренировка не найдена")
     return {
@@ -505,18 +511,18 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
     if current_date > date_start:
         raise HTTPException(status_code=400, detail="Время начала должно быть позже настоящего времени")
 
-    training_repo = TrainingRepository(db)
-    booking_repo = BookingRepository(db)
+    training_service = create_training_service(db)
+    booking_service = create_booking_service(db)
     org_service = create_organization_service(db)
     user_service = create_user_service(db)
-    training_type_service = TrainingTypeService(TrainingRepository(db))
-    existing = await training_repo.get_by_id(training_id)
+    training_type_service = create_training_type_service(db)
+    existing = await training_service.get_by_id(training_id)
     if not existing or existing.organization_id != org_id:
         raise HTTPException(status_code=404, detail="Тренировка не найдена")
 
-    if await training_repo.has_gym_conflict(org_id, gym_id, date_start, date_end, exclude_training_id=training_id):
+    if await training_service.has_gym_conflict(org_id, gym_id, date_start, date_end, exclude_training_id=training_id):
         raise HTTPException(status_code=409, detail="Выбранный зал занят в это время")
-    if await training_repo.has_trainer_conflict(trainer_id, date_start, date_end, exclude_training_id=training_id):
+    if await training_service.has_trainer_conflict(trainer_id, date_start, date_end, exclude_training_id=training_id):
         raise HTTPException(status_code=409, detail="У этого тренера уже есть тренировка в это время")
     old_start = existing.date_start
     old_end = existing.date_end
@@ -525,12 +531,12 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
     old_trainer_id = existing.trainer_id
     old_gym = await org_service.get_place_by_id(existing.gym_id)
 
-    updated = await training_repo.update(training_id, gym_id, trainer_id, date_start, date_end, type_id, max_clients)
+    updated = await training_service.update(training_id, gym_id, trainer_id, date_start, date_end, type_id, max_clients)
 
     try:
         org = await org_service.get_by_id(org_id)
         org_name = org.name if org else "организации"
-        booked_tg_ids = await booking_repo.get_user_telegram_ids_by_training_id(training_id)
+        booked_tg_ids = await booking_service.get_user_telegram_ids_by_training_id(training_id)
         trainer = await user_service.get_by_id(trainer_id)
         old_trainer = await user_service.get_by_id(old_trainer_id)
         trainer_name = ""
@@ -558,23 +564,23 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
 
 @router.delete("/org/{org_id}/events/{training_id}")
 async def delete_event(org_id: int, training_id: int, db: Pool = Depends(get_db)):
-    training_repo = TrainingRepository(db)
-    booking_repo = BookingRepository(db)
+    training_service = create_training_service(db)
+    booking_service = create_booking_service(db)
     user_service = create_user_service(db)
     org_service = create_organization_service(db)
 
-    training = await training_repo.get_by_id(training_id)
+    training = await training_service.get_by_id(training_id)
     if not training or training.organization_id != org_id:
         raise HTTPException(status_code=404, detail="Тренировка не найдена")
 
     org = await org_service.get_by_id(org_id)
-    users_to_notify = await booking_repo.get_user_telegram_ids_by_training_id(training_id)
+    users_to_notify = await booking_service.get_user_telegram_ids_by_training_id(training_id)
     trainer = await user_service.get_by_id(training.trainer_id)
     if trainer and trainer.telegram_id:
         users_to_notify.append(trainer.telegram_id)
 
-    await booking_repo.delete_all_by_training_id(training_id)
-    await training_repo.delete_by_id(training_id)
+    await booking_service.delete_all_by_training_id(training_id)
+    await training_service.delete_by_id(training_id)
 
     org_name = org.name if org else "организации"
     await _broadcast_telegram_messages(
@@ -587,10 +593,10 @@ async def delete_event(org_id: int, training_id: int, db: Pool = Depends(get_db)
 @router.get("/worker/{org_id}/dashboard")
 async def get_worker_dashboard(org_id: int, user_id: int, days: int = 30, db: Pool = Depends(get_db)):
     user, _ = await _require_org_role(db, org_id, user_id, {2})
-    training_repo = TrainingRepository(db)
+    training_service = create_training_service(db)
     now = datetime.now()
     horizon = now + timedelta(days=max(1, min(days, 60)))
-    rows = await training_repo.get_trainings_by_trainer_and_org_in_period(user.id, org_id, now, horizon)
+    rows = await training_service.get_trainings_by_trainer_and_org_in_period(user.id, org_id, now, horizon)
     items = []
     for row in rows:
         duration = max(1, int((row["date_end"] - row["date_start"]).total_seconds() // 60))
@@ -631,10 +637,10 @@ async def create_worker_event(
     if date_end <= date_start:
         raise HTTPException(status_code=400, detail="Время окончания должно быть позже времени начала")
 
-    training_repo = TrainingRepository(db)
-    if await training_repo.has_gym_conflict(org_id, gym_id, date_start, date_end):
+    training_service = create_training_service(db)
+    if await training_service.has_gym_conflict(org_id, gym_id, date_start, date_end):
         raise HTTPException(status_code=409, detail="Зал занят в это время")
-    if await training_repo.has_trainer_conflict(user.id, date_start, date_end):
+    if await training_service.has_trainer_conflict(user.id, date_start, date_end):
         raise HTTPException(status_code=409, detail="У вас уже есть тренировка в это время")
 
     training = Training(
@@ -647,7 +653,7 @@ async def create_worker_event(
         type_id=type_id,
         max_clients=max_clients,
     )
-    created = await training_repo.create(training)
+    created = await training_service.create(training)
     return {"id": created.id, "organization_id": created.organization_id}
 
 
@@ -664,35 +670,10 @@ async def get_worker_history(
     safe_page_size = max(1, min(20, page_size))
     offset = (safe_page - 1) * safe_page_size
 
-    total = await db.fetchval(
-        """
-        select count(*)
-        from training t
-        where t.organization_id = $1
-          and t.trainer_id = $2
-          and t.date_end < now()
-        """,
-        org_id,
-        user.id,
-    )
+    training_service = create_training_service(db)
+    total = await training_service.count_past_trainings_for_trainer(org_id, user.id)
 
-    rows = await db.fetch(
-        """
-        select t.id as training_id, t.date_start, t.date_end, g.name as gym_name, tt.name as type_name
-        from training t
-        join gym g on t.gym_id = g.id
-        join training_type tt on t.type_id = tt.id
-        where t.organization_id = $1
-          and t.trainer_id = $2
-          and t.date_end < now()
-        order by t.date_start desc
-        limit $3 offset $4
-        """,
-        org_id,
-        user.id,
-        safe_page_size,
-        offset,
-    )
+    rows = await training_service.get_past_trainings_for_trainer_page(org_id, user.id, safe_page_size, offset)
     return {
         "items": [
             {
@@ -713,34 +694,11 @@ async def get_worker_history(
 @router.get("/worker/{org_id}/training/{training_id}/stats")
 async def get_worker_training_stats(org_id: int, training_id: int, user_id: int, db: Pool = Depends(get_db)):
     user, _ = await _require_org_role(db, org_id, user_id, {2})
-    row = await db.fetchrow(
-        "select id from training where id = $1 and organization_id = $2 and trainer_id = $3",
-        training_id,
-        org_id,
-        user.id,
-    )
-    if not row:
+    review_service = create_review_service(db)
+    stats = await review_service.get_worker_training_stats(org_id, training_id, user.id)
+    if stats is None:
         raise HTTPException(status_code=404, detail="Тренировка не найдена")
-
-    review_table_exists = await db.fetchval("select to_regclass('public.review') is not null")
-    if not review_table_exists:
-        return {"avg_grade": None, "reviews": []}
-
-    avg_grade = await db.fetchval("select avg(grade)::float from review where training_id = $1", training_id)
-    reviews = await db.fetch(
-        """
-        select r.grade, r.text, concat_ws(' ', u.first_name, u.last_name) as author
-        from review r
-        join users u on u.id = r.user_id
-        where r.training_id = $1
-        order by r.id desc
-        """,
-        training_id,
-    )
-    return {
-        "avg_grade": avg_grade,
-        "reviews": [{"grade": r["grade"], "text": r["text"] or "", "author": r["author"]} for r in reviews],
-    }
+    return stats
 
 
 @router.get("/worker/{org_id}/schedule")
@@ -748,10 +706,10 @@ async def get_my_worker_schedule(org_id: int, user_id: int, days: int = 3, db: P
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
-    training_repo = TrainingRepository(db)
+    training_service = create_training_service(db)
     now = datetime.now()
     horizon = now + timedelta(days=max(1, min(days, 14)))
-    rows = await training_repo.get_trainings_by_trainer_and_org_in_period(user.id, org_id, now, horizon)
+    rows = await training_service.get_trainings_by_trainer_and_org_in_period(user.id, org_id, now, horizon)
     return {
         "schedule": [
             {
@@ -771,10 +729,10 @@ async def get_my_client_bookings(org_id: int, user_id: int, days: int = 30, db: 
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
-    booking_repo = BookingRepository(db)
+    booking_service = create_booking_service(db)
     now = datetime.now()
     horizon = now + timedelta(days=max(1, min(days, 60)))
-    rows = await booking_repo.get_user_bookings_in_period(user.id, org_id, now, horizon)
+    rows = await booking_service.get_user_bookings_in_period(user.id, org_id, now, horizon)
     return {
         "bookings": [
             {
@@ -798,10 +756,10 @@ async def get_client_dashboard_bookings(org_id: int, year: int, month: int, user
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-    booking_repo = BookingRepository(db)
+    booking_service = create_booking_service(db)
     start = datetime(year, month, 1)
     end = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
-    rows = await booking_repo.get_user_bookings_in_period(user.id, org_id, start, end)
+    rows = await booking_service.get_user_bookings_in_period(user.id, org_id, start, end)
     trainings = []
     for row in rows:
         duration = max(1, int((row["date_end"] - row["date_start"]).total_seconds() // 60))
@@ -831,59 +789,14 @@ async def get_client_history(
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-    total = await db.fetchval(
-        """
-        select count(*)
-        from booking b
-        join training t on b.training_id = t.id
-        where b.user_id = $1
-          and t.organization_id = $2
-          and t.date_end < now()
-        """,
-        user.id, org_id
-    )
+    booking_service = create_booking_service(db)
+    review_service = create_review_service(db)
+    total = await booking_service.count_past_bookings_for_user_in_org(user.id, org_id)
 
-    review_table_exists = await db.fetchval("select to_regclass('public.review') is not null")
-    if review_table_exists:
-        rows = await db.fetch(
-            """
-            select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
-                   g.name as gym_name, tt.name as type_name,
-                   concat_ws(' ', u.first_name, u.last_name) as trainer_name,
-                   exists(select 1 from review r where r.user_id = $1 and r.training_id = t.id) as has_review
-            from booking b
-            join training t on b.training_id = t.id
-            join gym g on t.gym_id = g.id
-            join training_type tt on t.type_id = tt.id
-            join users u on t.trainer_id = u.id
-            where b.user_id = $1
-              and t.organization_id = $2
-              and t.date_end < now()
-            order by t.date_start desc
-            limit $3 offset $4
-            """,
-            user.id, org_id, safe_page_size, offset
-        )
-    else:
-        rows = await db.fetch(
-            """
-            select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
-                   g.name as gym_name, tt.name as type_name,
-                   concat_ws(' ', u.first_name, u.last_name) as trainer_name,
-                   false as has_review
-            from booking b
-            join training t on b.training_id = t.id
-            join gym g on t.gym_id = g.id
-            join training_type tt on t.type_id = tt.id
-            join users u on t.trainer_id = u.id
-            where b.user_id = $1
-              and t.organization_id = $2
-              and t.date_end < now()
-            order by t.date_start desc
-            limit $3 offset $4
-            """,
-            user.id, org_id, safe_page_size, offset
-        )
+    review_table_exists = await review_service.table_exists()
+    rows = await booking_service.get_client_history_page(
+        user.id, org_id, safe_page_size, offset, review_table_exists
+    )
 
     return {
         "items": [
@@ -913,38 +826,24 @@ async def create_client_review(
     text: str = Body("", embed=True),
     db: Pool = Depends(get_db),
 ):
-    review_table_exists = await db.fetchval("select to_regclass('public.review') is not null")
-    if not review_table_exists:
-        raise HTTPException(status_code=400, detail="Отзывы пока недоступны")
     if grade < 1 or grade > 5:
         raise HTTPException(status_code=400, detail="grade must be between 1 and 5")
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-    training = await db.fetchrow(
-        """
-        select t.id
-        from training t
-        join booking b on b.training_id = t.id
-        where t.id = $1 and t.organization_id = $2 and b.user_id = $3 and t.date_end < now()
-        """,
-        training_id, org_id, user.id
-    )
-    if training is None:
-        raise HTTPException(status_code=404, detail="Тренировка не найдена в архиве")
-
-    existing = await db.fetchval(
-        "select id from review where user_id = $1 and training_id = $2 limit 1",
-        user.id, training_id
-    )
-    if existing:
-        raise HTTPException(status_code=409, detail="Review already exists")
-
-    await db.execute(
-        "insert into review (user_id, training_id, grade, text) values ($1, $2, $3, $4)",
-        user.id, training_id, grade, (text or "").strip()
-    )
+    review_service = create_review_service(db)
+    try:
+        await review_service.create_client_review(user.id, org_id, training_id, grade, text or "")
+    except ValueError as e:
+        code = e.args[0] if e.args else ""
+        if code == "reviews_unavailable":
+            raise HTTPException(status_code=400, detail="Отзывы пока недоступны")
+        if code == "training_not_found":
+            raise HTTPException(status_code=404, detail="Тренировка не найдена в архиве")
+        if code == "review_exists":
+            raise HTTPException(status_code=409, detail="Review already exists")
+        raise
     return {"ok": True}
 
 @router.post("/client/{org_id}/book")
@@ -958,16 +857,8 @@ async def book_client_training(
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-    row = await db.fetchrow(
-        """
-        select t.id, t.max_clients,
-            (select count(*) from booking b where b.training_id = t.id) as booked_count,
-            exists(select 1 from booking b where b.training_id = t.id and b.user_id = $1) as is_booked
-        from training t
-        where t.id = $2 and t.organization_id = $3
-        """,
-        user.id, trainingId, org_id
-    )
+    booking_service = create_booking_service(db)
+    row = await booking_service.get_training_booking_row(user.id, trainingId, org_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Тренировка не найдена")
     if row["is_booked"]:
@@ -975,9 +866,8 @@ async def book_client_training(
     if row["booked_count"] >= row["max_clients"]:
         raise HTTPException(status_code=409, detail="No free spots")
 
-    booking_repo = BookingRepository(db)
     booking = Booking(None, user.id, trainingId, datetime.now())
-    created = await booking_repo.create(booking)
+    created = await booking_service.create(booking)
     return {"id": created.id, "training_id": trainingId}
 
 @router.delete("/client/{org_id}/book/{training_id}")
@@ -986,17 +876,12 @@ async def unbook_client_training(org_id: int, training_id: int, user_id: int = Q
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-    training_exists = await db.fetchval(
-        "select id from training where id = $1 and organization_id = $2",
-        training_id, org_id
-    )
-    if training_exists is None:
+    training_service = create_training_service(db)
+    booking_service = create_booking_service(db)
+    if not await training_service.exists_in_org(training_id, org_id):
         raise HTTPException(status_code=404, detail="Тренировка не найдена")
 
-    deleted_id = await db.fetchval(
-        "delete from booking where user_id = $1 and training_id = $2 returning id",
-        user.id, training_id
-    )
+    deleted_id = await booking_service.delete_booking_for_user_training(user.id, training_id)
     if deleted_id is None:
         raise HTTPException(status_code=404, detail="Запись не найдена")
 
@@ -1057,10 +942,9 @@ async def get_worker_organizations(
     if role_id is None:
         org_ids, names = await organization_service.show_owned_orgs(user_id)
     else:
-        org_ids = await organization_service.organizationMember_repository.get_membered_orgs(user_id, role_id)
+        org_ids, names = await organization_service.list_org_ids_and_names_by_member_role(user_id, role_id)
         if not org_ids:
             return {"organizations": []}
-        names = await organization_service.organization_repository.get_names_by_ids(org_ids)
 
     organizations = [
         {"id": org_id, "name": name}
@@ -1090,13 +974,13 @@ async def create_place(org_id: int,name: str = Query(...),db: Pool = Depends(get
 
 @router.get("/org/{org_id}/events/{training_id}/bookings")
 async def get_training_bookings(org_id: int, training_id: int, db: Pool = Depends(get_db)):
-    training_repo = TrainingRepository(db)
-    training = await training_repo.get_by_id(training_id)
+    training_service = create_training_service(db)
+    booking_service = create_booking_service(db)
+    training = await training_service.get_by_id(training_id)
     if not training or training.organization_id != org_id:
         raise HTTPException(status_code=404, detail="Training not found")
 
-    booking_repo = BookingRepository(db)
-    bookings = await booking_repo.get_by_training_id(training_id)
+    bookings = await booking_service.get_by_training_id(training_id)
 
     user_service = create_user_service(db)
     result = []
@@ -1113,13 +997,13 @@ async def get_training_bookings(org_id: int, training_id: int, db: Pool = Depend
 
 @router.get("/org/{org_id}/events/{training_id}/reviews")
 async def get_training_reviews(org_id: int, training_id: int, db: Pool = Depends(get_db)):
-    training_repo = TrainingRepository(db)
-    training = await training_repo.get_by_id(training_id)
+    training_service = create_training_service(db)
+    review_service = create_review_service(db)
+    training = await training_service.get_by_id(training_id)
     if not training or training.organization_id != org_id:
         raise HTTPException(status_code=404, detail="Training not found")
 
-    reviews_repo = ReviewRepository(db)
-    reviews_db = await reviews_repo.get_by_training_id(training_id)
+    reviews_db = await review_service.get_by_training_id(training_id)
 
     reviews = []
     total_grade = 0

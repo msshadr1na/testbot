@@ -222,7 +222,7 @@ class OrganizationRepository:
         return organization
 
     async def get_client_schedule(self,user_id, org_id, start_date, end_date):
-        sql = """select t.id id, to_char(t.date_start , 'HH24:MI') time, extract(epoch from (t.date_end - t.date_start)) / 60 as duration,
+        sql = """select t.id id, t.date_start as date_start, to_char(t.date_start , 'HH24:MI') time, extract(epoch from (t.date_end - t.date_start)) / 60 as duration,
          g.name place, tt.name type, concat_ws(' ',u.first_name,u.last_name) trainer,
          (t.max_clients-count(b.id))::int as available_spots,t.max_clients total_spots,(count(*) filter (where b.user_id = $1) > 0) as is_booked
          from training t
@@ -231,7 +231,7 @@ class OrganizationRepository:
          join users u on t.trainer_id = u.id
          left join booking b on t.id = b.training_id
          where t.organization_id = $2 and t.date_start >= $3::date and t.date_start < ($4::date + interval '1 day')
-         group by t.id, g.name, tt.name, u.first_name, u.last_name
+         group by t.id, t.date_start, t.date_end, g.name, tt.name, u.first_name, u.last_name
          order by t.date_start asc;"""
 
         rows = await self.pool.fetch(sql, user_id, org_id, start_date, end_date)
@@ -433,6 +433,47 @@ class TrainingRepository:
         row = await self.pool.fetchrow(sql, trainer_id, date_start, date_end, exclude_training_id)
         return row is not None
 
+    async def count_past_trainings_for_trainer(self, org_id: int, trainer_id: int):
+        sql = """
+            select count(*)
+            from training t
+            where t.organization_id = $1
+              and t.trainer_id = $2
+              and t.date_end < now()
+        """
+        return await self.pool.fetchval(sql, org_id, trainer_id)
+
+    async def get_past_trainings_for_trainer_page(self, org_id: int, trainer_id: int, limit: int, offset: int):
+        sql = """
+            select t.id as training_id, t.date_start, t.date_end, g.name as gym_name, tt.name as type_name
+            from training t
+            join gym g on t.gym_id = g.id
+            join training_type tt on t.type_id = tt.id
+            where t.organization_id = $1
+              and t.trainer_id = $2
+              and t.date_end < now()
+            order by t.date_start desc
+            limit $3 offset $4
+        """
+        return await self.pool.fetch(sql, org_id, trainer_id, limit, offset)
+
+    async def exists_for_trainer(self, training_id: int, org_id: int, trainer_id: int):
+        row = await self.pool.fetchrow(
+            "select id from training where id = $1 and organization_id = $2 and trainer_id = $3",
+            training_id,
+            org_id,
+            trainer_id,
+        )
+        return row is not None
+
+    async def exists_in_org(self, training_id: int, org_id: int):
+        val = await self.pool.fetchval(
+            "select id from training where id = $1 and organization_id = $2",
+            training_id,
+            org_id,
+        )
+        return val is not None
+
 class BookingRepository:
     def __init__(self,pool):
         self.pool = pool
@@ -486,6 +527,86 @@ class BookingRepository:
         rows = await self.pool.fetch(sql, training_id)
         return [Booking(row["id"],row["user_id"], row["training_id"], row["created_at"]) for row in rows]
 
+    async def get_training_booking_row(self, user_id: int, training_id: int, org_id: int):
+        sql = """
+            select t.id, t.max_clients,
+                (select count(*) from booking b where b.training_id = t.id) as booked_count,
+                exists(select 1 from booking b where b.training_id = t.id and b.user_id = $1) as is_booked
+            from training t
+            where t.id = $2 and t.organization_id = $3
+        """
+        return await self.pool.fetchrow(sql, user_id, training_id, org_id)
+
+    async def delete_booking_for_user_training(self, user_id: int, training_id: int):
+        return await self.pool.fetchval(
+            "delete from booking where user_id = $1 and training_id = $2 returning id",
+            user_id,
+            training_id,
+        )
+
+    async def count_past_bookings_for_user_in_org(self, user_id: int, org_id: int):
+        sql = """
+            select count(*)
+            from booking b
+            join training t on b.training_id = t.id
+            where b.user_id = $1
+              and t.organization_id = $2
+              and t.date_end < now()
+        """
+        return await self.pool.fetchval(sql, user_id, org_id)
+
+    async def get_client_history_page_with_review(self, user_id: int, org_id: int, limit: int, offset: int):
+        sql = """
+            select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
+                   g.name as gym_name, tt.name as type_name,
+                   concat_ws(' ', u.first_name, u.last_name) as trainer_name,
+                   exists(select 1 from review r where r.user_id = $1 and r.training_id = t.id) as has_review
+            from booking b
+            join training t on b.training_id = t.id
+            join gym g on t.gym_id = g.id
+            join training_type tt on t.type_id = tt.id
+            join users u on t.trainer_id = u.id
+            where b.user_id = $1
+              and t.organization_id = $2
+              and t.date_end < now()
+            order by t.date_start desc
+            limit $3 offset $4
+        """
+        return await self.pool.fetch(sql, user_id, org_id, limit, offset)
+
+    async def get_client_history_page_without_review(self, user_id: int, org_id: int, limit: int, offset: int):
+        sql = """
+            select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
+                   g.name as gym_name, tt.name as type_name,
+                   concat_ws(' ', u.first_name, u.last_name) as trainer_name,
+                   false as has_review
+            from booking b
+            join training t on b.training_id = t.id
+            join gym g on t.gym_id = g.id
+            join training_type tt on t.type_id = tt.id
+            join users u on t.trainer_id = u.id
+            where b.user_id = $1
+              and t.organization_id = $2
+              and t.date_end < now()
+            order by t.date_start desc
+            limit $3 offset $4
+        """
+        return await self.pool.fetch(sql, user_id, org_id, limit, offset)
+
+    async def user_has_completed_booking(self, user_id: int, org_id: int, training_id: int):
+        row = await self.pool.fetchrow(
+            """
+            select t.id
+            from training t
+            join booking b on b.training_id = t.id
+            where t.id = $1 and t.organization_id = $2 and b.user_id = $3 and t.date_end < now()
+            """,
+            training_id,
+            org_id,
+            user_id,
+        )
+        return row is not None
+
 class ReviewRepository:
     def __init__(self,pool):
         self.pool = pool
@@ -503,6 +624,29 @@ class ReviewRepository:
                 where training_id = $1"""
         rows = await self.pool.fetch(sql, training_id)
         return rows
+
+    async def table_exists(self) -> bool:
+        return await self.pool.fetchval("select to_regclass('public.review') is not null")
+
+    async def get_avg_grade_for_training(self, training_id: int):
+        return await self.pool.fetchval("select avg(grade)::float from review where training_id = $1", training_id)
+
+    async def list_reviews_with_author_for_training(self, training_id: int):
+        sql = """
+            select r.grade, r.text, concat_ws(' ', u.first_name, u.last_name) as author
+            from review r
+            join users u on u.id = r.user_id
+            where r.training_id = $1
+            order by r.id desc
+        """
+        return await self.pool.fetch(sql, training_id)
+
+    async def find_id_by_user_and_training(self, user_id: int, training_id: int):
+        return await self.pool.fetchval(
+            "select id from review where user_id = $1 and training_id = $2 limit 1",
+            user_id,
+            training_id,
+        )
 
 class InviteRepository:
     def __init__(self, pool):

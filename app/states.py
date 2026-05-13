@@ -16,3 +16,5 @@ class UserState(StatesGroup):
     editing_org_name = State()
     creating_place = State()
     menu = State()
+    client_pick_org = State()
+    client_menu = State()
