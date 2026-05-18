@@ -69,7 +69,7 @@ async def _send_client_schedule(message: Message, state: FSMContext):
         ds = row["date_start"]
         d = ds.date() if hasattr(ds, "date") else ds
         by_date[d].append(row)
-    lines = ["📅 Расписание на неделю (с сегодня):\n"]
+    lines = ["Расписание на неделю:\n"]
     for d in sorted(by_date.keys()):
         lines.append(f"\n{d.strftime('%d.%m')}:")
         for row in sorted(by_date[d], key=lambda r: r["date_start"]):
@@ -104,7 +104,7 @@ async def _send_client_bookings(message: Message, state: FSMContext):
     if not rows:
         await message.answer("У вас нет записей на ближайшие 30 дней.")
         return
-    lines = ["📝 Ваши записи:\n"]
+    lines = ["Ваши записи:\n"]
     for row in rows:
         ds = row["date_start"].strftime("%d.%m %H:%M")
         de = row["date_end"].strftime("%H:%M")
@@ -188,9 +188,9 @@ async def client_pick_org_handler(callback: CallbackQuery, state: FSMContext):
     await state.set_state(UserState.client_menu)
     await callback.message.edit_text(
         f"Организация: {org.name}\n\n"
-        "Напишите /schedule — расписание на неделю.\n"
-        "Напишите /bookings — ваши записи.\n"
-        "Напишите /exit — выход в главное меню.",
+        "/schedule — расписание на неделю.\n"
+        "/bookings — ваши записи.\n"
+        "/exit — выход в главное меню.",
         reply_markup=None,
     )
     rk = presentation.keyboards.build_client_menu_reply_keyboard(org_id, callback.from_user.id)
