@@ -134,6 +134,56 @@ async def update_my_profile(
     return {"ok": True}
 
 
+@router.get("/me/notifications")
+async def get_my_notifications(user_id: int, db: Pool = Depends(get_db)):
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    user_service = create_user_service(db)
+    try:
+        settings = await user_service.get_notification_settings(user.id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    return settings
+
+
+@router.put("/me/notifications")
+async def update_my_notifications(
+    user_id: int,
+    payload: dict = Body(...),
+    db: Pool = Depends(get_db),
+):
+    before_day = payload.get("before_day")
+    before_hour = payload.get("before_hour")
+
+    if before_day is not None:
+        try:
+            before_day = int(before_day)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="before_day must be integer or null")
+        if before_day < 0 or before_day > 7:
+            raise HTTPException(status_code=400, detail="before_day must be between 0 and 7")
+
+    if before_hour is not None:
+        try:
+            before_hour = int(before_hour)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="before_hour must be integer or null")
+        if before_hour < 0 or before_hour > 23:
+            raise HTTPException(status_code=400, detail="before_hour must be between 0 and 23")
+
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    user_service = create_user_service(db)
+    try:
+        await user_service.update_notification_settings(user.id, before_day, before_hour)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    return {"ok": True}
+
+
 @router.get("/org/organizations")
 async def get_user_organizations(user_id: int, db: Pool = Depends(get_db)):
     org_service = create_organization_service(db)

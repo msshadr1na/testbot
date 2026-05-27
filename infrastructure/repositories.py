@@ -18,6 +18,14 @@ class SettingsRepository:
         row = await self.pool.fetchrow(sql_insert, json_value)
         return Settings(id=row["id"], notification_settings=json_value)
 
+    async def get_by_id(self, settings_id: int) -> Settings | None:
+        sql = "select id, notification_settings from settings where id = $1"
+        row = await self.pool.fetchrow(sql, settings_id)
+        if not row:
+            return None
+        value = row["notification_settings"]
+        return Settings(id=row["id"], notification_settings=value)
+
 class UserRepository:
     def __init__(self, pool):
         self.pool = pool
@@ -606,6 +614,26 @@ class BookingRepository:
             user_id,
         )
         return row is not None
+
+    async def get_upcoming_with_settings(self, start_dt, end_dt):
+        """
+        Получить будущие бронирования с настройками уведомлений пользователей.
+        """
+        sql = """
+            select
+                b.id as booking_id,
+                u.id as user_id,
+                u.telegram_id,
+                t.id as training_id,
+                t.date_start,
+                s.notification_settings
+            from booking b
+            join users u on u.id = b.user_id
+            join training t on t.id = b.training_id
+            join settings s on s.id = u.settings_id
+            where t.date_start >= $1 and t.date_start <= $2
+        """
+        return await self.pool.fetch(sql, start_dt, end_dt)
 
 class ReviewRepository:
     def __init__(self,pool):

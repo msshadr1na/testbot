@@ -1,7 +1,9 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
+import asyncio
+import json
 
-from aiogram import Router, types, F
+from aiogram import Router, types, F, Bot
 from aiogram.filters import CommandStart, Command, StateFilter
 from aiogram.types import (
     CallbackQuery,
@@ -26,6 +28,78 @@ from infrastructure.repositories import (
 import presentation.keyboards
 
 router = Router()
+
+_sent_notifications: set[tuple[int, int, int]] = set()
+
+
+async def _notifications_worker(bot: Bot, interval_seconds: int = 60):
+    """
+    Фоновый воркер, который рассылает напоминания о тренировках клиентам.
+    Работает через сервисы/репозитории, без прямых SQL в presentation-слое.
+    """
+    global _sent_notifications
+    while True:
+        try:
+            pool = await get_db_pool()
+            booking_service = create_booking_service(pool)
+
+            now = datetime.utcnow()
+            horizon = now + timedelta(days=7)
+            rows = await booking_service.get_upcoming_with_settings(now, horizon)
+
+            for row in rows:
+                tg_id = row["telegram_id"]
+                if not tg_id:
+                    continue
+
+                raw_settings = row["notification_settings"]
+                if isinstance(raw_settings, str):
+                    try:
+                        settings = json.loads(raw_settings)
+                    except Exception:
+                        settings = {}
+                else:
+                    settings = dict(raw_settings or {})
+
+                before_day = settings.get("before_day", 1)
+                before_hour = settings.get("before_hour", 0)
+
+                if before_day is None and before_hour is None:
+                    continue
+
+                training_time = row["date_start"]
+                notify_time = training_time
+                if before_day:
+                    notify_time -= timedelta(days=int(before_day))
+                if before_hour:
+                    notify_time -= timedelta(hours=int(before_hour))
+
+                delta = (now - notify_time).total_seconds()
+                if 0 <= delta < interval_seconds:
+                    key = (
+                        row["booking_id"],
+                        row["training_id"],
+                        int(before_day or 0) * 24 + int(before_hour or 0),
+                    )
+                    if key in _sent_notifications:
+                        continue
+                    _sent_notifications.add(key)
+
+                    msg_time = training_time.strftime("%d.%m %H:%M")
+                    text = f"Напоминание: у вас тренировка {msg_time}."
+                    try:
+                        await bot.send_message(tg_id, text)
+                    except Exception:
+                        continue
+        except Exception:
+            # Не падаем из-за одной ошибки, просто ждём следующую итерацию
+            pass
+
+        await asyncio.sleep(interval_seconds)
+
+
+async def on_startup_notifications(bot: Bot):
+    asyncio.create_task(_notifications_worker(bot))
 
 
 # --- Клиент -----------------------------------------------------------------

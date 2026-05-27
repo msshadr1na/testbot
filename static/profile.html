@@ -23,6 +23,7 @@
             font-size: 30px; font-family: inherit; cursor: pointer; line-height: 1;
             display:flex; align-items:center; justify-content:center;
             box-shadow: 0 7px 0 rgba(64, 52, 96, 0.22), 0 10px 18px rgba(26, 15, 52, 0.18);
+            color: #000000;
         }
         .page-title { font-size: 16px; letter-spacing: 0.6px; opacity: 0.75; line-height: 1.05; text-align: right; flex: 1; text-transform: uppercase; }
         .card {
@@ -55,8 +56,55 @@
             background: #CBBAFD;
             box-shadow: 0 6px 0 #9B7FCC;
             margin-bottom:10px;
+            color: #000000;
         }
         .status { margin-top: 10px; font-size: 12px; min-height: 16px; text-align: center; color: #5a5a5a; }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(18, 10, 34, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 230;
+            padding: 18px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            width: 100%;
+            max-width: 330px;
+            background: #efeefc;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 10px 24px rgba(31, 20, 52, 0.28);
+        }
+        .modal-title { font-size: 14px; margin-bottom: 10px; text-transform: uppercase; }
+        .modal-row { margin-bottom: 12px; }
+        .modal-row label { font-size: 11px; margin-bottom: 6px; display: block; }
+        .select {
+            width: 100%;
+            height: 44px;
+            border-radius: 14px;
+            border: 1px solid #d3cde8;
+            padding: 0 10px;
+            font-family: inherit;
+            font-size: 12px;
+            background: #fff;
+        }
+        .modal-actions { display: flex; gap: 8px; margin-top: 4px; }
+        .modal-btn {
+            flex: 1;
+            border: none;
+            border-radius: 12px;
+            height: 42px;
+            font-family: inherit;
+            font-size: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+        .modal-btn.cancel { background: #fff; box-shadow: 0 3px 0 #c7c2df; }
+        .modal-btn.ok { background: #CBBAFD; box-shadow: 0 3px 0 #9B7FCC; }
     </style>
 </head>
 <body>
@@ -86,6 +134,59 @@
             <button class="btn" id="notifBtn">Настройки уведомлений</button>
             <button class="btn" id="saveBtn">Сохранить</button>
             <div class="status" id="status"></div>
+        </div>
+        <div class="modal-overlay" id="notifModal">
+            <div class="modal">
+                <div class="modal-title">Настройки уведомлений</div>
+                <div class="modal-row">
+                    <label for="notifDays">За сколько дней до тренировки</label>
+                    <select id="notifDays" class="select">
+                        <option value="none">—</option>
+                        <option value="0">В день тренировки (0)</option>
+                        <option value="1">За 1 день</option>
+                        <option value="2">За 2 дня</option>
+                        <option value="3">За 3 дня</option>
+                        <option value="4">За 4 дня</option>
+                        <option value="5">За 5 дней</option>
+                        <option value="6">За 6 дней</option>
+                        <option value="7">За 7 дней</option>
+                    </select>
+                </div>
+                <div class="modal-row">
+                    <label for="notifHours">За сколько часов до тренировки</label>
+                    <select id="notifHours" class="select">
+                        <option value="none">—</option>
+                        <option value="0">В момент тренировки (0)</option>
+                        <option value="1">За 1 час</option>
+                        <option value="2">За 2 часа</option>
+                        <option value="3">За 3 часа</option>
+                        <option value="4">За 4 часа</option>
+                        <option value="5">За 5 часов</option>
+                        <option value="6">За 6 часов</option>
+                        <option value="7">За 7 часов</option>
+                        <option value="8">За 8 часов</option>
+                        <option value="9">За 9 часов</option>
+                        <option value="10">За 10 часов</option>
+                        <option value="11">За 11 часов</option>
+                        <option value="12">За 12 часов</option>
+                        <option value="13">За 13 часов</option>
+                        <option value="14">За 14 часов</option>
+                        <option value="15">За 15 часов</option>
+                        <option value="16">За 16 часов</option>
+                        <option value="17">За 17 часов</option>
+                        <option value="18">За 18 часов</option>
+                        <option value="19">За 19 часов</option>
+                        <option value="20">За 20 часов</option>
+                        <option value="21">За 21 час</option>
+                        <option value="22">За 22 часа</option>
+                        <option value="23">За 23 часа</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn cancel" id="notifCancel">Отмена</button>
+                    <button class="modal-btn ok" id="notifSave">Сохранить</button>
+                </div>
+            </div>
         </div>
     </div>
     <script>
@@ -151,6 +252,75 @@
 
         document.getElementById("backBtn").onclick = () => window.location.href = "/app";
         document.getElementById("saveBtn").onclick = saveProfile;
+
+        const notifBtn = document.getElementById("notifBtn");
+        const notifModal = document.getElementById("notifModal");
+        const notifDays = document.getElementById("notifDays");
+        const notifHours = document.getElementById("notifHours");
+        const notifCancel = document.getElementById("notifCancel");
+        const notifSave = document.getElementById("notifSave");
+
+        function openNotifModal() {
+            if (!userId) { setStatus("Не удалось определить пользователя", true); return; }
+            notifModal.classList.add("show");
+            loadNotifications();
+        }
+
+        function closeNotifModal() {
+            notifModal.classList.remove("show");
+        }
+
+        async function loadNotifications() {
+            try {
+                const res = await fetch(`/api/v1/me/notifications?user_id=${userId}`);
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    return;
+                }
+                const beforeDay = data.before_day;
+                const beforeHour = data.before_hour;
+                notifDays.value = (beforeDay === null || beforeDay === undefined) ? "none" : String(beforeDay);
+                notifHours.value = (beforeHour === null || beforeHour === undefined) ? "none" : String(beforeHour);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function saveNotifications() {
+            if (!userId) { setStatus("Не удалось определить пользователя", true); return; }
+            const dayVal = notifDays.value;
+            const hourVal = notifHours.value;
+            const before_day = dayVal === "none" ? null : Number(dayVal);
+            const before_hour = hourVal === "none" ? null : Number(hourVal);
+            if (before_day !== null && (before_day < 0 || before_day > 7)) {
+                return setStatus("День уведомления должен быть от 0 до 7", true);
+            }
+            if (before_hour !== null && (before_hour < 0 || before_hour > 23)) {
+                return setStatus("Часы уведомления должны быть от 0 до 23", true);
+            }
+            try {
+                const res = await fetch(`/api/v1/me/notifications?user_id=${userId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ before_day, before_hour })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    setStatus(data.detail || "Не удалось сохранить настройки уведомлений", true);
+                } else {
+                    setStatus("Настройки уведомлений сохранены");
+                    closeNotifModal();
+                }
+            } catch (e) {
+                console.error(e);
+                setStatus("Ошибка сети при сохранении настроек уведомлений", true);
+            }
+        }
+
+        if (notifBtn) notifBtn.onclick = openNotifModal;
+        if (notifCancel) notifCancel.onclick = closeNotifModal;
+        if (notifSave) notifSave.onclick = saveNotifications;
+
         loadProfile();
     </script>
 </body>

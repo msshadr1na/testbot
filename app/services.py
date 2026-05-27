@@ -33,6 +33,37 @@ class UserService:
     async def update(self, user: User):
         await self.user_repository.update(user)
 
+    async def get_notification_settings(self, user_id: int) -> dict:
+        user = await self.user_repository.get_by_id(user_id)
+        if not user:
+            raise ValueError("user_not_found")
+        settings = await self.settings_repository.get_by_id(user.settings_id)
+        if not settings or settings.notification_settings is None:
+            return {"before_hour": 0, "before_day": 1}
+        raw = settings.notification_settings
+        if isinstance(raw, str):
+            import json
+            try:
+                data = json.loads(raw)
+            except Exception:
+                data = {}
+        else:
+            data = dict(raw or {})
+        return {
+            "before_day": data.get("before_day", 1),
+            "before_hour": data.get("before_hour", 0),
+        }
+
+    async def update_notification_settings(self, user_id: int, before_day, before_hour):
+        user = await self.user_repository.get_by_id(user_id)
+        if not user:
+            raise ValueError("user_not_found")
+        settings_data = {"before_hour": before_hour, "before_day": before_day}
+        new_settings = Settings(id=None, notification_settings=settings_data)
+        saved = await self.settings_repository.create(new_settings)
+        user.settings_id = saved.id
+        await self.user_repository.update(user)
+
 
 
 
@@ -341,6 +372,9 @@ class BookingService:
 
     async def user_has_completed_booking(self, user_id: int, org_id: int, training_id: int):
         return await self._booking.user_has_completed_booking(user_id, org_id, training_id)
+
+    async def get_upcoming_with_settings(self, start_dt, end_dt):
+        return await self._booking.get_upcoming_with_settings(start_dt, end_dt)
 
 
 class ReviewService:
