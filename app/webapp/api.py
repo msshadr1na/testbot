@@ -810,15 +810,21 @@ async def get_client_dashboard_bookings(org_id: int, year: int, month: int, user
     start = datetime(year, month, 1)
     end = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
     rows = await booking_service.get_user_bookings_in_period(user.id, org_id, start, end)
+
+    # На главной странице клиента должны отображаться только предстоящие тренировки,
+    # прошедшие показываются во вкладке "Прошедшие события".
+    now = datetime.now()
+    rows = [row for row in rows if row["date_start"] > now]
     trainings = []
     for row in rows:
-        duration = max(1, int((row["date_end"] - row["date_start"]).total_seconds() // 60))
         ds = row["date_start"]
+        de = row["date_end"]
+        duration = max(1, int((de - ds).total_seconds() // 60))
         trainings.append({
             "id": row["training_id"],
             "date_start": ds.isoformat(),
             "date": ds.strftime("%d.%m"),
-            "time": row["date_start"].strftime("%H:%M"),
+            "time": ds.strftime("%H:%M"),
             "duration": duration,
             "place": row["gym_name"],
             "type": row["type_name"],
