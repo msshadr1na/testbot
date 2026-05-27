@@ -409,20 +409,29 @@
         }
 
         // === 2. ОТРИСОВКА ДАТ ===
+        function _toLocalYMD(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            return `${y}-${m}-${day}`;
+        }
+
         async function renderDateSelector() {
             const container = document.getElementById('dateSelector');
             container.innerHTML = '';
             
             const today = new Date();
             const daysOfWeek = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
-            const todayStr = today.toISOString().split('T')[0];
+            // Важно: используем локальную дату пользователя, а не UTC (toISOString),
+            // иначе около полуночи в UTC+5 будет смещение на сутки.
+            const todayStr = _toLocalYMD(today);
 
             for (let i = 0; i < 7; i++) {
                 const date = new Date(today);
                 date.setDate(today.getDate() + (currentView === "history" ? i - 7 : i));
                 const dayName = daysOfWeek[date.getDay()];
                 const dayNumber = date.getDate();
-                const dateStr = date.toISOString().split('T')[0];
+                const dateStr = _toLocalYMD(date);
 
                 // Создаем элемент даты
                 const el = document.createElement('div');
