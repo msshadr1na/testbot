@@ -616,9 +616,6 @@ class BookingRepository:
         return row is not None
 
     async def get_upcoming_with_settings(self, start_dt, end_dt):
-        """
-        Получить будущие бронирования с настройками уведомлений пользователей.
-        """
         sql = """
             select
                 b.id as booking_id,
@@ -626,10 +623,19 @@ class BookingRepository:
                 u.telegram_id,
                 t.id as training_id,
                 t.date_start,
+                t.date_end,
+                o.name as organization_name,
+                g.name as gym_name,
+                tt.name as type_name,
+                concat_ws(' ', tr.first_name, tr.last_name) as trainer_name,
                 s.notification_settings
             from booking b
             join users u on u.id = b.user_id
             join training t on t.id = b.training_id
+            join organization o on o.id = t.organization_id
+            join gym g on g.id = t.gym_id
+            join training_type tt on tt.id = t.type_id
+            join users tr on tr.id = t.trainer_id
             join settings s on s.id = u.settings_id
             where t.date_start >= $1 and t.date_start <= $2
         """

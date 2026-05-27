@@ -33,20 +33,13 @@ _sent_notifications: set[tuple[int, int, int]] = set()
 
 
 async def _notifications_worker(bot: Bot, interval_seconds: int = 60):
-    """
-    Фоновый воркер, который рассылает напоминания о тренировках клиентам.
-    Работает через сервисы/репозитории, без прямых SQL в presentation-слое.
-    """
     global _sent_notifications
     while True:
         try:
             pool = await get_db_pool()
             booking_service = create_booking_service(pool)
 
-            # В БД используется TIMESTAMP без таймзоны, остальной код проекта тоже
-            # работает от локального времени, поэтому используем datetime.now().
             now = datetime.now()
-            # Максимальная комбинация настроек: до 7 дней и до 23 часов.
             horizon = now + timedelta(days=7, hours=23)
             rows = await booking_service.get_upcoming_with_settings(now, horizon)
 
@@ -67,41 +60,57 @@ async def _notifications_worker(bot: Bot, interval_seconds: int = 60):
                 before_day = settings.get("before_day", 1)
                 before_hour = settings.get("before_hour", 0)
 
-                if before_day is None and before_hour is None:
-                    continue
-
                 training_time = row["date_start"]
-                days_offset = int(before_day) if before_day is not None else 0
-                hours_offset = int(before_hour) if before_hour is not None else 0
-                notify_time = training_time - timedelta(days=days_offset, hours=hours_offset)
+                org_name = row.get("organization_name") or "Организация"
+                gym_name = row.get("gym_name") or "Зал"
+                type_name = row.get("type_name") or "Тренировка"
+                trainer_name = row.get("trainer_name") or "Тренер"
+                date_text = training_time.strftime("%d.%m.%Y %H:%M")
 
-                delta = (now - notify_time).total_seconds()
-                # Более надежная проверка окна отправки:
-                # отправляем, только если now попадает в [notify_time, notify_time + interval_seconds)
-                if notify_time <= now < notify_time + timedelta(seconds=interval_seconds):
-                    key = (
-                        row["booking_id"],
-                        row["training_id"],
-                        days_offset * 24 + hours_offset,
-                    )
+                notifications = []
+                if before_day is not None:
+                    day_value = int(before_day)
+                    notifications.append(("day", day_value, training_time - timedelta(days=day_value)))
+                if before_hour is not None:
+                    hour_value = int(before_hour)
+                    notifications.append(("hour", hour_value, training_time - timedelta(hours=hour_value)))
+
+                for notif_kind, notif_value, notify_time in notifications:
+                    if not (notify_time <= now < notify_time + timedelta(seconds=interval_seconds)):
+                        continue
+                    key = (row["booking_id"], row["training_id"], hash((notif_kind, notif_value)))
                     if key in _sent_notifications:
                         continue
                     _sent_notifications.add(key)
 
-                    msg_time = training_time.strftime("%d.%m %H:%M")
-                    text = f"Напоминание: у вас тренировка {msg_time}."
+                    if notif_kind == "day":
+                        lead_text = f"Напоминание: тренировка через {notif_value} дн."
+                    else:
+                        lead_text = f"Напоминание: тренировка через {notif_value} ч."
+
+                    text = (
+                        f"{lead_text}\n"
+                        f"Организация: {org_name}\n"
+                        f"Дата и время: {date_text}\n"
+                        f"Тренировка: {type_name}\n"
+                        f"Зал: {gym_name}\n"
+                        f"Тренер: {trainer_name}"
+                    )
                     try:
                         await bot.send_message(tg_id, text)
                     except Exception:
                         continue
         except Exception:
-            # Не падаем из-за одной ошибки, просто ждём следующую итерацию
             pass
 
         await asyncio.sleep(interval_seconds)
 
 
 async def on_startup_notifications(bot: Bot):
+    asyncio.create_task(_notifications_worker(bot))
+
+
+def start_notifications(bot: Bot):
     asyncio.create_task(_notifications_worker(bot))
 
 

@@ -311,7 +311,11 @@ async def delete_worker(org_id: int, worker_id: int, db: Pool = Depends(get_db))
     org = await org_service.get_by_id(org_id)
     await org_service.delete_worker(org_id, worker_id)
     if worker and org:
-        await _send_telegram_message(worker.telegram_id, f"Вы были удалены из организации {org.name}.")
+        worker_name = f"{worker.first_name} {worker.last_name}".strip()
+        await _send_telegram_message(
+            worker.telegram_id,
+            f"Вы исключены из организации «{org.name}».\nПрофиль: {worker_name}.",
+        )
     return {"ok": True}
 
 
@@ -361,7 +365,11 @@ async def delete_client(org_id: int, client_id: int, db: Pool = Depends(get_db))
     org = await org_service.get_by_id(org_id)
     await org_service.delete_client(org_id, client_id)
     if client and org:
-        await _send_telegram_message(client.telegram_id, f"Вы были удалены из организации {org.name}.")
+        client_name = f"{client.first_name} {client.last_name}".strip()
+        await _send_telegram_message(
+            client.telegram_id,
+            f"Вы исключены из организации «{org.name}».\nПрофиль: {client_name}.",
+        )
     return {"ok": True}
 
 
@@ -592,20 +600,27 @@ async def update_event(org_id: int,training_id: int,day: str,time_start: str,tim
         trainer_name = ""
         if trainer:
             trainer_name = f"{trainer.first_name} {trainer.last_name}".strip()
-        msg = f"Изменена тренировка: {old_training_type} в организации {org_name}.\n"
+        new_gym = await org_service.get_place_by_id(gym_id)
+        new_gym_name = new_gym.name if new_gym else str(gym_id)
+        old_gym_name = old_gym.name if old_gym else str(existing.gym_id)
+        old_time = f"{old_start.strftime('%d.%m.%Y %H:%M')} - {old_end.strftime('%H:%M')}"
+        new_time = f"{date_start.strftime('%d.%m.%Y %H:%M')} - {date_end.strftime('%H:%M')}"
+        msg = (
+            f"Изменение тренировки в организации «{org_name}».\n"
+            f"Тренировка: {old_training_type}\n"
+            f"Было: {old_time}\n"
+            f"Стало: {new_time}\n"
+            f"Зал: {old_gym_name} -> {new_gym_name}\n"
+        )
         if existing.type_id != type_id:
-            msg += (f"Новый тип тренировки: {new_training_type.name}\n")
-        if old_start != date_start or old_end != date_end:
-            msg += (f"Старые дата/время:\n {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n"
-                f"Новая дата/время:\n {date_start.strftime('%d.%m %H:%M')}–{date_end.strftime('%H:%M')}\n")
-        else:
-            msg += (f"Дата:\n {old_start.strftime('%d.%m %H:%M')} - {old_end.strftime('%d.%m %H:%M')}\n")
-        if old_gym.id != gym_id:
-            msg += f"Новое место: {gym_id}\n"
+            msg += f"Новый тип: {new_training_type}\n"
         if old_trainer_id != trainer_id:
-            old_name = f"{old_trainer.first_name} {old_trainer.last_name}".strip()
-            msg += (f"Старый тренер: {old_name}.\n"
-                    f"Новый тренер: {trainer_name}.\n")
+            old_name = "Тренер"
+            if old_trainer:
+                old_name = f"{old_trainer.first_name} {old_trainer.last_name}".strip()
+            if not trainer_name:
+                trainer_name = "Тренер"
+            msg += f"Тренер: {old_name} -> {trainer_name}\n"
         await _broadcast_telegram_messages(booked_tg_ids, msg)
     except Exception:
         pass
@@ -633,9 +648,10 @@ async def delete_event(org_id: int, training_id: int, db: Pool = Depends(get_db)
     await training_service.delete_by_id(training_id)
 
     org_name = org.name if org else "организации"
+    event_time = f"{training.date_start.strftime('%d.%m.%Y %H:%M')} - {training.date_end.strftime('%H:%M')}"
     await _broadcast_telegram_messages(
         users_to_notify,
-        f"Тренировка в организации {org_name} была отменена.",
+        f"Тренировка отменена.\nОрганизация: «{org_name}»\nВремя: {event_time}",
     )
     return {"ok": True}
 
@@ -976,6 +992,16 @@ async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...),
     org_service = create_organization_service(db)
     # Для страницы расписания клиента нужен список тренировок только на выбранный день
     rows = await org_service.get_schedule(user.id, orgId, date, date)
+
+    # В расписании клиенту не должны предлагаться тренировки в прошлом:
+    # - для прошлых дат: ничего не показываем
+    # - для сегодняшней даты: показываем только те, что начнутся позже текущего времени
+    now_dt = datetime.now()
+    today = now_dt.date()
+    if date < today:
+        rows = []
+    elif date == today:
+        rows = [r for r in rows if r.get("date_start") and r["date_start"] > now_dt]
     trainings = []
     for row in rows:
         trainings.append({
