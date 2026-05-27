@@ -43,8 +43,11 @@ async def _notifications_worker(bot: Bot, interval_seconds: int = 60):
             pool = await get_db_pool()
             booking_service = create_booking_service(pool)
 
-            now = datetime.utcnow()
-            horizon = now + timedelta(days=7)
+            # В БД используется TIMESTAMP без таймзоны, остальной код проекта тоже
+            # работает от локального времени, поэтому используем datetime.now().
+            now = datetime.now()
+            # Максимальная комбинация настроек: до 7 дней и до 23 часов.
+            horizon = now + timedelta(days=7, hours=23)
             rows = await booking_service.get_upcoming_with_settings(now, horizon)
 
             for row in rows:
@@ -68,18 +71,18 @@ async def _notifications_worker(bot: Bot, interval_seconds: int = 60):
                     continue
 
                 training_time = row["date_start"]
-                notify_time = training_time
-                if before_day:
-                    notify_time -= timedelta(days=int(before_day))
-                if before_hour:
-                    notify_time -= timedelta(hours=int(before_hour))
+                days_offset = int(before_day) if before_day is not None else 0
+                hours_offset = int(before_hour) if before_hour is not None else 0
+                notify_time = training_time - timedelta(days=days_offset, hours=hours_offset)
 
                 delta = (now - notify_time).total_seconds()
-                if 0 <= delta < interval_seconds:
+                # Более надежная проверка окна отправки:
+                # отправляем, только если now попадает в [notify_time, notify_time + interval_seconds)
+                if notify_time <= now < notify_time + timedelta(seconds=interval_seconds):
                     key = (
                         row["booking_id"],
                         row["training_id"],
-                        int(before_day or 0) * 24 + int(before_hour or 0),
+                        days_offset * 24 + hours_offset,
                     )
                     if key in _sent_notifications:
                         continue
