@@ -29,11 +29,12 @@ import presentation.keyboards
 
 router = Router()
 
-_sent_notifications: set[tuple[int, int, int]] = set()
+_sent_notifications: set[tuple[int, int, str, int]] = set()
 
 
 async def _notifications_worker(bot: Bot, interval_seconds: int = 60):
     global _sent_notifications
+    last_check = datetime.now() - timedelta(seconds=interval_seconds)
     while True:
         try:
             pool = await get_db_pool()
@@ -76,9 +77,9 @@ async def _notifications_worker(bot: Bot, interval_seconds: int = 60):
                     notifications.append(("hour", hour_value, training_time - timedelta(hours=hour_value)))
 
                 for notif_kind, notif_value, notify_time in notifications:
-                    if not (notify_time <= now < notify_time + timedelta(seconds=interval_seconds)):
+                    if not (last_check < notify_time <= now):
                         continue
-                    key = (row["booking_id"], row["training_id"], hash((notif_kind, notif_value)))
+                    key = (row["booking_id"], row["training_id"], notif_kind, notif_value)
                     if key in _sent_notifications:
                         continue
                     _sent_notifications.add(key)
@@ -100,6 +101,7 @@ async def _notifications_worker(bot: Bot, interval_seconds: int = 60):
                         await bot.send_message(tg_id, text)
                     except Exception:
                         continue
+            last_check = now
         except Exception:
             pass
 

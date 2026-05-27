@@ -362,16 +362,16 @@ class BookingService:
     async def delete_booking_for_user_training(self, user_id: int, training_id: int):
         return await self._booking.delete_booking_for_user_training(user_id, training_id)
 
-    async def count_past_bookings_for_user_in_org(self, user_id: int, org_id: int):
-        return await self._booking.count_past_bookings_for_user_in_org(user_id, org_id)
+    async def count_past_bookings_for_user_in_org(self, user_id: int, org_id: int, now_dt):
+        return await self._booking.count_past_bookings_for_user_in_org(user_id, org_id, now_dt)
 
-    async def get_client_history_page(self, user_id: int, org_id: int, limit: int, offset: int, review_table_exists: bool):
+    async def get_client_history_page(self, user_id: int, org_id: int, limit: int, offset: int, review_table_exists: bool, now_dt):
         if review_table_exists:
-            return await self._booking.get_client_history_page_with_review(user_id, org_id, limit, offset)
-        return await self._booking.get_client_history_page_without_review(user_id, org_id, limit, offset)
+            return await self._booking.get_client_history_page_with_review(user_id, org_id, limit, offset, now_dt)
+        return await self._booking.get_client_history_page_without_review(user_id, org_id, limit, offset, now_dt)
 
-    async def user_has_completed_booking(self, user_id: int, org_id: int, training_id: int):
-        return await self._booking.user_has_completed_booking(user_id, org_id, training_id)
+    async def user_has_completed_booking(self, user_id: int, org_id: int, training_id: int, now_dt):
+        return await self._booking.user_has_completed_booking(user_id, org_id, training_id, now_dt)
 
     async def get_upcoming_with_settings(self, start_dt, end_dt):
         return await self._booking.get_upcoming_with_settings(start_dt, end_dt)
@@ -404,7 +404,8 @@ class ReviewService:
     async def create_client_review(self, user_id: int, org_id: int, training_id: int, grade: int, text: str):
         if not await self._review.table_exists():
             raise ValueError("reviews_unavailable")
-        if not await self._booking.user_has_completed_booking(user_id, org_id, training_id):
+        from datetime import datetime
+        if not await self._booking.user_has_completed_booking(user_id, org_id, training_id, datetime.now()):
             raise ValueError("training_not_found")
         existing = await self._review.find_id_by_user_and_training(user_id, training_id)
         if existing:

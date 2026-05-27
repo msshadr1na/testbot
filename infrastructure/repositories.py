@@ -552,18 +552,18 @@ class BookingRepository:
             training_id,
         )
 
-    async def count_past_bookings_for_user_in_org(self, user_id: int, org_id: int):
+    async def count_past_bookings_for_user_in_org(self, user_id: int, org_id: int, now_dt):
         sql = """
             select count(*)
             from booking b
             join training t on b.training_id = t.id
             where b.user_id = $1
               and t.organization_id = $2
-              and t.date_end < now()
+              and t.date_end < $3
         """
-        return await self.pool.fetchval(sql, user_id, org_id)
+        return await self.pool.fetchval(sql, user_id, org_id, now_dt)
 
-    async def get_client_history_page_with_review(self, user_id: int, org_id: int, limit: int, offset: int):
+    async def get_client_history_page_with_review(self, user_id: int, org_id: int, limit: int, offset: int, now_dt):
         sql = """
             select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
                    g.name as gym_name, tt.name as type_name,
@@ -576,13 +576,13 @@ class BookingRepository:
             join users u on t.trainer_id = u.id
             where b.user_id = $1
               and t.organization_id = $2
-              and t.date_end < now()
+              and t.date_end < $5
             order by t.date_start desc
             limit $3 offset $4
         """
-        return await self.pool.fetch(sql, user_id, org_id, limit, offset)
+        return await self.pool.fetch(sql, user_id, org_id, limit, offset, now_dt)
 
-    async def get_client_history_page_without_review(self, user_id: int, org_id: int, limit: int, offset: int):
+    async def get_client_history_page_without_review(self, user_id: int, org_id: int, limit: int, offset: int, now_dt):
         sql = """
             select b.id as booking_id, t.id as training_id, t.date_start, t.date_end,
                    g.name as gym_name, tt.name as type_name,
@@ -595,23 +595,24 @@ class BookingRepository:
             join users u on t.trainer_id = u.id
             where b.user_id = $1
               and t.organization_id = $2
-              and t.date_end < now()
+              and t.date_end < $5
             order by t.date_start desc
             limit $3 offset $4
         """
-        return await self.pool.fetch(sql, user_id, org_id, limit, offset)
+        return await self.pool.fetch(sql, user_id, org_id, limit, offset, now_dt)
 
-    async def user_has_completed_booking(self, user_id: int, org_id: int, training_id: int):
+    async def user_has_completed_booking(self, user_id: int, org_id: int, training_id: int, now_dt):
         row = await self.pool.fetchrow(
             """
             select t.id
             from training t
             join booking b on b.training_id = t.id
-            where t.id = $1 and t.organization_id = $2 and b.user_id = $3 and t.date_end < now()
+            where t.id = $1 and t.organization_id = $2 and b.user_id = $3 and t.date_end < $4
             """,
             training_id,
             org_id,
             user_id,
+            now_dt,
         )
         return row is not None
 

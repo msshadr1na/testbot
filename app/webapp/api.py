@@ -866,11 +866,12 @@ async def get_client_history(
 
     booking_service = create_booking_service(db)
     review_service = create_review_service(db)
-    total = await booking_service.count_past_bookings_for_user_in_org(user.id, org_id)
+    now_dt = datetime.now()
+    total = await booking_service.count_past_bookings_for_user_in_org(user.id, org_id, now_dt)
 
     review_table_exists = await review_service.table_exists()
     rows = await booking_service.get_client_history_page(
-        user.id, org_id, safe_page_size, offset, review_table_exists
+        user.id, org_id, safe_page_size, offset, review_table_exists, now_dt
     )
 
     return {
