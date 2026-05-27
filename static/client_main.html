@@ -673,10 +673,10 @@
                     card.className = "booking-item";
                     card.innerHTML = `
                         <div class="booking-card-header">
-                            <div class="time-info">
-                                <span class="time">${training.time}</span>
-                                <span class="duration">${training.duration} мин</span>
-                            </div>
+                        <div class="time-info">
+                            <span class="time">${training.date ? (training.date + " " + training.time) : training.time}</span>
+                            <span class="duration">${training.duration} мин</span>
+                        </div>
                             <div class="place-name">${training.place}</div>
                         </div>
                         <div class="card-body">

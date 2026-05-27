@@ -813,8 +813,11 @@ async def get_client_dashboard_bookings(org_id: int, year: int, month: int, user
     trainings = []
     for row in rows:
         duration = max(1, int((row["date_end"] - row["date_start"]).total_seconds() // 60))
+        ds = row["date_start"]
         trainings.append({
             "id": row["training_id"],
+            "date_start": ds.isoformat(),
+            "date": ds.strftime("%d.%m"),
             "time": row["date_start"].strftime("%H:%M"),
             "duration": duration,
             "place": row["gym_name"],
@@ -965,8 +968,8 @@ async def get_client_schedule(orgId: int, user_id: int, date: date = Query(...),
     if user is None:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
     org_service = create_organization_service(db)
-    end_date = date + timedelta(days=6)
-    rows = await org_service.get_schedule(user.id, orgId, date, end_date)
+    # Для страницы расписания клиента нужен список тренировок только на выбранный день
+    rows = await org_service.get_schedule(user.id, orgId, date, date)
     trainings = []
     for row in rows:
         trainings.append({
