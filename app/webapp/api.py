@@ -42,6 +42,45 @@ async def _broadcast_telegram_messages(telegram_ids: list[int], text: str):
     for tg_id in unique_ids:
         await _send_telegram_message(tg_id, text)
 
+
+async def _cancel_future_trainer_events(db: Pool, org_id: int, trainer_id: int):
+    training_service = create_training_service(db)
+    booking_service = create_booking_service(db)
+    user_service = create_user_service(db)
+    org_service = create_organization_service(db)
+
+    now = datetime.now()
+    horizon = now + timedelta(days=3650)
+    rows = await training_service.get_trainings_by_trainer_and_org_in_period(trainer_id, org_id, now, horizon)
+    if not rows:
+        return 0
+
+    org = await org_service.get_by_id(org_id)
+    org_name = org.name if org else "организации"
+    trainer = await user_service.get_by_id(trainer_id)
+    trainer_name = "Тренер"
+    if trainer:
+        trainer_name = f"{trainer.first_name} {trainer.last_name}".strip()
+
+    cancelled = 0
+    for row in rows:
+        training_id = row["id"]
+        users_to_notify = await booking_service.get_user_telegram_ids_by_training_id(training_id)
+        time_text = f"{row['date_start'].strftime('%d.%m.%Y %H:%M')} - {row['date_end'].strftime('%H:%M')}"
+        msg = (
+            f"Тренировка отменена.\n"
+            f"Организация: «{org_name}»\n"
+            f"Дата и время: {time_text}\n"
+            f"Тренировка: {row['type_name']}\n"
+            f"Зал: {row['gym_name']}\n"
+            f"Тренер: {trainer_name}"
+        )
+        await _broadcast_telegram_messages(users_to_notify, msg)
+        await booking_service.delete_all_by_training_id(training_id)
+        await training_service.delete_by_id(training_id)
+        cancelled += 1
+    return cancelled
+
 async def _require_org_role(db: Pool, org_id: int, user_id: int, allowed_roles: set[int]):
     user = await _resolve_user_by_any_id(user_id, db)
     if user is None:
@@ -309,6 +348,7 @@ async def delete_worker(org_id: int, worker_id: int, db: Pool = Depends(get_db))
     user_service = create_user_service(db)
     worker = await user_service.get_by_id(worker_id)
     org = await org_service.get_by_id(org_id)
+    await _cancel_future_trainer_events(db, org_id, worker_id)
     await org_service.delete_worker(org_id, worker_id)
     if worker and org:
         worker_name = f"{worker.first_name} {worker.last_name}".strip()
@@ -370,6 +410,37 @@ async def delete_client(org_id: int, client_id: int, db: Pool = Depends(get_db))
             client.telegram_id,
             f"Вы исключены из организации «{org.name}».\nПрофиль: {client_name}.",
         )
+    return {"ok": True}
+
+
+@router.delete("/client/{org_id}/leave")
+async def leave_client_org(org_id: int, user_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    membership = await org_service.get_membership_any_role(user.id, org_id)
+    if not membership:
+        raise HTTPException(status_code=404, detail="Участие в организации не найдено")
+    if membership.role_id != 3:
+        raise HTTPException(status_code=403, detail="Только клиент может выйти через этот endpoint")
+    await org_service.delete_client(org_id, user.id)
+    return {"ok": True}
+
+
+@router.delete("/worker/{org_id}/leave")
+async def leave_worker_org(org_id: int, user_id: int, db: Pool = Depends(get_db)):
+    org_service = create_organization_service(db)
+    user = await _resolve_user_by_any_id(user_id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    membership = await org_service.get_membership_any_role(user.id, org_id)
+    if not membership:
+        raise HTTPException(status_code=404, detail="Участие в организации не найдено")
+    if membership.role_id != 2:
+        raise HTTPException(status_code=403, detail="Только тренер может выйти через этот endpoint")
+    await _cancel_future_trainer_events(db, org_id, user.id)
+    await org_service.delete_worker(org_id, user.id)
     return {"ok": True}
 
 

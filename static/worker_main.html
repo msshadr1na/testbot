@@ -248,12 +248,14 @@
             }
             list.innerHTML = "";
             data.trainings.forEach((t) => {
+                const start = new Date(t.date_start);
+                const dateText = start.toLocaleDateString("ru-RU");
                 const card = document.createElement("div");
                 card.className = "booking-item";
                 card.innerHTML = `
                     <div class="booking-card-header">
                         <div class="time-info">
-                            <span class="time">${t.time}</span>
+                            <span class="time">${dateText} ${t.time}</span>
                             <span class="duration">${t.duration} мин</span>
                         </div>
                         <div class="place-name">${t.gym_name}</div>

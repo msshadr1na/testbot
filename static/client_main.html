@@ -600,6 +600,16 @@
             if (leaveBtn) {
                 leaveBtn.onclick = async () => {
                     if (await askConfirm("Вы точно хотите покинуть организацию?")) {
+                        const userId = getUserId();
+                        if (!currentOrgId || !userId) {
+                            showToast("Не удалось определить пользователя или организацию");
+                            return;
+                        }
+                        const res = await fetch(`/api/v1/client/${currentOrgId}/leave?user_id=${userId}`, { method: "DELETE" });
+                        if (!res.ok) {
+                            showToast("Не удалось покинуть организацию");
+                            return;
+                        }
                         localStorage.removeItem("selectedOrgId");
                         window.location.href = "/app/client_orgs.html?v=2";
                     }
